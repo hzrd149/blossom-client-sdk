@@ -1,0 +1,25 @@
+{
+  "name": "blossom-client",
+  "version": "0.1.0",
+  "description": "A simple client for manage blobs on blossom servers",
+  "type": "module",
+  "main": "./lib/index.js",
+  "typings": "./lib/index.d.ts",
+  "author": "hzrd149",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc",
+    "prepublish": "npm run build",
+    "format": "prettier -w ."
+  },
+  "files": [
+    "lib"
+  ],
+  "dependencies": {
+    "cross-fetch": "^4.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "prettier": "^3.2.5"
+  }
+}
