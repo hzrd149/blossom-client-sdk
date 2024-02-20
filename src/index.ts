@@ -1,5 +1,5 @@
 import fetch from "cross-fetch";
-const now = () => new Date().valueOf() / 1000;
+const now = () => Math.floor(new Date().valueOf() / 1000);
 const oneHour = () => now() + 60 * 60;
 
 export type EventTemplate = {
