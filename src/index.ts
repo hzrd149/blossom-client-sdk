@@ -8,7 +8,7 @@ export type EventTemplate = {
   content: string;
   tags: string[][];
 };
-export type SignedEvent = EventTemplate & { id: string; sig: string };
+export type SignedEvent = EventTemplate & { id: string; sig: string, pubkey: string };
 
 export type Signer = (draft: EventTemplate) => Promise<SignedEvent>;
 
