@@ -8,7 +8,11 @@ export type EventTemplate = {
   content: string;
   tags: string[][];
 };
-export type SignedEvent = EventTemplate & { id: string; sig: string, pubkey: string };
+export type SignedEvent = EventTemplate & {
+  id: string;
+  sig: string;
+  pubkey: string;
+};
 
 export type Signer = (draft: EventTemplate) => Promise<SignedEvent>;
 
@@ -19,6 +23,30 @@ export type BlobDescriptor = {
   size: number;
   url: string;
 };
+
+export class HTTPError extends Error {
+  response: Response;
+  status: number;
+  body?: { message: string };
+
+  constructor(response: Response, body: { message: string } | string) {
+    super(typeof body === "string" ? body : body.message);
+    this.response = response;
+    this.status = response.status;
+
+    if (typeof body == "object") this.body = body;
+  }
+
+  static async handleErrorResponse(res: Response) {
+    if (!res.ok) {
+      try {
+        throw new HTTPError(res, await res.json());
+      } catch (e) {
+        if (e instanceof Error) throw new HTTPError(res, e.message);
+      }
+    }
+  }
+}
 
 export class BlossomClient {
   server: string;
@@ -132,10 +160,7 @@ export class BlossomClient {
         ? { authorization: BlossomClient.encodeAuthorizationHeader(auth) }
         : {},
     });
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.message);
-    }
+    await HTTPError.handleErrorResponse(res);
     return await res.blob();
   }
   async getBlob(hash: string, auth: SignedEvent | boolean = false) {
@@ -157,10 +182,7 @@ export class BlossomClient {
         ? { authorization: BlossomClient.encodeAuthorizationHeader(auth) }
         : {},
     });
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.message);
-    }
+    await HTTPError.handleErrorResponse(res);
     return (await res.json()) as Promise<BlobDescriptor[]>;
   }
   async listBlobs(
@@ -184,10 +206,7 @@ export class BlossomClient {
         ? { authorization: BlossomClient.encodeAuthorizationHeader(auth) }
         : {},
     });
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.message);
-    }
+    await HTTPError.handleErrorResponse(res);
     return await res.text();
   }
   async deleteBlob(hash: string, auth: SignedEvent | boolean = true) {
@@ -205,7 +224,7 @@ export class BlossomClient {
         : {},
     });
 
-    if (!res.ok) throw new Error(await res.text());
+    await HTTPError.handleErrorResponse(res);
     return (await res.json()) as Promise<BlobDescriptor>;
   }
   async uploadBlob(file: File, auth: SignedEvent | boolean = true) {
