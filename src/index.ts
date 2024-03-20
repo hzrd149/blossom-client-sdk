@@ -168,6 +168,15 @@ export class BlossomClient {
     return BlossomClient.getBlob(this.server, hash, auth ? auth : undefined);
   }
 
+  static async hasBlob(server: string, hash: string) {
+    const res = await fetch(new URL(`/` + hash, server), { method: "HEAD" });
+    await HTTPError.handleErrorResponse(res);
+    return res.ok;
+  }
+  async hasBlob(hash: string) {
+    return BlossomClient.hasBlob(this.server, hash);
+  }
+
   static async listBlobs(
     server: string,
     pubkey: string,
