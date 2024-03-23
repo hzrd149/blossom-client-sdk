@@ -5,7 +5,7 @@ A javascript client for manage blobs on blossom servers
 ## Example
 
 ```js
-import { BlossomClient } from "blossom-client";
+import { BlossomClient } from "blossom-client-sdk";
 
 async function signer(event) {
   return await window.nostr.signEvent(event);
