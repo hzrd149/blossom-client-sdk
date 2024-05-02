@@ -17,8 +17,12 @@ export type SignedEvent = EventTemplate & {
 /** An async method used to sign nostr events */
 export type Signer = (draft: EventTemplate) => Promise<SignedEvent>;
 
+export const AUTH_EVENT_KIND = 24242;
+
 export type BlobDescriptor = {
-  created: number;
+  /** @deprecated use updated instead */
+  created?: number;
+  updated: number;
   type?: string;
   sha256: string;
   size: number;
@@ -61,7 +65,7 @@ export class BlossomClient {
   static async getGetAuth(signer: Signer, message = "Get Blobs", expiration = oneHour()) {
     return await signer({
       created_at: now(),
-      kind: 24242,
+      kind: AUTH_EVENT_KIND,
       content: message,
       tags: [
         ["t", "get"],
@@ -72,7 +76,7 @@ export class BlossomClient {
   static async getUploadAuth(file: File, signer: Signer, message = "Upload Blob", expiration = oneHour()) {
     return await signer({
       created_at: now(),
-      kind: 24242,
+      kind: AUTH_EVENT_KIND,
       content: message,
       tags: [
         ["t", "upload"],
@@ -85,7 +89,7 @@ export class BlossomClient {
   static async getDeleteAuth(hash: string, signer: Signer, message = "Delete Blob", expiration = oneHour()) {
     return await signer({
       created_at: now(),
-      kind: 24242,
+      kind: AUTH_EVENT_KIND,
       content: message,
       tags: [
         ["t", "delete"],
@@ -97,7 +101,7 @@ export class BlossomClient {
   static async getListAuth(signer: Signer, message = "List Blobs", expiration = oneHour()) {
     return await signer({
       created_at: now(),
-      kind: 24242,
+      kind: AUTH_EVENT_KIND,
       content: message,
       tags: [
         ["t", "list"],
