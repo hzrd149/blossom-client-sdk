@@ -20,9 +20,9 @@ export type Signer = (draft: EventTemplate) => Promise<SignedEvent>;
 export const AUTH_EVENT_KIND = 24242;
 
 export type BlobDescriptor = {
-  /** @deprecated use updated instead */
+  /** @deprecated use uploaded instead */
   created?: number;
-  updated: number;
+  uploaded: number;
   type?: string;
   sha256: string;
   size: number;

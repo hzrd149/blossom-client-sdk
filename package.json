@@ -1,6 +1,6 @@
 {
   "name": "blossom-client-sdk",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "A simple client for manage blobs on blossom servers",
   "type": "module",
   "main": "./lib/index.js",
