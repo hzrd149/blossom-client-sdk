@@ -53,6 +53,24 @@ const blobs = await client.listBlobs(pubkey, undefined, true);
 // passing true as the last argument will make it send an auth event with the list request
 ```
 
+## Using with NDK
+
+The `BlossomClient` class and methods optionally take a `signer` method that is used to sign the upload auth events
+
+If your using NDK in your app you can use this method
+
+```ts
+const signer = async (draft: EventTemplate) => {
+  // add the pubkey to the draft event
+  const event: UnsignedEvent = { ...draft, pubkey: user.pubkey };
+  // get the signature
+  const sig = await ndk.signer!.sign(event);
+
+  // return the event + id + sig
+  return { ...event, sig, id: getEventHash(event) };
+};
+```
+
 ## Examples
 
 ### List all blobs on a server
