@@ -4,10 +4,12 @@ A client for manage blobs on blossom servers
 
 [Documentation](https://hzrd149.github.io/blossom-client-sdk/classes/BlossomClient)
 
-## Using the static methods
+## Using the client
+
+### Using the static methods
 
 ```js
-import { BlossomClient } from "blossom-client-sdk";
+import { BlossomClient } from "blossom-client-sdk/client";
 
 async function signer(event) {
   return await window.nostr.signEvent(event);
@@ -35,7 +37,7 @@ if (res.ok) {
 }
 ```
 
-## Using the class
+### Using the class
 
 The `BlossomClient` class can be used to talk to a single server
 
@@ -53,7 +55,7 @@ const blobs = await client.listBlobs(pubkey, undefined, true);
 // passing true as the last argument will make it send an auth event with the list request
 ```
 
-## Using with NDK
+### Using with NDK
 
 The `BlossomClient` class and methods optionally take a `signer` method that is used to sign the upload auth events
 
@@ -71,7 +73,68 @@ const signer = async (draft: EventTemplate) => {
 };
 ```
 
-## Examples
+## Helper Methods
+
+### Getting the hash from a URL
+
+The `getHashFromURL` method will return the last SHA256 hash it finds in a URL
+
+```js
+import { getHashFromURL } from "blossom-client-sdk";
+
+// blossom compatible URLs
+console.log(
+  getHashFromURL("https://cdn.example.com/b1674191a88ec5cdd733e4240a81803105dc412d6c6708d53ab94fc248f4f553.pdf"),
+);
+// -> b1674191a88ec5cdd733e4240a81803105dc412d6c6708d53ab94fc248f4f553
+
+// non-blossom URLs
+console.log(
+  getHashFromURL(
+    "https://cdn.example.com/266815e0c9210dfa324c6cba3573b14bee49da4209a9456f9484e5106cd408a5/media/b1674191a88ec5cdd733e4240a81803105dc412d6c6708d53ab94fc248f4f553.pdf",
+  ),
+);
+// -> b1674191a88ec5cdd733e4240a81803105dc412d6c6708d53ab94fc248f4f553
+
+// returns null when no hash is found
+console.log(getHashFromURL("https://example.com/index.html"));
+// -> null
+```
+
+### Handling broken images
+
+This package also exports a few helper methods for handling broken images
+
+The `handleImageFallbacks(image, getServers)` method listen for an `error` event on an `<img/>` element and if the element has a `data-pubkey` attribute. it will call `getServers` to ask for a list of blossom servers for the pubkey
+
+```js
+import { handleImageFallbacks, USER_BLOSSOM_SERVER_LIST_KIND, getServersFromServerListEvent } from "blossom-client-sdk";
+
+const image = new Image();
+image.src = "https://cdn.censorship.com/72cb99b689b4cfe1a9fb6937f779f3f9c65094bf0e6ac72a8f8261efa96653f5.png";
+
+// set the pubkey from the kind 1 event this image was found it
+image.dataset.pubkey = event.pubkey;
+
+// this is called when
+async function getServers(pubkey) {
+  if (pubkey) {
+    // use NDK to find the users blossom server list event (k:10063)
+    const event = await ndk.fetchEvent({ kinds: [USER_BLOSSOM_SERVER_LIST_KIND], authors: [pubkey] });
+
+    // if its found return a list of blossom servers
+    if (event) return getServersFromServerListEvent(event);
+  }
+  return undefined;
+}
+
+// listen for "error" events
+handleImageFallbacks(image, getServers);
+
+document.body.appendChild(image);
+```
+
+## Other Examples
 
 ### List all blobs on a server
 
