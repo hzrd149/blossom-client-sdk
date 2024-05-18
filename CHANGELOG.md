@@ -1,5 +1,11 @@
 # blossom-client-sdk
 
+## 0.8.0
+
+### Minor Changes
+
+- Add `handleBrokenImages` method for repairing any broken images in an app
+
 ## 0.7.0
 
 ### Minor Changes
