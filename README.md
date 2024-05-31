@@ -194,3 +194,28 @@ for (let server of servers) {
   await BlossomClient.uploadBlob(server, file, auth);
 }
 ```
+
+### Upload and Mirror
+
+```js
+import { BlossomClient } from "blossom-client-sdk";
+
+async function signer(event) {
+  return await window.nostr.signEvent(event);
+}
+
+const mainServer = "https://cdn.server-a.com";
+const mirrorServers = ["https://cdn.example.com", "https://cdn.other.com"];
+const file = new File(["testing"], "test.txt");
+
+const auth = await BlossomClient.getUploadAuth(file, signer, "Upload test.txt");
+
+// first upload blob to main server
+const blob = await BlossomClient.uploadBlob(mainServer, file, auth);
+
+// then tell mirror servers to download it
+for (let server of mirrorServers) {
+  // reuse the same auth for mirroring
+  await BlossomClient.mirrorBlob(server, blob.url, auth);
+}
+```
