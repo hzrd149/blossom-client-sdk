@@ -83,15 +83,17 @@ export class BlossomClient {
     return bytesToHex(hash);
   }
 
-  static async getGetAuth(signer: Signer, message = "Get Blobs", expiration = oneHour()) {
+  static async getGetAuth(signer: Signer, message: string, serverOrHash: string, expiration = oneHour()) {
+    let scopeTag: string[];
+    if (serverOrHash.match(/^[0-9a-f]{64}$/)) {
+      scopeTag = ["x", serverOrHash];
+    } else scopeTag = ["server", new URL("/", serverOrHash).toString()];
+
     return await signer({
       created_at: now(),
       kind: AUTH_EVENT_KIND,
       content: message,
-      tags: [
-        ["t", "get"],
-        ["expiration", String(expiration)],
-      ],
+      tags: [["t", "get"], ["expiration", String(expiration)], scopeTag],
     });
   }
   static async getUploadAuth(file: UploadType, signer: Signer, message = "Upload Blob", expiration = oneHour()) {
@@ -136,9 +138,9 @@ export class BlossomClient {
     });
   }
 
-  async getGetAuth(message?: string, expiration?: number) {
+  async getGetAuth(message: string, serverOrHash: string, expiration?: number) {
     if (!this.signer) throw new Error("Missing signer");
-    return await BlossomClient.getGetAuth(this.signer, message, expiration);
+    return await BlossomClient.getGetAuth(this.signer, message, serverOrHash, expiration);
   }
   async getUploadAuth(file: UploadType, message?: string, expiration?: number) {
     if (!this.signer) throw new Error("Missing signer");
@@ -165,7 +167,7 @@ export class BlossomClient {
     return await res.blob();
   }
   async getBlob(hash: string, auth: SignedEvent | boolean = false) {
-    if (typeof auth === "boolean" && auth) auth = await this.getGetAuth();
+    if (typeof auth === "boolean" && auth) auth = await this.getGetAuth("Get Blob", hash);
     return BlossomClient.getBlob(this.server, hash, auth ? auth : undefined);
   }
 
