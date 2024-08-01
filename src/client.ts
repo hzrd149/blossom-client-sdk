@@ -1,6 +1,5 @@
 import fetch from "cross-fetch";
 import { bytesToHex } from "@noble/hashes/utils";
-import { readFileAsArrayBuffer as readBlobAsArrayBuffer } from "./helpers.js";
 
 const now = () => Math.floor(new Date().valueOf() / 1000);
 const oneHour = () => now() + 60 * 60;
@@ -57,7 +56,7 @@ export class HTTPError extends Error {
 }
 
 type ServerType = string | URL;
-type UploadType = Blob | File;
+type UploadType = Blob | File | Buffer;
 
 export class BlossomClient {
   server: URL;
@@ -69,7 +68,13 @@ export class BlossomClient {
   }
 
   static async getFileSha256(file: UploadType) {
-    const buffer = file instanceof File ? await file.arrayBuffer() : await readBlobAsArrayBuffer(file);
+    let buffer: ArrayBuffer;
+    if (file instanceof File || file instanceof Blob) {
+      buffer = await file.arrayBuffer();
+    } else {
+      // nodejs Buffer
+      buffer = file.buffer;
+    }
 
     let hash: Uint8Array;
     if (crypto.subtle) {
@@ -215,7 +220,7 @@ export class BlossomClient {
     if (!this.signer) throw new Error("Missing signer");
     return await BlossomClient.getUploadAuth(file, this.signer, message, expiration);
   }
-  async uploadBlob(file: File, auth: SignedEvent | boolean = true) {
+  async uploadBlob(file: UploadType, auth: SignedEvent | boolean = true) {
     if (typeof auth === "boolean" && auth) auth = await this.getUploadAuth(file);
     return BlossomClient.uploadBlob(this.server, file, auth ? auth : undefined);
   }

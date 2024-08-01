@@ -1,5 +1,11 @@
 # blossom-client-sdk
 
+## 0.9.1
+
+### Patch Changes
+
+- Add support for nodejs Buffer type
+
 ## 0.9.0
 
 ### Minor Changes
