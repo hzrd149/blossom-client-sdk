@@ -54,8 +54,8 @@ export class HTTPError extends Error {
   }
 }
 
-type ServerType = string | URL;
-type UploadType = Blob | File | Buffer;
+export type ServerType = string | URL;
+export type UploadType = Blob | File | Buffer;
 
 export class BlossomClient {
   server: URL;

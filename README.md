@@ -195,7 +195,56 @@ for (let server of servers) {
 }
 ```
 
-### Upload and Mirror
+### Uploading and mirroring to multiple servers
+
+The `multiServerUpload` method can be used to upload a single blob to multiple servers
+
+Example of uploading to each server one at time
+
+```ts
+import { multiServerUpload } from "blossom-server-sdk";
+
+async function signer(event: any) {
+  // @ts-expect-error
+  return await window.nostr.signEvent(event);
+}
+
+const servers = ["https://cdn.server-a.com", "https://cdn.example.com", "https://cdn.other.com"];
+const file = new File(["testing"], "test.txt");
+
+// create async generator for upload
+const upload = multiServerUpload(servers, file, signer);
+
+let successful = 0;
+
+while (true) {
+  let result: Awaited<ReturnType<typeof upload.next>> | undefined = undefined;
+
+  // attempt to upload
+  try {
+    result = await upload.next();
+    successful++;
+  } catch (error) {
+    if (error instanceof Error) console.log(`Failed to upload ${error.message}`);
+  }
+
+  if (result) {
+    // if upload was successful log progress
+    if (!result.done) {
+      console.log(`Uploaded to ${result.value.server} ${result.value.progress * 100}%`);
+    } else if (result.done && result.value) {
+      console.log(`Successfully uploaded ${result.value.sha256} to ${servers} servers`);
+
+      // exit while loop (important)
+      break;
+    } else {
+      throw Error("Failed to upload blob to any servers");
+    }
+  }
+}
+```
+
+### Upload and Mirror manually
 
 ```js
 import { BlossomClient } from "blossom-client-sdk";
