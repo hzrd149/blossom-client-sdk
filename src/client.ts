@@ -1,4 +1,3 @@
-import fetch from "cross-fetch";
 import { bytesToHex } from "@noble/hashes/utils";
 
 const now = () => Math.floor(new Date().valueOf() / 1000);
