@@ -1,5 +1,15 @@
 # blossom-client-sdk
 
+## 1.0.0
+
+### Major Changes
+
+- 8350d95: Remove dependency on cross-fetch and require NodeJS >= 18 for native `fetch` API
+
+### Minor Changes
+
+- 383a13b: Add `multiServerUpload` method
+
 ## 0.9.1
 
 ### Patch Changes
