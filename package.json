@@ -1,6 +1,6 @@
 {
   "name": "blossom-client-sdk",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A simple client for manage blobs on blossom servers",
   "type": "module",
   "main": "./lib/index.js",
@@ -36,6 +36,10 @@
     "./nostr": {
       "import": "./lib/nostr.js",
       "types": "./lib/nostr.d.ts"
+    },
+    "./upload": {
+      "import": "./lib/upload.js",
+      "types": "./lib/upload.d.ts"
     }
   },
   "engines": {
