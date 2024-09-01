@@ -1,5 +1,15 @@
 # blossom-client-sdk
 
+## 1.1.0
+
+### Minor Changes
+
+- Add support for multiple hashes when creating auth events
+
+### Patch Changes
+
+- Allow auth to be passed into multiServerUpload
+
 ## 1.0.1
 
 ### Patch Changes

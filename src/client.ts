@@ -91,19 +91,34 @@ export class BlossomClient {
     return "Nostr " + btoa(JSON.stringify(event));
   }
 
-  // static get blob
-  static async getGetAuth(signer: Signer, message: string, serverOrHash: string, expiration = oneHour()) {
-    let scopeTag: string[];
-    if (serverOrHash.match(/^[0-9a-f]{64}$/)) {
-      scopeTag = ["x", serverOrHash];
-    } else scopeTag = ["server", new URL("/", serverOrHash).toString()];
-
-    return await signer({
+  /**
+   * Creates a get auth event
+   * @param signer the signer to use for signing the event
+   * @param message A human readable explanation of what the auth token will be used for
+   * @param serverOrHash A server URL or one or many blob hashes
+   * @param expiration The expiration time in seconds
+   * @returns {Promise<SignedEvent>}
+   */
+  static async getGetAuth(signer: Signer, message: string, serverOrHash: string | string[], expiration = oneHour()) {
+    const draft: EventTemplate = {
       created_at: now(),
       kind: AUTH_EVENT_KIND,
       content: message,
-      tags: [["t", "get"], ["expiration", String(expiration)], scopeTag],
-    });
+      tags: [
+        ["t", "get"],
+        ["expiration", String(expiration)],
+      ],
+    };
+
+    if (Array.isArray(serverOrHash)) {
+      for (const sha256 of serverOrHash) draft.tags.push(["x", sha256]);
+    } else if (serverOrHash.match(/^[0-9a-f]{64}$/)) {
+      draft.tags.push(["x", serverOrHash]);
+    } else {
+      draft.tags.push(["server", new URL("/", serverOrHash).toString()]);
+    }
+
+    return await signer(draft);
   }
   static async getBlob(server: ServerType, hash: string, auth?: SignedEvent) {
     const res = await fetch(new URL(hash, server), {
@@ -113,20 +128,38 @@ export class BlossomClient {
     return await res.blob();
   }
 
-  // static upload blob
-  static async createUploadAuth(sha256: string, signer: Signer, message = "Upload Blob", expiration = oneHour()) {
-    const tags: string[][] = [];
-    tags.push(["t", "upload"]);
-    tags.push(["x", sha256]);
-    tags.push(["expiration", String(expiration)]);
-
-    return await signer({
-      created_at: now(),
+  /**
+   * Creates an upload auth event
+   * @param sha256 one or an array of sha256 hashes
+   * @param signer the signer to use for signing the event
+   * @param message A human readable explanation of what the auth token will be used for
+   * @param expiration The expiration time in seconds
+   * @returns {Promise<SignedEvent>}
+   */
+  static async createUploadAuth(
+    sha256: string | string[],
+    signer: Signer,
+    message = "Upload Blob",
+    expiration = oneHour(),
+  ) {
+    const draft: EventTemplate = {
       kind: AUTH_EVENT_KIND,
       content: message,
-      tags,
-    });
+      created_at: now(),
+      tags: [
+        ["t", "upload"],
+        ["expiration", String(expiration)],
+      ],
+    };
+
+    if (Array.isArray(sha256)) {
+      for (const hash of sha256) draft.tags.push(["x", hash]);
+    } else draft.tags.push(["x", sha256]);
+
+    return await signer(draft);
   }
+
+  /** Creates a one-off upload auth event for a file */
   static async getUploadAuth(file: UploadType, signer: Signer, message = "Upload Blob", expiration = oneHour()) {
     const sha256 = await BlossomClient.getFileSha256(file);
     return await BlossomClient.createUploadAuth(sha256, signer, message, expiration);
@@ -183,17 +216,22 @@ export class BlossomClient {
   }
 
   // static delete blob
-  static async getDeleteAuth(hash: string, signer: Signer, message = "Delete Blob", expiration = oneHour()) {
-    return await signer({
+  static async getDeleteAuth(hash: string | string[], signer: Signer, message = "Delete Blob", expiration = oneHour()) {
+    const draft: EventTemplate = {
       created_at: now(),
       kind: AUTH_EVENT_KIND,
       content: message,
       tags: [
         ["t", "delete"],
-        ["x", hash],
         ["expiration", String(expiration)],
       ],
-    });
+    };
+
+    if (Array.isArray(hash)) {
+      for (const x of hash) draft.tags.push(["x", x]);
+    } else draft.tags.push(["x", hash]);
+
+    return await signer(draft);
   }
   static async deleteBlob(server: ServerType, hash: string, auth?: SignedEvent) {
     const res = await fetch(new URL("/" + hash, server), {

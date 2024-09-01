@@ -1,4 +1,4 @@
-import { BlobDescriptor, BlossomClient, ServerType, Signer, UploadType } from "./client.js";
+import { BlobDescriptor, BlossomClient, ServerType, SignedEvent, Signer, UploadType } from "./client.js";
 
 /**
  * Creates an AsyncGenerator that can be used to upload a blob to multiple servers
@@ -7,8 +7,13 @@ import { BlobDescriptor, BlossomClient, ServerType, Signer, UploadType } from ".
  * @param signer An async function used for signing nostr events
  * @returns The BlobDescriptor if successful
  */
-export async function* multiServerUpload(servers: Iterable<ServerType>, file: UploadType, signer: Signer) {
-  const auth = await BlossomClient.getUploadAuth(file, signer);
+export async function* multiServerUpload(
+  servers: Iterable<ServerType>,
+  file: UploadType,
+  signer: Signer,
+  auth?: SignedEvent,
+) {
+  auth = auth || (await BlossomClient.getUploadAuth(file, signer));
 
   let blob: BlobDescriptor | undefined = undefined;
   let total = Array.from(servers).length;
