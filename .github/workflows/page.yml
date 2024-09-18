@@ -28,23 +28,28 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout Repo
         uses: actions/checkout@v4
-      - name: Set up Node
+
+      - uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: "npm"
-      - name: Install dependencies
-        run: yarn install
+          cache: "pnpm"
+
       - name: Build
-        run: yarn typedoc src/index.ts
+        run: pnpm typedoc src/index.ts
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: "./docs"
+
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
