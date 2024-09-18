@@ -41,7 +41,7 @@ jobs:
           cache: "pnpm"
 
       - name: Build
-        run: pnpm typedoc src/index.ts
+        run: pnpm run docs
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
