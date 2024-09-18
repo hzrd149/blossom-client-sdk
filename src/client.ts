@@ -72,7 +72,7 @@ export class BlossomClient {
       buffer = await file.arrayBuffer();
     } else {
       // nodejs Buffer
-      buffer = file.buffer;
+      buffer = file;
     }
 
     let hash: Uint8Array;
