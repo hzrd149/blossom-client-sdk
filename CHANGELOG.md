@@ -1,5 +1,11 @@
 # blossom-client-sdk
 
+## 1.1.1
+
+### Patch Changes
+
+- df84c52: Fix incorrect file hashes in nodejs
+
 ## 1.1.0
 
 ### Minor Changes
