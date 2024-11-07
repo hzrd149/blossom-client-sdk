@@ -14,7 +14,7 @@ export default class HTTPError extends Error {
   static async handleErrorResponse(res: Response) {
     if (!res.ok) {
       try {
-        throw new HTTPError(res, res.headers.get("x-reason") || (await res.json()));
+        throw new HTTPError(res, res.headers.get("x-reason") || "Something went wrong");
       } catch (e) {
         throw e;
       }
