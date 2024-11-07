@@ -37,15 +37,24 @@
       "import": "./lib/nostr.js",
       "types": "./lib/nostr.d.ts"
     },
-    "./upload": {
-      "import": "./lib/upload.js",
-      "types": "./lib/upload.d.ts"
+    "./auth": {
+      "import": "./lib/auth.js",
+      "types": "./lib/auth.d.ts"
+    },
+    "./actions": {
+      "import": "./lib/actions.js",
+      "types": "./lib/actions.d.ts"
+    },
+    "./actions/*": {
+      "import": "./lib/actions/*.js",
+      "types": "./lib/actions/*.d.ts"
     }
   },
   "engines": {
     "node": ">=18"
   },
   "dependencies": {
+    "@cashu/cashu-ts": "2.0.0-rc1",
     "@noble/hashes": "^1.4.0"
   },
   "devDependencies": {
