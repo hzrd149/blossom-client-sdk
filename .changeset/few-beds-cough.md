@@ -2,4 +2,4 @@
 "blossom-client-sdk": major
 ---
 
-Rename BlossomClient.getMirrorAuth to BlossomClient.createMirrorAuth
+Renamed `BlossomClient.getMirrorAuth` to `BlossomClient.createMirrorAuth`

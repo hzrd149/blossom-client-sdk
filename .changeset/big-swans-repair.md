@@ -2,4 +2,4 @@
 "blossom-client-sdk": major
 ---
 
-Rename BlossomClient.getBlob to BlossomClient.downloadBlob
+Renamed `BlossomClient.getBlob` to `BlossomClient.downloadBlob`

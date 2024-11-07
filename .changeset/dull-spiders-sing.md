@@ -2,4 +2,4 @@
 "blossom-client-sdk": minor
 ---
 
-Add support for X-Reason header on failed requests
+Added support for `X-Reason` header on failed requests

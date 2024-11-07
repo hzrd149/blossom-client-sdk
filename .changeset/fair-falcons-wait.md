@@ -2,4 +2,4 @@
 "blossom-client-sdk": major
 ---
 
-Removed `created` from BlobDescriptor
+Removed `created` from `BlobDescriptor`

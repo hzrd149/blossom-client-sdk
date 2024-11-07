@@ -2,4 +2,4 @@
 "blossom-client-sdk": major
 ---
 
-Removed BlossomClient.getUploadAuth
+Renamed `BlossomClient.getUploadAuth` to `BlossomClient.createUploadAuth`

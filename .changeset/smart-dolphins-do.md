@@ -1,5 +1,5 @@
 ---
-"blossom-client-sdk": minor
+"blossom-client-sdk": major
 ---
 
-Add support for cashu payments
+Added `BlossomClient.payment` for handling payments

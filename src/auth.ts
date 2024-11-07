@@ -39,8 +39,8 @@ export async function doseAuthMatchUpload(auth: SignedEvent, server: ServerType,
  */
 export async function createDownloadAuth(
   signer: Signer,
-  message: string,
   serverOrHash: string | string[],
+  message: string,
   expiration = oneHour(),
 ) {
   const draft: EventTemplate = {
@@ -66,15 +66,15 @@ export async function createDownloadAuth(
 
 /**
  * Creates an upload auth event
- * @param sha256 one or an array of sha256 hashes
+ * @param blobsOrHashes one or an array of sha256 hashes
  * @param signer the signer to use for signing the event
  * @param message A human readable explanation of what the auth token will be used for
  * @param expiration The expiration time in seconds
  * @returns {Promise<SignedEvent>}
  */
 export async function createUploadAuth(
-  sha256: string | string[],
   signer: Signer,
+  blobsOrHashes: string | string[] | UploadType | UploadType[],
   message = "Upload Blob",
   expiration = oneHour(),
 ) {
@@ -88,9 +88,13 @@ export async function createUploadAuth(
     ],
   };
 
-  if (Array.isArray(sha256)) {
-    for (const hash of sha256) draft.tags.push(["x", hash]);
-  } else draft.tags.push(["x", sha256]);
+  const getHash = (blob: string | UploadType) => (typeof blob === "string" ? blob : getBlobSha256(blob));
+
+  if (Array.isArray(blobsOrHashes)) {
+    for (const blob of blobsOrHashes) draft.tags.push(["x", await getHash(blob)]);
+  } else {
+    draft.tags.push(["x", await getHash(blobsOrHashes)]);
+  }
 
   return await signer(draft);
 }
@@ -108,8 +112,8 @@ export async function createListAuth(signer: Signer, message = "List Blobs", exp
 }
 
 export async function createDeleteAuth(
-  hash: string | string[],
   signer: Signer,
+  hash: string | string[],
   message = "Delete Blob",
   expiration = oneHour(),
 ) {

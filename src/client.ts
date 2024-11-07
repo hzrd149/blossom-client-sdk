@@ -48,7 +48,7 @@ export class BlossomClient {
   // download blob
   async createDownloadAuth(message: string, hash: string, expiration?: number) {
     if (!this.signer) throw new Error("Missing signer");
-    return await createDownloadAuth(this.signer, message, hash, expiration);
+    return await createDownloadAuth(this.signer, hash, message, expiration);
   }
   async downloadBlob(
     hash: string,
@@ -76,7 +76,7 @@ export class BlossomClient {
   async createUploadAuth(blob: UploadType, message?: string, expiration?: number) {
     if (!this.signer) throw new Error("Missing signer");
     const hash = await getBlobSha256(blob);
-    return await createUploadAuth(hash, this.signer, message, expiration);
+    return await createUploadAuth(this.signer, hash, message, expiration);
   }
   async uploadBlob<B extends UploadType>(
     blob: B,
@@ -102,7 +102,7 @@ export class BlossomClient {
   // mirror blob
   async createMirrorAuth(blob: string | BlobDescriptor, message?: string, expiration?: number) {
     if (!this.signer) throw new Error("Missing signer");
-    return await createUploadAuth(typeof blob === "string" ? blob : blob.sha256, this.signer, message, expiration);
+    return await createUploadAuth(this.signer, typeof blob === "string" ? blob : blob.sha256, message, expiration);
   }
   async mirrorBlob(
     blob: BlobDescriptor,
@@ -163,7 +163,7 @@ export class BlossomClient {
   // delete blob
   async createDeleteAuth(hash: string, message?: string, expiration?: number) {
     if (!this.signer) throw new Error("Missing signer");
-    return await createDeleteAuth(hash, this.signer, message, expiration);
+    return await createDeleteAuth(this.signer, hash, message, expiration);
   }
   async deleteBlob(
     hash: string,
