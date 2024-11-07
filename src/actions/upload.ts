@@ -1,7 +1,6 @@
 import { type Token } from "@cashu/cashu-ts";
 
 import { ServerType, UploadType } from "../client.js";
-import { fetchWithHandlers } from "../fetch.js";
 import { BlobDescriptor, PaymentRequest, SignedEvent } from "../types.js";
 import { getBlobSha256, getBlobSize, getBlobType, getPaymentRequestFromHeaders } from "../helpers.js";
 import HTTPError from "../error.js";
@@ -26,60 +25,72 @@ export async function uploadBlob<S extends ServerType, B extends UploadType>(
 
   const headers: Record<string, string> = {
     "X-SHA-256": hash,
+  };
+
+  // build check headers
+  const checkHeaders: Record<string, string> = {
+    ...headers,
     "X-Content-Length": String(getBlobSize(blob)),
   };
   const type = getBlobType(blob);
-  if (type) headers["X-Content-Type"] = type;
+  if (type) checkHeaders["X-Content-Type"] = type;
 
   // check upload with HEAD /upload
-  const check = await fetchWithHandlers(
-    url,
-    {
-      method: "HEAD",
+  let check = await fetch(url, {
+    method: "HEAD",
+    signal: opts?.signal,
+    headers: checkHeaders,
+  });
+
+  let upload: Response | undefined = undefined;
+
+  switch (check.status) {
+    case 402: {
+      if (!opts?.onPayment) throw new Error("Missing payment handler");
+      const { getEncodedToken } = await import("@cashu/cashu-ts");
+      const request = getPaymentRequestFromHeaders(check.headers);
+
+      const token = await opts.onPayment(server, blob, request);
+      const payment = getEncodedToken(token);
+
+      // Try upload with payment
+      upload = await fetch(url, {
+        signal: opts?.signal,
+        method: "PUT",
+        body: blob,
+        headers: { ...headers, "X-Cashu": payment },
+      });
+      break;
+    }
+
+    case 403: {
+      const auth = opts?.auth || (await opts?.onAuth?.(server, blob));
+      if (!auth) throw new Error("Missing auth handler");
+
+      // Try upload with auth
+      upload = await fetch(url, {
+        signal: opts?.signal,
+        method: "PUT",
+        body: blob,
+        headers: { ...headers, Authorization: encodeAuthorizationHeader(auth) },
+      });
+      break;
+    }
+  }
+
+  if (check.status >= 500) throw new Error("Server error");
+
+  // check passed, upload
+  if (!upload)
+    upload = await fetch(url, {
       signal: opts?.signal,
-      headers,
-    },
-    {
-      402: async (res) => {
-        if (!opts?.onPayment) throw new Error("Missing payment handler");
-        const { getEncodedToken } = await import("@cashu/cashu-ts");
-        const request = getPaymentRequestFromHeaders(res.headers);
-
-        const token = await opts.onPayment(server, blob, request);
-        const payment = getEncodedToken(token);
-
-        // Try upload with payment
-        return fetch(url, {
-          signal: opts?.signal,
-          method: "PUT",
-          body: blob,
-          headers: { "X-Cashu": payment },
-        });
-      },
-      403: async (_res) => {
-        const auth = opts?.auth || (await opts?.onAuth?.(server, blob));
-        if (!auth) throw new Error("Missing auth handler");
-
-        // Try upload with auth
-        return fetch(url, {
-          signal: opts?.signal,
-          method: "PUT",
-          body: blob,
-          headers: { Authorization: encodeAuthorizationHeader(auth) },
-        });
-      },
-    },
-  );
+      method: "PUT",
+      body: blob,
+      headers: { ...headers },
+    });
 
   // handle errors
-  await HTTPError.handleErrorResponse(check);
-
-  // check passed, free upload
-  const upload = await fetch(url, {
-    signal: opts?.signal,
-    method: "PUT",
-    body: blob,
-  });
+  await HTTPError.handleErrorResponse(upload);
 
   // check upload errors
   await HTTPError.handleErrorResponse(upload);
@@ -89,6 +100,7 @@ export async function uploadBlob<S extends ServerType, B extends UploadType>(
 }
 
 export type MultiServerUploadOptions<S extends ServerType, B extends UploadType> = UploadOptions<S, B> & {
+  onStart?: (server: S, blob: B) => void;
   onUpload?: (server: S, blob: B) => void;
   onError?: (server: S, blob: B, error: Error) => void;
 };
@@ -135,6 +147,8 @@ export async function multiServerUpload<S extends ServerType, B extends UploadTy
   for (const server of servers) {
     try {
       let metadata: BlobDescriptor | undefined = undefined;
+
+      opts?.onStart?.(server, blob);
 
       // attempt to mirror the blob
       if (initialUpload) {

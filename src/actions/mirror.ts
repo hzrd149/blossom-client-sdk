@@ -1,7 +1,6 @@
 import { type Token } from "@cashu/cashu-ts";
 import { ServerType } from "../client.js";
 import { BlobDescriptor, SignedEvent, PaymentRequest } from "../types.js";
-import { fetchWithHandlers } from "../fetch.js";
 import HTTPError from "../error.js";
 import { encodeAuthorizationHeader } from "../auth.js";
 import { getPaymentRequestFromHeaders } from "../helpers.js";
@@ -28,45 +27,45 @@ export async function mirrorBlob<S extends ServerType>(
   if (blob.type) headers["X-Content-Type"] = blob.type;
 
   const body = JSON.stringify({ url: blob.url });
-  const mirror = await fetchWithHandlers(
-    url,
-    {
-      method: "PUT",
-      signal: opts?.signal,
-      headers,
-      body,
-    },
-    {
-      402: async (res) => {
-        if (!opts?.onPayment) throw new Error("Missing payment handler");
-        const { getEncodedToken } = await import("@cashu/cashu-ts");
-        const request = getPaymentRequestFromHeaders(res.headers);
+  let mirror = await fetch(url, {
+    method: "PUT",
+    signal: opts?.signal,
+    headers,
+    body,
+  });
 
-        const token = await opts.onPayment(server, blob, request);
-        const payment = getEncodedToken(token);
+  switch (mirror.status) {
+    case 402: {
+      if (!opts?.onPayment) throw new Error("Missing payment handler");
+      const { getEncodedToken } = await import("@cashu/cashu-ts");
+      const request = getPaymentRequestFromHeaders(mirror.headers);
 
-        // Try mirror with payment
-        return fetch(url, {
-          signal: opts?.signal,
-          method: "PUT",
-          body,
-          headers: { "X-Cashu": payment },
-        });
-      },
-      403: async (_res) => {
-        const auth = opts?.auth || (await opts?.onAuth?.(server, blob));
-        if (!auth) throw new Error("Missing auth handler");
+      const token = await opts.onPayment(server, blob, request);
+      const payment = getEncodedToken(token);
 
-        // Try mirror with auth
-        return fetch(url, {
-          signal: opts?.signal,
-          method: "PUT",
-          body,
-          headers: { Authorization: encodeAuthorizationHeader(auth) },
-        });
-      },
-    },
-  );
+      // Try mirror with payment
+      mirror = await fetch(url, {
+        signal: opts?.signal,
+        method: "PUT",
+        body,
+        headers: { "X-Cashu": payment },
+      });
+      break;
+    }
+    case 403: {
+      const auth = opts?.auth || (await opts?.onAuth?.(server, blob));
+      if (!auth) throw new Error("Missing auth handler");
+
+      // Try mirror with auth
+      mirror = await fetch(url, {
+        signal: opts?.signal,
+        method: "PUT",
+        body,
+        headers: { Authorization: encodeAuthorizationHeader(auth) },
+      });
+      break;
+    }
+  }
 
   // handle errors
   await HTTPError.handleErrorResponse(mirror);

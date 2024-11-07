@@ -2,7 +2,6 @@ import { type Token } from "@cashu/cashu-ts";
 
 import { ServerType } from "../client.js";
 import { PaymentRequest, SignedEvent } from "../types.js";
-import { fetchWithHandlers } from "../fetch.js";
 import HTTPError from "../error.js";
 import { encodeAuthorizationHeader } from "../auth.js";
 import { getPaymentRequestFromHeaders } from "../helpers.js";
@@ -18,38 +17,40 @@ export type DeleteOptions<S extends ServerType> = {
 export async function deleteBlob<S extends ServerType>(server: S, hash: string, opts?: DeleteOptions<S>) {
   const url = new URL("/" + hash, server);
 
-  const res = await fetchWithHandlers(
-    url,
-    { signal: opts?.signal, method: "DELETE" },
-    {
-      402: async (res) => {
-        if (!opts?.onPayment) throw new Error("Missing payment handler");
-        const { getEncodedToken } = await import("@cashu/cashu-ts");
-        const request = getPaymentRequestFromHeaders(res.headers);
+  let res = await fetch(url, { signal: opts?.signal, method: "DELETE" });
 
-        const token = await opts.onPayment(server, hash, request);
-        const payment = getEncodedToken(token);
+  // handle auth and payment
+  switch (res.status) {
+    case 402: {
+      if (!opts?.onPayment) throw new Error("Missing payment handler");
+      const { getEncodedToken } = await import("@cashu/cashu-ts");
+      const request = getPaymentRequestFromHeaders(res.headers);
 
-        // Try delete with payment
-        return fetch(url, {
-          signal: opts?.signal,
-          method: "DELETE",
-          headers: { "X-Cashu": payment },
-        });
-      },
-      403: async (_res) => {
-        const auth = opts?.auth || (await opts?.onAuth?.(server, hash));
-        if (!auth) throw new Error("Missing auth handler");
+      const token = await opts.onPayment(server, hash, request);
+      const payment = getEncodedToken(token);
 
-        // Try delete with auth
-        return fetch(url, {
-          signal: opts?.signal,
-          method: "DELETE",
-          headers: { Authorization: encodeAuthorizationHeader(auth) },
-        });
-      },
-    },
-  );
+      // Try delete with payment
+      res = await fetch(url, {
+        signal: opts?.signal,
+        method: "DELETE",
+        headers: { "X-Cashu": payment },
+      });
+      break;
+    }
+
+    case 403: {
+      const auth = opts?.auth || (await opts?.onAuth?.(server, hash));
+      if (!auth) throw new Error("Missing auth handler");
+
+      // Try delete with auth
+      res = await fetch(url, {
+        signal: opts?.signal,
+        method: "DELETE",
+        headers: { Authorization: encodeAuthorizationHeader(auth) },
+      });
+      break;
+    }
+  }
 
   // handle errors
   await HTTPError.handleErrorResponse(res);

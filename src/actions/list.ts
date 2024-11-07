@@ -2,7 +2,6 @@ import { type Token } from "@cashu/cashu-ts";
 
 import { ServerType } from "../client.js";
 import { BlobDescriptor, PaymentRequest, SignedEvent } from "../types.js";
-import { fetchWithHandlers } from "../fetch.js";
 import HTTPError from "../error.js";
 import { encodeAuthorizationHeader } from "../auth.js";
 import { getPaymentRequestFromHeaders } from "../helpers.js";
@@ -26,36 +25,37 @@ export async function listBlobs<S extends ServerType>(
   if (opts?.since) url.searchParams.append("since", String(opts.since));
   if (opts?.until) url.searchParams.append("until", String(opts.until));
 
-  const list = await fetchWithHandlers(
-    url,
-    { signal: opts?.signal },
-    {
-      402: async (res) => {
-        if (!opts?.onPayment) throw new Error("Missing payment handler");
-        const { getEncodedToken } = await import("@cashu/cashu-ts");
-        const request = getPaymentRequestFromHeaders(res.headers);
+  let list = await fetch(url, { signal: opts?.signal });
 
-        const token = await opts.onPayment(server, request);
-        const payment = getEncodedToken(token);
+  // handle auth and payments
+  switch (list.status) {
+    case 402: {
+      if (!opts?.onPayment) throw new Error("Missing payment handler");
+      const { getEncodedToken } = await import("@cashu/cashu-ts");
+      const request = getPaymentRequestFromHeaders(list.headers);
 
-        // Try list with payment
-        return fetch(url, {
-          signal: opts?.signal,
-          headers: { "X-Cashu": payment },
-        });
-      },
-      403: async (_res) => {
-        const auth = opts?.auth || (await opts?.onAuth?.(server));
-        if (!auth) throw new Error("Missing auth handler");
+      const token = await opts.onPayment(server, request);
+      const payment = getEncodedToken(token);
 
-        // Try list with auth
-        return fetch(url, {
-          signal: opts?.signal,
-          headers: { Authorization: encodeAuthorizationHeader(auth) },
-        });
-      },
-    },
-  );
+      // Try list with payment
+      list = await fetch(url, {
+        signal: opts?.signal,
+        headers: { "X-Cashu": payment },
+      });
+      break;
+    }
+    case 403: {
+      const auth = opts?.auth || (await opts?.onAuth?.(server));
+      if (!auth) throw new Error("Missing auth handler");
+
+      // Try list with auth
+      list = await fetch(url, {
+        signal: opts?.signal,
+        headers: { Authorization: encodeAuthorizationHeader(auth) },
+      });
+      break;
+    }
+  }
 
   // handle errors
   await HTTPError.handleErrorResponse(list);

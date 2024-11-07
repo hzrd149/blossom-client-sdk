@@ -1,7 +1,6 @@
 import { type Token } from "@cashu/cashu-ts";
 
 import { ServerType } from "../client.js";
-import { fetchWithHandlers } from "../fetch.js";
 import { PaymentRequest, SignedEvent } from "../types.js";
 import HTTPError from "../error.js";
 import { encodeAuthorizationHeader } from "../auth.js";
@@ -18,36 +17,39 @@ export type DownloadOptions<S extends ServerType> = {
 export async function downloadBlob<S extends ServerType>(server: S, hash: string, opts?: DownloadOptions<S>) {
   const url = new URL("/" + hash, server);
 
-  const download = await fetchWithHandlers(
-    url,
-    { signal: opts?.signal },
-    {
-      402: async (res) => {
-        if (!opts?.onPayment) throw new Error("Missing payment handler");
-        const { getEncodedToken } = await import("@cashu/cashu-ts");
-        const request = getPaymentRequestFromHeaders(res.headers);
+  let download = await fetch(url, { signal: opts?.signal });
 
-        const token = await opts.onPayment(server, hash, request);
-        const payment = getEncodedToken(token);
+  // handle auth and payment
+  switch (download.status) {
+    case 402: {
+      if (!opts?.onPayment) throw new Error("Missing payment handler");
+      const { getEncodedToken } = await import("@cashu/cashu-ts");
+      const request = getPaymentRequestFromHeaders(download.headers);
 
-        // Try download with payment
-        return fetch(url, {
-          signal: opts?.signal,
-          headers: { "X-Cashu": payment },
-        });
-      },
-      403: async (_res) => {
-        const auth = opts?.auth || (await opts?.onAuth?.(server, hash));
-        if (!auth) throw new Error("Missing auth handler");
+      const token = await opts.onPayment(server, hash, request);
+      const payment = getEncodedToken(token);
 
-        // Try download with auth
-        return fetch(url, {
-          signal: opts?.signal,
-          headers: { Authorization: encodeAuthorizationHeader(auth) },
-        });
-      },
-    },
-  );
+      // Try download with payment
+      download = await fetch(url, {
+        signal: opts?.signal,
+        headers: { "X-Cashu": payment },
+      });
+
+      break;
+    }
+    case 403: {
+      const auth = opts?.auth || (await opts?.onAuth?.(server, hash));
+      if (!auth) throw new Error("Missing auth handler");
+
+      // Try download with auth
+      download = await fetch(url, {
+        signal: opts?.signal,
+        headers: { Authorization: encodeAuthorizationHeader(auth) },
+      });
+
+      break;
+    }
+  }
 
   // check download errors
   await HTTPError.handleErrorResponse(download);
