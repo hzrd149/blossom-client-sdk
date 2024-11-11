@@ -37,11 +37,6 @@ export type BlobDescriptor = {
   url: string;
 };
 
-/** A Blob with a precomputed hash */
-export interface HashedBlob extends Blob {
-  hash: string;
-}
-
 export type PaymentRequest = {
   amount: number;
   unit: string;

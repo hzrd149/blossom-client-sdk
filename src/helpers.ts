@@ -13,7 +13,7 @@ export function getHashFromURL(url: string | URL) {
   return null;
 }
 
-export const BlobHashSymbol = Symbol.for("blob-sha256");
+export const BlobHashSymbol = Symbol.for("sha256");
 
 /** gets or calculates the sha2456 of a Blob */
 export function getBlobSha256(blob: UploadType) {
