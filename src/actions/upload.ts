@@ -45,6 +45,19 @@ export async function uploadBlob<S extends ServerType, B extends UploadType>(
   let upload: Response | undefined = undefined;
 
   switch (check.status) {
+    case 401: {
+      const auth = opts?.auth || (await opts?.onAuth?.(server, blob));
+      if (!auth) throw new Error("Missing auth handler");
+
+      // Try upload with auth
+      upload = await fetch(url, {
+        signal: opts?.signal,
+        method: "PUT",
+        body: blob,
+        headers: { ...headers, Authorization: encodeAuthorizationHeader(auth) },
+      });
+      break;
+    }
     case 402: {
       if (!opts?.onPayment) throw new Error("Missing payment handler");
       const { getEncodedToken } = await import("@cashu/cashu-ts");
@@ -59,20 +72,6 @@ export async function uploadBlob<S extends ServerType, B extends UploadType>(
         method: "PUT",
         body: blob,
         headers: { ...headers, "X-Cashu": payment },
-      });
-      break;
-    }
-
-    case 403: {
-      const auth = opts?.auth || (await opts?.onAuth?.(server, blob));
-      if (!auth) throw new Error("Missing auth handler");
-
-      // Try upload with auth
-      upload = await fetch(url, {
-        signal: opts?.signal,
-        method: "PUT",
-        body: blob,
-        headers: { ...headers, Authorization: encodeAuthorizationHeader(auth) },
       });
       break;
     }

@@ -35,6 +35,19 @@ export async function mirrorBlob<S extends ServerType>(
   });
 
   switch (mirror.status) {
+    case 401: {
+      const auth = opts?.auth || (await opts?.onAuth?.(server, blob));
+      if (!auth) throw new Error("Missing auth handler");
+
+      // Try mirror with auth
+      mirror = await fetch(url, {
+        signal: opts?.signal,
+        method: "PUT",
+        body,
+        headers: { Authorization: encodeAuthorizationHeader(auth) },
+      });
+      break;
+    }
     case 402: {
       if (!opts?.onPayment) throw new Error("Missing payment handler");
       const { getEncodedToken } = await import("@cashu/cashu-ts");
@@ -49,19 +62,6 @@ export async function mirrorBlob<S extends ServerType>(
         method: "PUT",
         body,
         headers: { "X-Cashu": payment },
-      });
-      break;
-    }
-    case 403: {
-      const auth = opts?.auth || (await opts?.onAuth?.(server, blob));
-      if (!auth) throw new Error("Missing auth handler");
-
-      // Try mirror with auth
-      mirror = await fetch(url, {
-        signal: opts?.signal,
-        method: "PUT",
-        body,
-        headers: { Authorization: encodeAuthorizationHeader(auth) },
       });
       break;
     }
