@@ -1,5 +1,22 @@
 # blossom-client-sdk
 
+## 2.0.0
+
+### Major Changes
+
+- 89050e5: Renamed `BlossomClient.getBlob` to `BlossomClient.downloadBlob`
+- 89050e5: Removed `created` from `BlobDescriptor`
+- 89050e5: Renamed `BlossomClient.getMirrorAuth` to `BlossomClient.createMirrorAuth`
+- 89050e5: Updated `BlossomClient.mirrorBlob` to take `BlobDescriptor` instead of `hash, url`
+- 89050e5: Renamed `BlossomClient.getListAuth` to `BlossomClient.createListAuth`
+- 89050e5: Moved `multiServerUpload` to `blossom-client-sdk/actions`
+- 89050e5: Renamed `BlossomClient.getUploadAuth` to `BlossomClient.createUploadAuth`
+- 89050e5: Added `BlossomClient.payment` for handling payments
+
+### Minor Changes
+
+- 89050e5: Added support for `X-Reason` header on failed requests
+
 ## 1.1.1
 
 ### Patch Changes
