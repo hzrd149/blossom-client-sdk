@@ -1,5 +1,15 @@
 # blossom-client-sdk
 
+## 2.1.0
+
+### Minor Changes
+
+- 157af49: Handle servers that don't support HEAD /upload
+
+### Patch Changes
+
+- 157af49: Fix download, delete, and list authentication
+
 ## 2.0.0
 
 ### Major Changes
