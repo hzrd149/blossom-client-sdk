@@ -21,6 +21,18 @@ export async function downloadBlob<S extends ServerType>(server: S, hash: string
 
   // handle auth and payment
   switch (download.status) {
+    case 401: {
+      const auth = opts?.auth || (await opts?.onAuth?.(server, hash));
+      if (!auth) throw new Error("Missing auth handler");
+
+      // Try download with auth
+      download = await fetch(url, {
+        signal: opts?.signal,
+        headers: { Authorization: encodeAuthorizationHeader(auth) },
+      });
+
+      break;
+    }
     case 402: {
       if (!opts?.onPayment) throw new Error("Missing payment handler");
       const { getEncodedToken } = await import("@cashu/cashu-ts");
@@ -33,18 +45,6 @@ export async function downloadBlob<S extends ServerType>(server: S, hash: string
       download = await fetch(url, {
         signal: opts?.signal,
         headers: { "X-Cashu": payment },
-      });
-
-      break;
-    }
-    case 403: {
-      const auth = opts?.auth || (await opts?.onAuth?.(server, hash));
-      if (!auth) throw new Error("Missing auth handler");
-
-      // Try download with auth
-      download = await fetch(url, {
-        signal: opts?.signal,
-        headers: { Authorization: encodeAuthorizationHeader(auth) },
       });
 
       break;

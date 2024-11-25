@@ -36,7 +36,7 @@ export async function uploadBlob<S extends ServerType, B extends UploadType>(
   if (type) checkHeaders["X-Content-Type"] = type;
 
   // check upload with HEAD /upload
-  let check = await fetch(url, {
+  let firstTry = await fetch(url, {
     method: "HEAD",
     signal: opts?.signal,
     headers: checkHeaders,
@@ -44,7 +44,12 @@ export async function uploadBlob<S extends ServerType, B extends UploadType>(
 
   let upload: Response | undefined = undefined;
 
-  switch (check.status) {
+  if (firstTry.status === 404) {
+    // BUD-06 HEAD endpoint is not supported. attempt to upload
+    upload = firstTry = await fetch(url, { body: blob, method: "PUT", signal: opts?.signal });
+  }
+
+  switch (firstTry.status) {
     case 401: {
       const auth = opts?.auth || (await opts?.onAuth?.(server, blob));
       if (!auth) throw new Error("Missing auth handler");
@@ -61,7 +66,7 @@ export async function uploadBlob<S extends ServerType, B extends UploadType>(
     case 402: {
       if (!opts?.onPayment) throw new Error("Missing payment handler");
       const { getEncodedToken } = await import("@cashu/cashu-ts");
-      const request = getPaymentRequestFromHeaders(check.headers);
+      const request = getPaymentRequestFromHeaders(firstTry.headers);
 
       const token = await opts.onPayment(server, blob, request);
       const payment = getEncodedToken(token);
@@ -77,7 +82,7 @@ export async function uploadBlob<S extends ServerType, B extends UploadType>(
     }
   }
 
-  if (check.status >= 500) throw new Error("Server error");
+  if (firstTry.status >= 500) throw new Error("Server error");
 
   // check passed, upload
   if (!upload)
@@ -89,9 +94,6 @@ export async function uploadBlob<S extends ServerType, B extends UploadType>(
     });
 
   // handle errors
-  await HTTPError.handleErrorResponse(upload);
-
-  // check upload errors
   await HTTPError.handleErrorResponse(upload);
 
   // return blob descriptor

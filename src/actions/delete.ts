@@ -21,6 +21,18 @@ export async function deleteBlob<S extends ServerType>(server: S, hash: string, 
 
   // handle auth and payment
   switch (res.status) {
+    case 401: {
+      const auth = opts?.auth || (await opts?.onAuth?.(server, hash));
+      if (!auth) throw new Error("Missing auth handler");
+
+      // Try delete with auth
+      res = await fetch(url, {
+        signal: opts?.signal,
+        method: "DELETE",
+        headers: { Authorization: encodeAuthorizationHeader(auth) },
+      });
+      break;
+    }
     case 402: {
       if (!opts?.onPayment) throw new Error("Missing payment handler");
       const { getEncodedToken } = await import("@cashu/cashu-ts");
@@ -34,19 +46,6 @@ export async function deleteBlob<S extends ServerType>(server: S, hash: string, 
         signal: opts?.signal,
         method: "DELETE",
         headers: { "X-Cashu": payment },
-      });
-      break;
-    }
-
-    case 403: {
-      const auth = opts?.auth || (await opts?.onAuth?.(server, hash));
-      if (!auth) throw new Error("Missing auth handler");
-
-      // Try delete with auth
-      res = await fetch(url, {
-        signal: opts?.signal,
-        method: "DELETE",
-        headers: { Authorization: encodeAuthorizationHeader(auth) },
       });
       break;
     }
