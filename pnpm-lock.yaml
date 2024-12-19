@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@cashu/cashu-ts':
-        specifier: 2.0.0-rc1
-        version: 2.0.0-rc1
+        specifier: ^2.1.0
+        version: 2.1.0
       '@noble/hashes':
         specifier: ^1.4.0
         version: 1.5.0
@@ -37,11 +37,11 @@ packages:
     resolution: {integrity: sha512-VBj9MYyDb9tuLq7yzqjgzt6Q+IBQLrGZfdjOekyEirZPHxXWoTSGUTMrpsfi58Up73d13NfYLv8HT9vmznjzhQ==}
     engines: {node: '>=6.9.0'}
 
-  '@cashu/cashu-ts@2.0.0-rc1':
-    resolution: {integrity: sha512-39459l7x/fUMEgOsCdGLLl6rMekO4nbv+wEuavmyElh8hgN8t66wcb29AJvdFTb6K3lPACKF2rs/jAlPYrN7Ng==}
+  '@cashu/cashu-ts@2.1.0':
+    resolution: {integrity: sha512-qFfFz1dx9keJxumjk5FyTvI1j0Yp/P5LXDy0cGO4Xlp3WYKOI1nykNOTPd+bTY9vSkvIM+xuXRer9BtQxqHtwA==}
 
-  '@cashu/crypto@0.2.7':
-    resolution: {integrity: sha512-1aaDfUjiHNXoJqg8nW+341TLWV9W28DsVNXJUKcHL0yAmwLs5+56SSnb8LLDJzPamLVoYL0U0bda91klAzptig==}
+  '@cashu/crypto@0.3.4':
+    resolution: {integrity: sha512-mfv1Pj4iL1PXzUj9NKIJbmncCLMqYfnEDqh/OPxAX0nNBt6BOnVJJLjLWFlQeYxlnEfWABSNkrqPje1t5zcyhA==}
 
   '@changesets/apply-release-plan@7.0.5':
     resolution: {integrity: sha512-1cWCk+ZshEkSVEZrm2fSj1Gz8sYvxgUL4Q78+1ZZqeqfuevPTPk033/yUZ3df8BKMohkqqHfzj0HOOrG0KtXTw==}
@@ -502,15 +502,15 @@ snapshots:
     dependencies:
       regenerator-runtime: 0.14.1
 
-  '@cashu/cashu-ts@2.0.0-rc1':
+  '@cashu/cashu-ts@2.1.0':
     dependencies:
-      '@cashu/crypto': 0.2.7
+      '@cashu/crypto': 0.3.4
       '@noble/curves': 1.6.0
       '@noble/hashes': 1.5.0
       '@scure/bip32': 1.5.0
       buffer: 6.0.3
 
-  '@cashu/crypto@0.2.7':
+  '@cashu/crypto@0.3.4':
     dependencies:
       '@noble/curves': 1.6.0
       '@noble/hashes': 1.5.0
