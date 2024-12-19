@@ -41,5 +41,5 @@ export type PaymentRequest = {
   amount: number;
   unit: string;
   mints: string[];
-  pubkey: string;
+  pubkey?: string;
 };

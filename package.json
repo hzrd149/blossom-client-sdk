@@ -4,6 +4,7 @@
   "description": "A simple client for manage blobs on blossom servers",
   "type": "module",
   "main": "./lib/index.js",
+  "module": "./lib/index.js",
   "typings": "./lib/index.d.ts",
   "author": "hzrd149",
   "license": "MIT",
@@ -54,7 +55,7 @@
     "node": ">=18"
   },
   "dependencies": {
-    "@cashu/cashu-ts": "2.0.0-rc1",
+    "@cashu/cashu-ts": "^2.1.0",
     "@noble/hashes": "^1.4.0"
   },
   "devDependencies": {
