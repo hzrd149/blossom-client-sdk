@@ -1,5 +1,12 @@
 # blossom-client-sdk
 
+## 2.1.1
+
+### Patch Changes
+
+- d06052a: Make `pubkey` optional in PaymentRequest
+- d06052a: Bump @cashu/cashu-ts dependency
+
 ## 2.1.0
 
 ### Minor Changes
