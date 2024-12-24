@@ -11,14 +11,16 @@ export function encodeAuthorizationHeader(event: SignedEvent) {
 }
 
 /** Checks if an auth event matches a server / blob upload */
-export async function doseAuthMatchUpload(auth: SignedEvent, server: ServerType, blob: UploadType) {
+export async function doseAuthMatchUpload(auth: SignedEvent, server: ServerType, blob: string | UploadType) {
   const type = auth.tags.find((t) => t[0] === "t")?.[1];
   if (type !== "upload") return false;
+
+  const sha256 = typeof blob === "string" ? blob : await getBlobSha256(blob);
 
   for (const tag of auth.tags) {
     switch (tag[0]) {
       case "x":
-        if (tag[1] === (await getBlobSha256(blob))) return true;
+        if (tag[1] === sha256) return true;
         break;
       case "server":
         if (areServersEqual(tag[1], server)) return true;

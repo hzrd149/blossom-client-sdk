@@ -27,6 +27,9 @@ importers:
       typedoc:
         specifier: ^0.25.12
         version: 0.25.13(typescript@5.6.2)
+      typedoc-plugin-mermaid:
+        specifier: ^1.12.0
+        version: 1.12.0(typedoc@0.25.13(typescript@5.6.2))
       typescript:
         specifier: ^5.3.3
         version: 5.6.2
@@ -248,6 +251,9 @@ packages:
   graceful-fs@4.2.11:
     resolution: {integrity: sha512-RbJ5/jmFcNNCcDV5o9eTnBLJ/HszWV0P73bc+Ff4nS/rJj+YaS6IGyiOL0VoBYX+l1Wrl3k63h/KrH+nhJ0XvQ==}
 
+  html-escaper@3.0.3:
+    resolution: {integrity: sha512-RuMffC89BOWQoY0WKGpIhn5gX3iI54O6nRA0yC124NYVtzjmFWBIiFd8M0x+ZdX0P9R4lADg1mgP8C7PxGOWuQ==}
+
   human-id@1.0.2:
     resolution: {integrity: sha512-UNopramDEhHJD+VR+ehk8rOslwSfByxPIZyJRfV739NDhN5LF1fa1MqnzKm2lGTQRjNrjK19Q5fhkgIfjlVUKw==}
 
@@ -463,6 +469,12 @@ packages:
   to-regex-range@5.0.1:
     resolution: {integrity: sha512-65P7iz6X5yEr1cwcgvQxbbIw7Uk3gOy5dIdtZ4rDveLqhrdJP+Li/Hx6tyK0NEb+2GCyneCMJiGqrADCSNk8sQ==}
     engines: {node: '>=8.0'}
+
+  typedoc-plugin-mermaid@1.12.0:
+    resolution: {integrity: sha512-CRjw29j0YbQEh4ygG7xeGjq8zKUikgd1BBBrW3ttzTeCPLrNKZopWFPd1/leSb9dUEJ3p9exOO84aP4CgjYp3g==}
+    engines: {node: '>=16.0.0'}
+    peerDependencies:
+      typedoc: '>=0.23.0 || 0.24.x || 0.25.x || 0.26.x'
 
   typedoc@0.25.13:
     resolution: {integrity: sha512-pQqiwiJ+Z4pigfOnnysObszLiU3mVLWAExSPf+Mu06G/qsc3wzbuM56SZQvONhHLncLUhYzOVkjFFpFfL5AzhQ==}
@@ -829,6 +841,8 @@ snapshots:
 
   graceful-fs@4.2.11: {}
 
+  html-escaper@3.0.3: {}
+
   human-id@1.0.2: {}
 
   iconv-lite@0.4.24:
@@ -994,6 +1008,11 @@ snapshots:
   to-regex-range@5.0.1:
     dependencies:
       is-number: 7.0.0
+
+  typedoc-plugin-mermaid@1.12.0(typedoc@0.25.13(typescript@5.6.2)):
+    dependencies:
+      html-escaper: 3.0.3
+      typedoc: 0.25.13(typescript@5.6.2)
 
   typedoc@0.25.13(typescript@5.6.2):
     dependencies:

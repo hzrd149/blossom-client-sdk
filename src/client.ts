@@ -12,6 +12,7 @@ import { uploadBlob, UploadOptions } from "./actions/upload.js";
 import { listBlobs, ListOptions } from "./actions/list.js";
 import { downloadBlob, DownloadOptions } from "./actions/download.js";
 import { deleteBlob, DeleteOptions } from "./actions/delete.js";
+import { uploadMedia } from "./actions/media.js";
 
 export type ServerType = string | URL;
 export type UploadType = Blob | File | Buffer;
@@ -44,6 +45,7 @@ export class BlossomClient {
   static listBlobs = listBlobs;
   static downloadBlob = downloadBlob;
   static deleteBlob = deleteBlob;
+  static uploadMedia = uploadMedia;
 
   // download blob
   async createDownloadAuth(message: string, hash: string, expiration?: number) {

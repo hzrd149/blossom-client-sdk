@@ -1,40 +1,20 @@
-import { type Token } from "@cashu/cashu-ts";
-
 import { ServerType, UploadType } from "../client.js";
-import { BlobDescriptor, PaymentRequest, SignedEvent } from "../types.js";
+import { BlobDescriptor } from "../types.js";
 import { getBlobSha256, getBlobSize, getBlobType, getPaymentRequestFromHeaders } from "../helpers.js";
 import HTTPError from "../error.js";
 import { encodeAuthorizationHeader } from "../auth.js";
+import { UploadOptions } from "./upload.js";
 
-export type UploadOptions<S extends ServerType, B extends UploadType> = {
-  /** AbortSignal to cancel the action */
-  signal?: AbortSignal;
-  /** Override auth event to use */
-  auth?: SignedEvent;
-  /**
-   * A method used to request payment when uploading or mirroring a blob
-   * @param server the server requiring payment
-   * @param sha256 the sha256 of the blob being uploaded or mirrored
-   * @param blob the original blob
-   * @param request the payment request
-   */
-  onPayment?: (server: S, sha256: string, blob: B, request: PaymentRequest) => Promise<Token>;
-  /**
-   * A method used to request a signed auth event for a server and sha256
-   * @param server the server requesting the auth
-   * @param sha256 the sha256 of the blob being upload or mirror to the server
-   * @param blob the original blob passed to the method
-   */
-  onAuth?: (server: S, sha256: string, blob: B) => Promise<SignedEvent>;
-};
+/** Error thrown when /media endpoint is not present on a server */
+export class MediaEndpointMissingError extends Error {}
 
-/** Upload a blob to a server, handles payment and auth */
-export async function uploadBlob<S extends ServerType, B extends UploadType>(
+/** Upload a media blob to a server using the /media endpoint, handles payment and auth */
+export async function uploadMedia<S extends ServerType, B extends UploadType>(
   server: S,
   blob: B,
   opts?: UploadOptions<S, B>,
 ): Promise<BlobDescriptor> {
-  const url = new URL("/upload", server);
+  const url = new URL("/media", server);
   const sha256 = await getBlobSha256(blob);
 
   const headers: Record<string, string> = {
@@ -49,7 +29,7 @@ export async function uploadBlob<S extends ServerType, B extends UploadType>(
   const type = getBlobType(blob);
   if (type) checkHeaders["X-Content-Type"] = type;
 
-  // check upload with HEAD /upload
+  // check upload with HEAD /media
   let firstTry = await fetch(url, {
     method: "HEAD",
     signal: opts?.signal,
@@ -59,8 +39,8 @@ export async function uploadBlob<S extends ServerType, B extends UploadType>(
   let upload: Response | undefined = undefined;
 
   if (firstTry.status === 404) {
-    // BUD-06 HEAD endpoint is not supported. attempt to upload
-    upload = firstTry = await fetch(url, { body: blob, method: "PUT", signal: opts?.signal });
+    // HEAD endpoint is not supported. abort
+    throw new MediaEndpointMissingError("/media endpoint not supported");
   }
 
   // handle auth and payment

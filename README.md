@@ -214,8 +214,40 @@ const file = new File(["testing"], "test.txt");
 
 // create async generator for upload
 const results = await multiServerUpload(servers, file, {
-  onAuth: async (server, blob) => createUploadAuth(signer, blob),
+  onAuth: async (server, sha256) => createUploadAuth(signer, sha256),
   onUpload: (server, blob) => {},
+  onError: (server, blob, error) => {
+    console.log("Failed to upload to", server);
+    console.log(error);
+  },
+});
+```
+
+### Uploading media and mirroring
+
+The `multiServerUpload` method can also be used to upload media blobs and mirror them
+
+```ts
+import { multiServerUpload, createUploadAuth } from "blossom-server-sdk";
+
+async function signer(event: any) {
+  // @ts-expect-error
+  return await window.nostr.signEvent(event);
+}
+
+const servers = ["https://cdn.server-a.com", "https://cdn.example.com", "https://cdn.other.com"];
+const media = new File(["image data"], "image.png");
+
+// create async generator for upload
+const results = await multiServerUpload(servers, media, {
+  // use media upload endpoint
+  isMedia: true,
+  // use any servers media endpoint
+  mediaUploadBehavior: "any",
+  // if the media endpoint isn't found fallback to the /upload endpoint
+  mediaUploadFallback: true,
+  // handle auth requests
+  onAuth: async (server, sha256) => createUploadAuth(signer, sha256),
   onError: (server, blob, error) => {
     console.log("Failed to upload to", server);
     console.log(error);
