@@ -11,8 +11,11 @@
   "scripts": {
     "build": "tsc",
     "prepublish": "npm run build",
+    "test": "vitest run",
+    "coverage": "vitest run --coverage",
     "format": "prettier -w .",
-    "docs": "typedoc src/index.ts"
+    "docs": "typedoc src/index.ts",
+    "test:browser": "vitest"
   },
   "files": [
     "lib"
@@ -60,11 +63,17 @@
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.1",
+    "@testing-library/dom": "^10.4.0",
     "@types/node": "^22.5.5",
+    "@vitest/browser": "^2.1.8",
+    "@vitest/coverage-v8": "2.1.8",
+    "nostr-tools": "^2.10.4",
+    "playwright": "^1.49.1",
     "prettier": "^3.3.3",
     "typedoc": "^0.25.12",
     "typedoc-plugin-mermaid": "^1.12.0",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "vitest": "^2.1.8"
   },
   "packageManager": "pnpm@9.6.0"
 }

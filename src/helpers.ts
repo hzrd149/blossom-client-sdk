@@ -3,6 +3,10 @@ import { bytesToHex } from "@noble/hashes/utils";
 import { type UploadType } from "./client.js";
 import { PaymentRequest } from "./types.js";
 
+export function isSha256(str: string) {
+  return str.match(/^[0-9a-f]{64}$/);
+}
+
 /** returns the last sha256 in a URL */
 export function getHashFromURL(url: string | URL) {
   if (typeof url === "string") url = new URL(url);
@@ -57,7 +61,7 @@ export function getBlobSize(blob: UploadType) {
   }
 }
 
-/** Returns the mimt type of the blob */
+/** Returns the mime type of the blob */
 export function getBlobType(blob: UploadType) {
   if (blob instanceof File || blob instanceof Blob) {
     return blob.type;

@@ -25,7 +25,7 @@ export type UploadOptions<S extends ServerType, B extends UploadType> = {
    * @param sha256 the sha256 of the blob being upload or mirror to the server
    * @param blob the original blob passed to the method
    */
-  onAuth?: (server: S, sha256: string, blob: B) => Promise<SignedEvent>;
+  onAuth?: (server: S, sha256: string, authType: "upload" | "media", blob: B) => Promise<SignedEvent>;
 };
 
 /** Upload a blob to a server, handles payment and auth */
@@ -66,7 +66,7 @@ export async function uploadBlob<S extends ServerType, B extends UploadType>(
   // handle auth and payment
   switch (firstTry.status) {
     case 401: {
-      const auth = opts?.auth || (await opts?.onAuth?.(server, sha256, blob));
+      const auth = opts?.auth || (await opts?.onAuth?.(server, sha256, "upload", blob));
       if (!auth) throw new Error("Missing auth handler");
 
       // Try upload with auth

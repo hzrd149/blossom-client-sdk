@@ -188,7 +188,7 @@ async function signer(event) {
 const servers = ["https://cdn.example.com", "https://cdn.other.com"];
 const file = new File(["testing"], "test.txt");
 
-const auth = await BlossomClient.createUploadAuth(file, signer, "Upload test.txt");
+const auth = await BlossomClient.createUploadAuth(file, signer, { message: "Upload test.txt" });
 
 for (let server of servers) {
   await BlossomClient.uploadBlob(server, file, auth);
@@ -214,7 +214,7 @@ const file = new File(["testing"], "test.txt");
 
 // create async generator for upload
 const results = await multiServerUpload(servers, file, {
-  onAuth: async (server, sha256) => createUploadAuth(signer, sha256),
+  onAuth: async (server, sha256, type) => createUploadAuth(signer, sha256, { type }),
   onUpload: (server, blob) => {},
   onError: (server, blob, error) => {
     console.log("Failed to upload to", server);
@@ -247,7 +247,7 @@ const results = await multiServerUpload(servers, media, {
   // if the media endpoint isn't found fallback to the /upload endpoint
   mediaUploadFallback: true,
   // handle auth requests
-  onAuth: async (server, sha256) => createUploadAuth(signer, sha256),
+  onAuth: async (server, sha256, type) => createUploadAuth(signer, sha256, { type }),
   onError: (server, blob, error) => {
     console.log("Failed to upload to", server);
     console.log(error);
@@ -268,7 +268,7 @@ const mainServer = "https://cdn.server-a.com";
 const mirrorServers = ["https://cdn.example.com", "https://cdn.other.com"];
 const file = new File(["testing"], "test.txt");
 
-const auth = await BlossomClient.createUploadAuth(file, signer, "Upload test.txt");
+const auth = await BlossomClient.createUploadAuth(file, signer, { message: "Upload test.txt" });
 
 // first upload blob to main server
 const blob = await BlossomClient.uploadBlob(mainServer, file, auth);

@@ -3,8 +3,14 @@ import {
   createDeleteAuth,
   createDownloadAuth,
   createListAuth,
+  createMirrorAuth,
   createUploadAuth,
+  DeleteAuthOptions,
+  DownloadAuthOptions,
   encodeAuthorizationHeader,
+  ListAuthOptions,
+  MirrorAuthOptions,
+  UploadAuthOptions,
 } from "./auth.js";
 import { BlobDescriptor, PaymentHandlers as PaymentHandler, SignedEvent, Signer } from "./types.js";
 import { mirrorBlob, MirrorOptions } from "./actions/mirror.js";
@@ -12,7 +18,7 @@ import { uploadBlob, UploadOptions } from "./actions/upload.js";
 import { listBlobs, ListOptions } from "./actions/list.js";
 import { downloadBlob, DownloadOptions } from "./actions/download.js";
 import { deleteBlob, DeleteOptions } from "./actions/delete.js";
-import { uploadMedia } from "./actions/media.js";
+import { uploadMedia, UploadMediaOptions } from "./actions/media.js";
 
 export type ServerType = string | URL;
 export type UploadType = Blob | File | Buffer;
@@ -48,9 +54,9 @@ export class BlossomClient {
   static uploadMedia = uploadMedia;
 
   // download blob
-  async createDownloadAuth(message: string, hash: string, expiration?: number) {
+  async createDownloadAuth(hash: string, options?: DownloadAuthOptions) {
     if (!this.signer) throw new Error("Missing signer");
-    return await createDownloadAuth(this.signer, hash, message, expiration);
+    return await createDownloadAuth(this.signer, hash, options);
   }
   async downloadBlob(
     hash: string,
@@ -63,8 +69,9 @@ export class BlossomClient {
 
     // attach auth
     if (opts?.auth !== false) {
+      if (this.signer)
+        options.onAuth = (_server, sha256) => this.createDownloadAuth(sha256, { message: `Download ${sha256}` });
       if (typeof opts?.auth === "object") options.auth = opts.auth;
-      if (this.signer) options.auth = await this.createDownloadAuth(`Download ${hash}`, hash);
     }
 
     // attach payment
@@ -75,10 +82,9 @@ export class BlossomClient {
   }
 
   // upload blob
-  async createUploadAuth(blob: UploadType, message?: string, expiration?: number) {
+  async createUploadAuth(blob: string | UploadType, options?: UploadAuthOptions) {
     if (!this.signer) throw new Error("Missing signer");
-    const hash = await getBlobSha256(blob);
-    return await createUploadAuth(this.signer, hash, message, expiration);
+    return await createUploadAuth(this.signer, blob, options);
   }
   async uploadBlob<B extends UploadType>(
     blob: B,
@@ -91,8 +97,8 @@ export class BlossomClient {
 
     // attach auth
     if (opts?.auth !== false) {
+      if (this.signer) options.onAuth = (_server, sha256, type) => this.createUploadAuth(sha256, { type });
       if (typeof opts?.auth === "object") options.auth = opts.auth;
-      if (this.signer) options.auth = await this.createUploadAuth(blob);
     }
 
     // attach payment
@@ -102,9 +108,9 @@ export class BlossomClient {
   }
 
   // mirror blob
-  async createMirrorAuth(blob: string | BlobDescriptor, message?: string, expiration?: number) {
+  async createMirrorAuth(blob: string | BlobDescriptor, options?: MirrorAuthOptions) {
     if (!this.signer) throw new Error("Missing signer");
-    return await createUploadAuth(this.signer, typeof blob === "string" ? blob : blob.sha256, message, expiration);
+    return await createMirrorAuth(this.signer, typeof blob === "string" ? blob : blob.sha256, options);
   }
   async mirrorBlob(
     blob: BlobDescriptor,
@@ -117,14 +123,39 @@ export class BlossomClient {
 
     // attach auth
     if (opts?.auth !== false) {
+      if (this.signer) options.onAuth = (_server, sha256) => this.createMirrorAuth(sha256);
       if (typeof opts?.auth === "object") options.auth = opts.auth;
-      if (this.signer) options.auth = await this.createMirrorAuth(blob);
     }
 
     // attach payment
     if (opts?.payment !== false && this.payment) options.onPayment = this.payment.mirror;
 
     return mirrorBlob(this.server, blob, options);
+  }
+
+  // upload media
+  async createMediaAuth(blob: string | UploadType, options?: Omit<UploadAuthOptions, "type">) {
+    return await this.createUploadAuth(blob, { ...options, type: "media" });
+  }
+  async uploadMedia<B extends UploadType>(
+    blob: B,
+    opts?: Omit<UploadMediaOptions<URL, B>, "onAuth" | "onPayment" | "auth"> & {
+      auth?: SignedEvent | boolean;
+      payment?: boolean;
+    },
+  ) {
+    const options: UploadMediaOptions<URL, B> = { signal: opts?.signal };
+
+    // attach auth
+    if (opts?.auth !== false) {
+      if (this.signer) options.onAuth = (_server, sha256, type) => this.createUploadAuth(sha256, { type });
+      if (typeof opts?.auth === "object") options.auth = opts.auth;
+    }
+
+    // attach payment
+    if (opts?.payment !== false && this.payment) options.onPayment = this.payment.upload;
+
+    return uploadMedia(this.server, blob, options);
   }
 
   // has blob
@@ -137,9 +168,9 @@ export class BlossomClient {
   }
 
   // list blobs
-  async createListAuth(message?: string, expiration?: number) {
+  async createListAuth(options?: ListAuthOptions) {
     if (!this.signer) throw new Error("Missing signer");
-    return await createListAuth(this.signer, message, expiration);
+    return await createListAuth(this.signer, options);
   }
   async listBlobs(
     pubkey: string,
@@ -152,8 +183,8 @@ export class BlossomClient {
 
     // attach auth
     if (opts?.auth !== false) {
+      if (this.signer) options.onAuth = (_server) => this.createListAuth();
       if (typeof opts?.auth === "object") options.auth = opts.auth;
-      if (this.signer) options.auth = await this.createListAuth();
     }
 
     // attach payment
@@ -163,9 +194,9 @@ export class BlossomClient {
   }
 
   // delete blob
-  async createDeleteAuth(hash: string, message?: string, expiration?: number) {
+  async createDeleteAuth(blob: string | UploadType, options?: DeleteAuthOptions) {
     if (!this.signer) throw new Error("Missing signer");
-    return await createDeleteAuth(this.signer, hash, message, expiration);
+    return await createDeleteAuth(this.signer, blob, options);
   }
   async deleteBlob(
     hash: string,
@@ -178,8 +209,8 @@ export class BlossomClient {
 
     // attach auth
     if (opts?.auth !== false) {
+      if (this.signer) options.onAuth = (_server, sha256) => this.createDeleteAuth(sha256);
       if (typeof opts?.auth === "object") options.auth = opts.auth;
-      if (this.signer) options.auth = await this.createListAuth();
     }
 
     // attach payment

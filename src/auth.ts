@@ -1,6 +1,6 @@
 import { ServerType, UploadType } from "./client.js";
 import { AUTH_EVENT_KIND } from "./const.js";
-import { areServersEqual, getBlobSha256 } from "./helpers.js";
+import { areServersEqual, getBlobSha256, isSha256 } from "./helpers.js";
 import { EventTemplate, SignedEvent, Signer } from "./types.js";
 
 export const now = () => Math.floor(new Date().valueOf() / 1000);
@@ -13,7 +13,7 @@ export function encodeAuthorizationHeader(event: SignedEvent) {
 /** Checks if an auth event matches a server / blob upload */
 export async function doseAuthMatchUpload(auth: SignedEvent, server: ServerType, blob: string | UploadType) {
   const type = auth.tags.find((t) => t[0] === "t")?.[1];
-  if (type !== "upload") return false;
+  if (type !== "upload" && type !== "media") return false;
 
   const sha256 = typeof blob === "string" ? blob : await getBlobSha256(blob);
 
@@ -31,107 +31,97 @@ export async function doseAuthMatchUpload(auth: SignedEvent, server: ServerType,
   return false;
 }
 
-/**
- * Creates a GET auth event
- * @param signer the signer to use for signing the event
- * @param message A human readable explanation of what the auth token will be used for
- * @param serverOrHash A server URL or one or many blob hashes
- * @param expiration The expiration time in seconds
- * @returns {Promise<SignedEvent>}
- */
+async function normalizeToHash(blob: string | UploadType) {
+  return typeof blob === "string" ? blob : getBlobSha256(blob);
+}
+
+export type AuthType = "upload" | "list" | "delete" | "get" | "media";
+export type AuthEventOptions = {
+  blobs?: string | string[] | UploadType | UploadType[];
+  servers?: string | string[];
+  message?: string;
+  expiration?: number;
+};
+
+/** Generic auth event builder */
+export async function createAuthEvent(signer: Signer, type: AuthType, options?: AuthEventOptions) {
+  const draft: EventTemplate = {
+    created_at: now(),
+    kind: AUTH_EVENT_KIND,
+    content: options?.message ?? "",
+    tags: [
+      ["t", type],
+      // attach NIP-40 expiration
+      ["expiration", String(options?.expiration ?? oneHour())],
+    ],
+  };
+
+  // add blob tags
+  if (options?.blobs) {
+    if (Array.isArray(options.blobs))
+      for (const blob of options.blobs) draft.tags.push(["x", await normalizeToHash(blob)]);
+    else draft.tags.push(["x", await normalizeToHash(options.blobs)]);
+  }
+
+  // add server tags
+  if (options?.servers) {
+    if (Array.isArray(options.servers)) for (const blob of options.servers) draft.tags.push(["server", blob]);
+    else draft.tags.push(["server", options.servers]);
+  }
+
+  return await signer(draft);
+}
+
+export type DownloadAuthOptions = Omit<AuthEventOptions, "blobs" | "servers">;
+/** Creates a GET auth event */
 export async function createDownloadAuth(
   signer: Signer,
-  serverOrHash: string | string[],
-  message: string,
-  expiration = oneHour(),
+  serverOrHash: string | string[] | UploadType | UploadType[],
+  options?: DownloadAuthOptions,
 ) {
-  const draft: EventTemplate = {
-    created_at: now(),
-    kind: AUTH_EVENT_KIND,
-    content: message,
-    tags: [
-      ["t", "get"],
-      ["expiration", String(expiration)],
-    ],
-  };
+  if (!Array.isArray(serverOrHash)) serverOrHash = [serverOrHash] as string[] | UploadType[];
 
-  if (Array.isArray(serverOrHash)) {
-    for (const sha256 of serverOrHash) draft.tags.push(["x", sha256]);
-  } else if (serverOrHash.match(/^[0-9a-f]{64}$/)) {
-    draft.tags.push(["x", serverOrHash]);
-  } else {
-    draft.tags.push(["server", new URL("/", serverOrHash).toString()]);
-  }
-
-  return await signer(draft);
-}
-
-/**
- * Creates an upload auth event
- * @param blobsOrHashes one or an array of sha256 hashes
- * @param signer the signer to use for signing the event
- * @param message A human readable explanation of what the auth token will be used for
- * @param expiration The expiration time in seconds
- * @returns {Promise<SignedEvent>}
- */
-export async function createUploadAuth(
-  signer: Signer,
-  blobsOrHashes: string | string[] | UploadType | UploadType[],
-  message = "Upload Blob",
-  expiration = oneHour(),
-) {
-  const draft: EventTemplate = {
-    kind: AUTH_EVENT_KIND,
-    content: message,
-    created_at: now(),
-    tags: [
-      ["t", "upload"],
-      ["expiration", String(expiration)],
-    ],
-  };
-
-  const getHash = (blob: string | UploadType) => (typeof blob === "string" ? blob : getBlobSha256(blob));
-
-  if (Array.isArray(blobsOrHashes)) {
-    for (const blob of blobsOrHashes) draft.tags.push(["x", await getHash(blob)]);
-  } else {
-    draft.tags.push(["x", await getHash(blobsOrHashes)]);
-  }
-
-  return await signer(draft);
-}
-
-export async function createListAuth(signer: Signer, message = "List Blobs", expiration = oneHour()) {
-  return await signer({
-    created_at: now(),
-    kind: AUTH_EVENT_KIND,
-    content: message,
-    tags: [
-      ["t", "list"],
-      ["expiration", String(expiration)],
-    ],
+  return await createAuthEvent(signer, "get", {
+    message: "Download Blob",
+    ...options,
+    blobs: serverOrHash.filter((s) => (typeof s === "string" ? isSha256(s) : true)) as string[] | UploadType[],
+    servers: serverOrHash.filter((s) => typeof s === "string" && !isSha256(s) && URL.canParse(s)) as string[],
   });
 }
 
+export type UploadAuthOptions = Omit<AuthEventOptions, "blobs"> & { type?: "upload" | "media" };
+/** Creates an upload or media upload auth event */
+export async function createUploadAuth(
+  signer: Signer,
+  blobs: string | string[] | UploadType | UploadType[],
+  options?: UploadAuthOptions,
+) {
+  return await createAuthEvent(signer, options?.type ?? "upload", { message: "Upload Blob", ...options, blobs });
+}
+
+export type MirrorAuthOptions = Omit<AuthEventOptions, "blobs">;
+/** Creates an upload or media upload auth event */
+export async function createMirrorAuth(
+  signer: Signer,
+  blobs: string | string[] | UploadType | UploadType[],
+  options?: MirrorAuthOptions,
+) {
+  // The /mirror endpoint uses "upload" type
+  return await createAuthEvent(signer, "upload", { message: "Mirror Blob", ...options, blobs });
+}
+
+export type ListAuthOptions = Omit<AuthEventOptions, "blobs">;
+/** Creates a list auth event */
+export async function createListAuth(signer: Signer, options?: ListAuthOptions) {
+  return await createAuthEvent(signer, "list", { message: "List Blobs", ...options });
+}
+
+export type DeleteAuthOptions = Omit<AuthEventOptions, "blobs">;
+/** Creates a "delete" auth event for a specific hash */
 export async function createDeleteAuth(
   signer: Signer,
-  hash: string | string[],
-  message = "Delete Blob",
-  expiration = oneHour(),
+  blobs: string | string[] | UploadType | UploadType[],
+  options?: DeleteAuthOptions,
 ) {
-  const draft: EventTemplate = {
-    created_at: now(),
-    kind: AUTH_EVENT_KIND,
-    content: message,
-    tags: [
-      ["t", "delete"],
-      ["expiration", String(expiration)],
-    ],
-  };
-
-  if (Array.isArray(hash)) {
-    for (const x of hash) draft.tags.push(["x", x]);
-  } else draft.tags.push(["x", hash]);
-
-  return await signer(draft);
+  return await createAuthEvent(signer, "delete", { message: "Delete Blob", ...options, blobs });
 }

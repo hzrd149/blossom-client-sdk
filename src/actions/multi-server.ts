@@ -74,7 +74,7 @@ export async function multiServerUpload<S extends ServerType, B extends UploadTy
 
   // reuse auth events
   let authEvents = opts?.auth ? [opts?.auth] : [];
-  const handleAuthRequest = async (server: S, sha256: string) => {
+  const handleAuthRequest = async (server: S, sha256: string, type: "upload" | "media") => {
     // check if any existing auth events match
     for (const auth of authEvents) {
       if (await doseAuthMatchUpload(auth, server, sha256)) return auth;
@@ -82,7 +82,7 @@ export async function multiServerUpload<S extends ServerType, B extends UploadTy
 
     // create a new auth event
     if (opts?.onAuth) {
-      const auth = await opts.onAuth(server, sha256, blob);
+      const auth = await opts.onAuth(server, sha256, type, blob);
       authEvents.push(auth);
       return auth;
     } else throw new Error("Missing onAuth handler");
@@ -154,7 +154,7 @@ export async function multiServerUpload<S extends ServerType, B extends UploadTy
 
           metadata = await mirrorBlob(server, initialUpload, {
             signal: opts?.signal,
-            onAuth: handleAuthRequest,
+            onAuth: (server, sha256) => handleAuthRequest(server, sha256, "upload"),
             onPayment: handlePaymentRequest,
           });
         } catch (error) {

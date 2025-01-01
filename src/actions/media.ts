@@ -8,11 +8,13 @@ import { UploadOptions } from "./upload.js";
 /** Error thrown when /media endpoint is not present on a server */
 export class MediaEndpointMissingError extends Error {}
 
+export type UploadMediaOptions<S extends ServerType, B extends UploadType> = UploadOptions<S, B>;
+
 /** Upload a media blob to a server using the /media endpoint, handles payment and auth */
 export async function uploadMedia<S extends ServerType, B extends UploadType>(
   server: S,
   blob: B,
-  opts?: UploadOptions<S, B>,
+  opts?: UploadMediaOptions<S, B>,
 ): Promise<BlobDescriptor> {
   const url = new URL("/media", server);
   const sha256 = await getBlobSha256(blob);
@@ -46,7 +48,7 @@ export async function uploadMedia<S extends ServerType, B extends UploadType>(
   // handle auth and payment
   switch (firstTry.status) {
     case 401: {
-      const auth = opts?.auth || (await opts?.onAuth?.(server, sha256, blob));
+      const auth = opts?.auth || (await opts?.onAuth?.(server, sha256, "media", blob));
       if (!auth) throw new Error("Missing auth handler");
 
       // Try upload with auth
