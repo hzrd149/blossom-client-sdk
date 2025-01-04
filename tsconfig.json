@@ -23,5 +23,5 @@
 
     "pretty": true
   },
-  "include": ["typings/**/*", "src/**/*", "tests/**/*"]
+  "include": ["typings/**/*", "src/**/*"]
 }
