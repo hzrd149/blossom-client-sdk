@@ -16,7 +16,7 @@ async function signer(event) {
 }
 
 // create an upload auth event
-const uploadAuth = await BlossomClient.getUploadAuth(file, server, "Upload bitcoin.pdf");
+const uploadAuth = await BlossomClient.createUploadAuth(file, server, "Upload bitcoin.pdf");
 
 // encode it using base64
 const encodedAuthHeader = BlossomClient.encodeAuthorizationHeader(auth);
