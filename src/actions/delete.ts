@@ -17,7 +17,12 @@ export type DeleteOptions<S extends ServerType> = {
 export async function deleteBlob<S extends ServerType>(server: S, hash: string, opts?: DeleteOptions<S>) {
   const url = new URL("/" + hash, server);
 
-  let res = await fetch(url, { signal: opts?.signal, method: "DELETE" });
+  const headers: HeadersInit = {};
+
+  // attach the auth if its already set
+  if (opts?.auth) headers["Authorization"] = encodeAuthorizationHeader(opts.auth);
+
+  let res = await fetch(url, { signal: opts?.signal, method: "DELETE", headers });
 
   // handle auth and payment
   switch (res.status) {
@@ -29,7 +34,7 @@ export async function deleteBlob<S extends ServerType>(server: S, hash: string, 
       res = await fetch(url, {
         signal: opts?.signal,
         method: "DELETE",
-        headers: { Authorization: encodeAuthorizationHeader(auth) },
+        headers: { ...headers, Authorization: encodeAuthorizationHeader(auth) },
       });
       break;
     }
@@ -45,7 +50,7 @@ export async function deleteBlob<S extends ServerType>(server: S, hash: string, 
       res = await fetch(url, {
         signal: opts?.signal,
         method: "DELETE",
-        headers: { "X-Cashu": payment },
+        headers: { ...headers, "X-Cashu": payment },
       });
       break;
     }

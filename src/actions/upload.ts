@@ -41,6 +41,9 @@ export async function uploadBlob<S extends ServerType, B extends UploadType>(
     "X-SHA-256": sha256,
   };
 
+  // attach the auth if its already set
+  if (opts?.auth) headers["Authorization"] = encodeAuthorizationHeader(opts.auth);
+
   // build check headers
   const checkHeaders: Record<string, string> = {
     ...headers,

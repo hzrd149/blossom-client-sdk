@@ -17,7 +17,12 @@ export type DownloadOptions<S extends ServerType> = {
 export async function downloadBlob<S extends ServerType>(server: S, hash: string, opts?: DownloadOptions<S>) {
   const url = new URL("/" + hash, server);
 
-  let download = await fetch(url, { signal: opts?.signal });
+  const headers: HeadersInit = {};
+
+  // attach the auth if its already set
+  if (opts?.auth) headers["Authorization"] = encodeAuthorizationHeader(opts.auth);
+
+  let download = await fetch(url, { signal: opts?.signal, headers });
 
   // handle auth and payment
   switch (download.status) {
@@ -28,7 +33,7 @@ export async function downloadBlob<S extends ServerType>(server: S, hash: string
       // Try download with auth
       download = await fetch(url, {
         signal: opts?.signal,
-        headers: { Authorization: encodeAuthorizationHeader(auth) },
+        headers: { ...headers, Authorization: encodeAuthorizationHeader(auth) },
       });
 
       break;
@@ -44,7 +49,7 @@ export async function downloadBlob<S extends ServerType>(server: S, hash: string
       // Try download with payment
       download = await fetch(url, {
         signal: opts?.signal,
-        headers: { "X-Cashu": payment },
+        headers: { ...headers, "X-Cashu": payment },
       });
 
       break;

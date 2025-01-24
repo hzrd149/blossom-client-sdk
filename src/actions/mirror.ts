@@ -41,6 +41,9 @@ export async function mirrorBlob<S extends ServerType>(
   };
   if (blob.type) headers["X-Content-Type"] = blob.type;
 
+  // attach the auth if its already set
+  if (opts?.auth) headers["Authorization"] = encodeAuthorizationHeader(opts.auth);
+
   const body = JSON.stringify({ url: blob.url });
   let mirror = await fetch(url, {
     method: "PUT",
