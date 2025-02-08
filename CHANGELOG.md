@@ -1,5 +1,24 @@
 # blossom-client-sdk
 
+## 3.0.0
+
+### Major Changes
+
+- c3e12d0: Update `createDownloadAuth`, `createUploadAuth`, `createMirrorAuth`, `createMediaAuth`, `createListAuth`, and `createDeleteAuth` to use options instead of message and expiration arguments
+- 9de5eed: Add `sha256` argument to `onAuth` and `onPayment` methods in `uploadBlob`, `multiServerUpload`, and `mirrorBlob` actions
+
+### Minor Changes
+
+- c3e12d0: Add `client.uploadMedia` method
+- 41aaa6d: Add `timeout` to `mirror`, `upload`, `list`, `delete`, `download` actions
+- 9de5eed: Add `uploadMedia` action
+- 41aaa6d: Add `mirrorTimeout` to `multiServerUpload` action
+
+### Patch Changes
+
+- 10719c5: Fix `auth` not getting set on first request
+- c3e12d0: Fix `client.deleteBlob` using incorrect auth type
+
 ## 2.1.1
 
 ### Patch Changes
