@@ -34,8 +34,12 @@
       "types": "./lib/image.d.ts"
     },
     "./helpers": {
-      "import": "./lib/helpers.js",
-      "types": "./lib/helpers.d.ts"
+      "import": "./lib/helpers/index.js",
+      "types": "./lib/helpers/index.d.ts"
+    },
+    "./helpers/*": {
+      "import": "./lib/helpers/*.js",
+      "types": "./lib/helpers/*.d.ts"
     },
     "./nostr": {
       "import": "./lib/nostr.js",

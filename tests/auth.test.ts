@@ -4,7 +4,7 @@ import { bytesToHex } from "@noble/hashes/utils";
 
 import { EventTemplate, Signer } from "../src/types.js";
 import { createAuthEvent } from "../src/auth.js";
-import { getBlobSha256 } from "../src/helpers.js";
+import { getBlobSha256 } from "../src/helpers/index.js";
 
 const key = generateSecretKey();
 const signer: Signer = async (t: EventTemplate) => finalizeEvent(t, key);

@@ -1,6 +1,6 @@
 import { ServerType, UploadType } from "../client.js";
 import { BlobDescriptor } from "../types.js";
-import { getBlobSha256, getBlobSize, getBlobType, getPaymentRequestFromHeaders } from "../helpers.js";
+import { getBlobSha256, getBlobSize, getBlobType, getPaymentRequestFromHeaders } from "../helpers/index.js";
 import HTTPError from "../error.js";
 import { encodeAuthorizationHeader } from "../auth.js";
 import { UploadOptions } from "./upload.js";

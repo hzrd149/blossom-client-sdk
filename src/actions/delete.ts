@@ -4,13 +4,29 @@ import { ServerType } from "../client.js";
 import { PaymentRequest, SignedEvent } from "../types.js";
 import HTTPError from "../error.js";
 import { encodeAuthorizationHeader } from "../auth.js";
-import { getPaymentRequestFromHeaders } from "../helpers.js";
+import { getPaymentRequestFromHeaders } from "../helpers/cachu.js";
+import { fetchWithTimeout } from "../helpers/fetch.js";
 
 export type DeleteOptions<S extends ServerType> = {
+  /** AbortSignal to cancel the action */
   signal?: AbortSignal;
+  /** Override auth event to use */
   auth?: SignedEvent;
-  onPayment?: (server: S, hash: string, request: PaymentRequest) => Promise<Token>;
-  onAuth?: (server: S, hash: string) => Promise<SignedEvent>;
+  /** Request timeout */
+  timeout?: number;
+  /**
+   * A method used to request payment when deleting
+   * @param server the server requiring payment
+   * @param sha256 the sha256 of the blob being uploaded or mirrored
+   * @param request the payment request
+   */
+  onPayment?: (server: S, sha256: string, request: PaymentRequest) => Promise<Token>;
+  /**
+   * A method used to request a signed auth event for a server and sha256
+   * @param server the server requesting the auth
+   * @param sha256 the sha256 of the blob being upload or mirror to the server
+   */
+  onAuth?: (server: S, sha256: string) => Promise<SignedEvent>;
 };
 
 /** Deletes a blob to a server */
@@ -22,7 +38,12 @@ export async function deleteBlob<S extends ServerType>(server: S, hash: string, 
   // attach the auth if its already set
   if (opts?.auth) headers["Authorization"] = encodeAuthorizationHeader(opts.auth);
 
-  let res = await fetch(url, { signal: opts?.signal, method: "DELETE", headers });
+  let res = await fetchWithTimeout(url, {
+    method: "DELETE",
+    headers,
+    signal: opts?.signal,
+    timeout: opts?.timeout,
+  });
 
   // handle auth and payment
   switch (res.status) {
@@ -31,10 +52,11 @@ export async function deleteBlob<S extends ServerType>(server: S, hash: string, 
       if (!auth) throw new Error("Missing auth handler");
 
       // Try delete with auth
-      res = await fetch(url, {
+      res = await fetchWithTimeout(url, {
         signal: opts?.signal,
         method: "DELETE",
         headers: { ...headers, Authorization: encodeAuthorizationHeader(auth) },
+        timeout: opts?.timeout,
       });
       break;
     }
@@ -47,10 +69,11 @@ export async function deleteBlob<S extends ServerType>(server: S, hash: string, 
       const payment = getEncodedToken(token);
 
       // Try delete with payment
-      res = await fetch(url, {
+      res = await fetchWithTimeout(url, {
         signal: opts?.signal,
         method: "DELETE",
         headers: { ...headers, "X-Cashu": payment },
+        timeout: opts?.timeout,
       });
       break;
     }

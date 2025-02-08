@@ -1,6 +1,6 @@
 import { doseAuthMatchUpload } from "../auth.js";
 import { ServerType, UploadType } from "../client.js";
-import { getBlobSha256 } from "../helpers.js";
+import { getBlobSha256 } from "../helpers/index.js";
 import { BlobDescriptor, PaymentRequest } from "../types.js";
 import { MediaEndpointMissingError, uploadMedia } from "./media.js";
 import { mirrorBlob } from "./mirror.js";
@@ -25,6 +25,11 @@ export type MultiServerUploadOptions<S extends ServerType, B extends UploadType>
    */
   mediaUploadFallback?: boolean;
   /**
+   * Timeout for mirror requests
+   * @default 5000
+   */
+  mirrorTimeout?: number;
+  /**
    * called on blob when uploaded to started to a server
    * @param server
    * @param sha256 the hash of the blob being uploaded or mirrored
@@ -35,6 +40,13 @@ export type MultiServerUploadOptions<S extends ServerType, B extends UploadType>
   onUpload?: (server: S, sha256: string, blob: B) => void;
   /** called when upload to a server fails */
   onError?: (server: S, sha256: string, blob: B, error: Error) => void;
+};
+
+const defaultMultiServerOptions: MultiServerUploadOptions<any, any> = {
+  isMedia: false,
+  mediaUploadBehavior: "first",
+  mediaUploadFallback: false,
+  mirrorTimeout: 5000,
 };
 
 /**
@@ -69,11 +81,12 @@ export async function multiServerUpload<S extends ServerType, B extends UploadTy
   blob: B,
   opts?: MultiServerUploadOptions<S, B>,
 ) {
+  const options = { ...defaultMultiServerOptions, ...opts };
   let initialUpload: BlobDescriptor | undefined;
   const results = new Map<S, BlobDescriptor>();
 
   // reuse auth events
-  let authEvents = opts?.auth ? [opts?.auth] : [];
+  let authEvents = options.auth ? [options.auth] : [];
   const handleAuthRequest = async (server: S, sha256: string, type: "upload" | "media") => {
     // check if any existing auth events match
     for (const auth of authEvents) {
@@ -81,8 +94,8 @@ export async function multiServerUpload<S extends ServerType, B extends UploadTy
     }
 
     // create a new auth event
-    if (opts?.onAuth) {
-      const auth = await opts.onAuth(server, sha256, type, blob);
+    if (options.onAuth) {
+      const auth = await options.onAuth(server, sha256, type, blob);
       authEvents.push(auth);
       return auth;
     } else throw new Error("Missing onAuth handler");
@@ -90,22 +103,22 @@ export async function multiServerUpload<S extends ServerType, B extends UploadTy
 
   // handle payment requests for servers
   const handlePaymentRequest = async (server: S, sha256: string, _blog: any, request: PaymentRequest) => {
-    if (!opts?.onPayment) throw new Error("Missing payment handler");
+    if (!options.onPayment) throw new Error("Missing payment handler");
 
-    return opts.onPayment(server, sha256, blob, request);
+    return options.onPayment(server, sha256, blob, request);
   };
 
   // servers to upload the blob to
   const uploadServers = Array.from(servers);
 
   // start media upload
-  if (opts?.isMedia) {
-    const mediaServers = opts.mediaUploadBehavior === "any" ? Array.from(servers) : [Array.from(servers)[0]];
+  if (options.isMedia) {
+    const mediaServers = options.mediaUploadBehavior === "any" ? Array.from(servers) : [Array.from(servers)[0]];
 
     for (const server of mediaServers) {
       try {
         const sha256 = await getBlobSha256(blob);
-        opts?.onStart?.(server, sha256, blob);
+        options.onStart?.(server, sha256, blob);
 
         // attempt to upload media
         initialUpload = await uploadMedia(server, blob, {
@@ -117,13 +130,13 @@ export async function multiServerUpload<S extends ServerType, B extends UploadTy
         results.set(server, initialUpload);
 
         // finished upload to server
-        opts?.onUpload?.(server, initialUpload.sha256, blob);
+        options.onUpload?.(server, initialUpload.sha256, blob);
       } catch (error) {
         if (error instanceof MediaEndpointMissingError) {
           // ignore error
         } else if (error instanceof Error) {
           const sha256 = await getBlobSha256(blob);
-          opts?.onError?.(server, sha256, blob, error);
+          options.onError?.(server, sha256, blob, error);
         }
       }
 
@@ -136,7 +149,7 @@ export async function multiServerUpload<S extends ServerType, B extends UploadTy
       }
     }
 
-    if (!opts.mediaUploadFallback && !initialUpload) {
+    if (!options.mediaUploadFallback && !initialUpload) {
       // failed to find a /media endpoint, abort
       throw new Error("Failed to find media processing endpoint");
     }
@@ -150,27 +163,29 @@ export async function multiServerUpload<S extends ServerType, B extends UploadTy
       // attempt to mirror the initial upload
       if (initialUpload) {
         try {
-          opts?.onStart?.(server, initialUpload.sha256, blob);
+          options.onStart?.(server, initialUpload.sha256, blob);
 
           metadata = await mirrorBlob(server, initialUpload, {
-            signal: opts?.signal,
+            signal: options.signal,
             onAuth: (server, sha256) => handleAuthRequest(server, sha256, "upload"),
             onPayment: handlePaymentRequest,
+            timeout: options.mirrorTimeout,
           });
         } catch (error) {
           // mirror failed, if isMedia skip server since we don't want to upload two versions of the blob
-          if (opts?.isMedia) continue;
+          if (options.isMedia) continue;
         }
       }
 
       // attempt to upload
       if (!metadata) {
         const sha256 = await getBlobSha256(blob);
-        opts?.onStart?.(server, sha256, blob);
+        options.onStart?.(server, sha256, blob);
 
         metadata = await uploadBlob(server, blob, {
           onAuth: handleAuthRequest,
           onPayment: handlePaymentRequest,
+          timeout: options.mirrorTimeout,
         });
 
         // save first upload
@@ -181,10 +196,10 @@ export async function multiServerUpload<S extends ServerType, B extends UploadTy
       results.set(server, metadata);
 
       // finished upload to server
-      opts?.onUpload?.(server, metadata.sha256, blob);
+      options.onUpload?.(server, metadata.sha256, blob);
     } catch (error) {
       // failed to upload to server
-      if (error instanceof Error) opts?.onError?.(server, await getBlobSha256(blob), blob, error);
+      if (error instanceof Error) options.onError?.(server, await getBlobSha256(blob), blob, error);
     }
   }
 

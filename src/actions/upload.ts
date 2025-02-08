@@ -2,7 +2,13 @@ import { type Token } from "@cashu/cashu-ts";
 
 import { ServerType, UploadType } from "../client.js";
 import { BlobDescriptor, PaymentRequest, SignedEvent } from "../types.js";
-import { getBlobSha256, getBlobSize, getBlobType, getPaymentRequestFromHeaders } from "../helpers.js";
+import {
+  fetchWithTimeout,
+  getBlobSha256,
+  getBlobSize,
+  getBlobType,
+  getPaymentRequestFromHeaders,
+} from "../helpers/index.js";
 import HTTPError from "../error.js";
 import { encodeAuthorizationHeader } from "../auth.js";
 
@@ -11,6 +17,8 @@ export type UploadOptions<S extends ServerType, B extends UploadType> = {
   signal?: AbortSignal;
   /** Override auth event to use */
   auth?: SignedEvent;
+  /** Request timeout */
+  timeout?: number;
   /**
    * A method used to request payment when uploading or mirroring a blob
    * @param server the server requiring payment
@@ -53,17 +61,23 @@ export async function uploadBlob<S extends ServerType, B extends UploadType>(
   if (type) checkHeaders["X-Content-Type"] = type;
 
   // check upload with HEAD /upload
-  let firstTry = await fetch(url, {
+  let firstTry = await fetchWithTimeout(url, {
     method: "HEAD",
     signal: opts?.signal,
     headers: checkHeaders,
+    timeout: opts?.timeout,
   });
 
   let upload: Response | undefined = undefined;
 
   if (firstTry.status === 404) {
     // BUD-06 HEAD endpoint is not supported. attempt to upload
-    upload = firstTry = await fetch(url, { body: blob, method: "PUT", signal: opts?.signal });
+    upload = firstTry = await fetchWithTimeout(url, {
+      body: blob,
+      method: "PUT",
+      signal: opts?.signal,
+      timeout: opts?.timeout,
+    });
   }
 
   // handle auth and payment
@@ -73,11 +87,12 @@ export async function uploadBlob<S extends ServerType, B extends UploadType>(
       if (!auth) throw new Error("Missing auth handler");
 
       // Try upload with auth
-      upload = await fetch(url, {
-        signal: opts?.signal,
+      upload = await fetchWithTimeout(url, {
         method: "PUT",
         body: blob,
         headers: { ...headers, Authorization: encodeAuthorizationHeader(auth) },
+        signal: opts?.signal,
+        timeout: opts?.timeout,
       });
       break;
     }
@@ -90,11 +105,12 @@ export async function uploadBlob<S extends ServerType, B extends UploadType>(
       const payment = getEncodedToken(token);
 
       // Try upload with payment
-      upload = await fetch(url, {
-        signal: opts?.signal,
+      upload = await fetchWithTimeout(url, {
         method: "PUT",
         body: blob,
         headers: { ...headers, "X-Cashu": payment },
+        signal: opts?.signal,
+        timeout: opts?.timeout,
       });
       break;
     }
@@ -104,11 +120,12 @@ export async function uploadBlob<S extends ServerType, B extends UploadType>(
 
   // check passed, upload
   if (!upload)
-    upload = await fetch(url, {
-      signal: opts?.signal,
+    upload = await fetchWithTimeout(url, {
       method: "PUT",
       body: blob,
       headers: { ...headers },
+      signal: opts?.signal,
+      timeout: opts?.timeout,
     });
 
   // handle errors

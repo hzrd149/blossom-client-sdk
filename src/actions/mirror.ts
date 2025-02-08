@@ -3,13 +3,15 @@ import { ServerType } from "../client.js";
 import { BlobDescriptor, SignedEvent, PaymentRequest } from "../types.js";
 import HTTPError from "../error.js";
 import { encodeAuthorizationHeader } from "../auth.js";
-import { getPaymentRequestFromHeaders } from "../helpers.js";
+import { fetchWithTimeout, getPaymentRequestFromHeaders } from "../helpers/index.js";
 
 export type MirrorOptions<S extends ServerType> = {
   /** AbortSignal to cancel the action */
   signal?: AbortSignal;
   /** Override auth event to use */
   auth?: SignedEvent;
+  /** Request timeout */
+  timeout?: number;
   /**
    * A method used to request payment when uploading or mirroring a blob
    * @param server the server requiring payment
@@ -45,11 +47,12 @@ export async function mirrorBlob<S extends ServerType>(
   if (opts?.auth) headers["Authorization"] = encodeAuthorizationHeader(opts.auth);
 
   const body = JSON.stringify({ url: blob.url });
-  let mirror = await fetch(url, {
+  let mirror = await fetchWithTimeout(url, {
     method: "PUT",
     signal: opts?.signal,
     headers,
     body,
+    timeout: opts?.timeout,
   });
 
   switch (mirror.status) {
@@ -58,11 +61,12 @@ export async function mirrorBlob<S extends ServerType>(
       if (!auth) throw new Error("Missing auth handler");
 
       // Try mirror with auth
-      mirror = await fetch(url, {
+      mirror = await fetchWithTimeout(url, {
         signal: opts?.signal,
         method: "PUT",
         body,
         headers: { Authorization: encodeAuthorizationHeader(auth) },
+        timeout: opts?.timeout,
       });
       break;
     }
@@ -75,11 +79,12 @@ export async function mirrorBlob<S extends ServerType>(
       const payment = getEncodedToken(token);
 
       // Try mirror with payment
-      mirror = await fetch(url, {
+      mirror = await fetchWithTimeout(url, {
         signal: opts?.signal,
         method: "PUT",
         body,
         headers: { "X-Cashu": payment },
+        timeout: opts?.timeout,
       });
       break;
     }

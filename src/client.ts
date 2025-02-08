@@ -1,4 +1,4 @@
-import { getBlobSha256 } from "./helpers.js";
+import { getBlobSha256 } from "./helpers/blob.js";
 import {
   createDeleteAuth,
   createDownloadAuth,

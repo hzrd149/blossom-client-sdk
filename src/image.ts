@@ -1,4 +1,4 @@
-import { getHashFromURL } from "./helpers.js";
+import { getHashFromURL } from "./helpers/url.js";
 
 type GetServersMethod = (pubkey?: string) => Promise<(string | URL)[] | undefined> | undefined;
 
