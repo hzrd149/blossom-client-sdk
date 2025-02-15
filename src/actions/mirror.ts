@@ -40,6 +40,7 @@ export async function mirrorBlob<S extends ServerType>(
   const headers: Record<string, string> = {
     "X-SHA-256": blob.sha256,
     "X-Content-Length": String(blob.size),
+    "Content-Type": "application/json",
   };
   if (blob.type) headers["X-Content-Type"] = blob.type;
 
@@ -65,7 +66,7 @@ export async function mirrorBlob<S extends ServerType>(
         signal: opts?.signal,
         method: "PUT",
         body,
-        headers: { Authorization: encodeAuthorizationHeader(auth) },
+        headers: { ...headers, Authorization: encodeAuthorizationHeader(auth) },
         timeout: opts?.timeout,
       });
       break;
@@ -83,7 +84,7 @@ export async function mirrorBlob<S extends ServerType>(
         signal: opts?.signal,
         method: "PUT",
         body,
-        headers: { "X-Cashu": payment },
+        headers: { ...headers, "X-Cashu": payment },
         timeout: opts?.timeout,
       });
       break;
