@@ -1,5 +1,11 @@
 # blossom-client-sdk
 
+## 3.0.1
+
+### Patch Changes
+
+- 1296dab: Fix Content-Type header on mirror action
+
 ## 3.0.0
 
 ### Major Changes
