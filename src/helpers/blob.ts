@@ -22,7 +22,9 @@ export function getBlobSha256(blob: UploadType) {
 /** Calculates the sha2456 of a Blob */
 export async function computeBlobSha256(blob: UploadType) {
   let buffer: ArrayBuffer | Buffer;
-  if (blob instanceof File || blob instanceof Blob) {
+
+  // NOTE: use typeof File !== "undefined" to check if File is supported (required to support node 18)
+  if ((typeof File !== "undefined" && blob instanceof File) || blob instanceof Blob) {
     buffer = await blob.arrayBuffer();
   } else {
     // nodejs Buffer
@@ -30,7 +32,7 @@ export async function computeBlobSha256(blob: UploadType) {
   }
 
   let hash: Uint8Array;
-  if (crypto.subtle) {
+  if (typeof crypto !== "undefined" && crypto.subtle) {
     const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
     hash = new Uint8Array(hashBuffer);
   } else {
@@ -43,7 +45,7 @@ export async function computeBlobSha256(blob: UploadType) {
 
 /** Returns the size of the blob in bytes */
 export function getBlobSize(blob: UploadType) {
-  if (blob instanceof File || blob instanceof Blob) {
+  if ((typeof File !== "undefined" && blob instanceof File) || blob instanceof Blob) {
     return blob.size;
   } else {
     // nodejs Buffer
@@ -53,7 +55,7 @@ export function getBlobSize(blob: UploadType) {
 
 /** Returns the mime type of the blob */
 export function getBlobType(blob: UploadType) {
-  if (blob instanceof File || blob instanceof Blob) {
+  if ((typeof File !== "undefined" && blob instanceof File) || blob instanceof Blob) {
     return blob.type;
   }
   return undefined;

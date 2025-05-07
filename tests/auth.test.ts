@@ -6,6 +6,9 @@ import { EventTemplate, Signer } from "../src/types.js";
 import { createAuthEvent, createMirrorAuth } from "../src/auth.js";
 import { getBlobSha256 } from "../src/helpers/index.js";
 
+// NOTE: patch to support node 18
+const crypto = globalThis.crypto || (await import("node:crypto"));
+
 const key = generateSecretKey();
 const signer: Signer = async (t: EventTemplate) => finalizeEvent(t, key);
 

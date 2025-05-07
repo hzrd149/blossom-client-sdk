@@ -39,7 +39,7 @@ describe("computeBlobSha256", () => {
     expect(hash).toBe("74f81fe167d99b4cb41d6d0ccda82278caee9f3e2f25d5e5a3936ff3dcec60d0");
   });
 
-  it("should calculate the SHA-256 hash of a File in browser", async () => {
+  it.skipIf(typeof File === "undefined")("should calculate the SHA-256 hash of a File in browser", async () => {
     const data = new Uint8Array([1, 2, 3, 4, 5, 6]);
     const file = new File([data], "test.txt");
     const hash = await computeBlobSha256(file);
@@ -54,19 +54,22 @@ describe("computeBlobSha256", () => {
     expect(hash).toBe("74f81fe167d99b4cb41d6d0ccda82278caee9f3e2f25d5e5a3936ff3dcec60d0");
   });
 
-  it("should return the same hash for identical content across different types", async () => {
-    const data = new Uint8Array([1, 2, 3, 4, 5]);
-    const blob = new Blob([data]);
-    const file = new File([data], "test.txt");
+  it.skipIf(typeof File === "undefined")(
+    "should return the same hash for identical content across different types",
+    async () => {
+      const data = new Uint8Array([1, 2, 3, 4, 5]);
+      const blob = new Blob([data]);
+      const file = new File([data], "test.txt");
 
-    const blobHash = await computeBlobSha256(blob);
-    const fileHash = await computeBlobSha256(file);
+      const blobHash = await computeBlobSha256(blob);
+      const fileHash = await computeBlobSha256(file);
 
-    expect(blobHash).toBe(fileHash);
-    expect(blobHash).toBe("74f81fe167d99b4cb41d6d0ccda82278caee9f3e2f25d5e5a3936ff3dcec60d0");
-  });
+      expect(blobHash).toBe(fileHash);
+      expect(blobHash).toBe("74f81fe167d99b4cb41d6d0ccda82278caee9f3e2f25d5e5a3936ff3dcec60d0");
+    },
+  );
 
-  it("should handle empty content correctly", async () => {
+  it.skipIf(typeof File === "undefined")("should handle empty content correctly", async () => {
     const emptyBlob = new Blob([]);
     const emptyFile = new File([], "empty.txt");
 
@@ -88,7 +91,7 @@ describe("getBlobSize", () => {
     expect(getBlobSize(blob)).toBe(5);
   });
 
-  it("should return the size of a File", () => {
+  it.skipIf(typeof File === "undefined")("should return the size of a File", () => {
     const data = new Uint8Array([1, 2, 3, 4, 5, 6]);
     const file = new File([data], "test.txt");
     expect(getBlobSize(file)).toBe(6);
@@ -112,7 +115,7 @@ describe("getBlobType", () => {
     expect(getBlobType(blob)).toBe("application/octet-stream");
   });
 
-  it("should return the type of a File", () => {
+  it.skipIf(typeof File === "undefined")("should return the type of a File", () => {
     const data = new Uint8Array([1, 2, 3, 4, 5]);
     const file = new File([data], "test.txt", { type: "text/plain" });
     expect(getBlobType(file)).toBe("text/plain");
