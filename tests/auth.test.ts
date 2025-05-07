@@ -3,7 +3,15 @@ import { finalizeEvent, generateSecretKey } from "nostr-tools";
 import { bytesToHex } from "@noble/hashes/utils";
 
 import { EventTemplate, Signer } from "../src/types.js";
-import { createAuthEvent, createDownloadAuth, createMirrorAuth, doseAuthMatchUpload } from "../src/auth.js";
+import {
+  createAuthEvent,
+  createDeleteAuth,
+  createDownloadAuth,
+  createListAuth,
+  createMirrorAuth,
+  createUploadAuth,
+  doseAuthMatchUpload,
+} from "../src/auth.js";
 import { getBlobSha256 } from "../src/helpers/index.js";
 import { AUTH_EVENT_KIND } from "../src";
 
@@ -52,6 +60,46 @@ describe("createAuthEvent", () => {
     expect(await createAuthEvent(signer, "upload", { blobs })).toEqual(
       expect.objectContaining({ tags: expect.arrayContaining(hashes.map((hash) => ["x", hash])) }),
     );
+  });
+
+  it("should remove duplicate servers", async () => {
+    const servers = [
+      "https://example.com",
+      "https://example.com", // duplicate
+      "https://another-server.com",
+      "https://another-server.com", // duplicate
+      "https://unique-server.com",
+    ].sort();
+
+    const event = await createAuthEvent(signer, "upload", { servers });
+
+    // Count server tags
+    const serverTags = event.tags.filter((tag) => tag[0] === "server");
+
+    // Check for unique servers
+    const uniqueServers = [...new Set(servers)];
+
+    expect(serverTags).toEqual(uniqueServers.sort().map((server) => ["server", server]));
+  });
+
+  it("should remove duplicate hashes", async () => {
+    const hashes = [
+      "abcdef1234567890",
+      "abcdef1234567890", // duplicate
+      "0987654321fedcba",
+      "0987654321fedcba", // duplicate
+      "unique1234567890abcdef",
+    ];
+
+    const event = await createAuthEvent(signer, "upload", { blobs: hashes });
+
+    // Count x tags
+    const xTags = event.tags.filter((tag) => tag[0] === "x");
+
+    // Check for unique hashes
+    const uniqueHashes = [...new Set(hashes)];
+
+    expect(xTags).toEqual(uniqueHashes.map((hash) => ["x", hash]));
   });
 
   it.skipIf(typeof window !== "undefined")("should add x tags for Buffers", async () => {
@@ -211,5 +259,165 @@ describe("createDownloadAuth", () => {
     // The invalid input should not be included
     expect(auth.tags).not.toContainEqual(["x", invalidInput]);
     expect(auth.tags).not.toContainEqual(["server", invalidInput]);
+  });
+});
+describe("createUploadAuth", () => {
+  it("should create an upload auth event with default type", async () => {
+    const hash = "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890";
+
+    const auth = await createUploadAuth(signer, hash);
+
+    expect(auth.kind).toBe(AUTH_EVENT_KIND);
+    expect(auth.tags).toContainEqual(["t", "upload"]);
+    expect(auth.tags).toContainEqual(["x", hash]);
+    expect(auth.content).toBe("Upload Blob");
+  });
+
+  it("should create a media auth event when type is specified", async () => {
+    const hash = "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890";
+
+    const auth = await createUploadAuth(signer, hash, { type: "media" });
+
+    expect(auth.kind).toBe(AUTH_EVENT_KIND);
+    expect(auth.tags).toContainEqual(["t", "media"]);
+    expect(auth.tags).toContainEqual(["x", hash]);
+  });
+
+  it("should handle multiple blobs", async () => {
+    const hash1 = "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890";
+    const hash2 = "0987654321fedcba0987654321fedcba0987654321fedcba0987654321fedcba";
+
+    const auth = await createUploadAuth(signer, [hash1, hash2]);
+
+    expect(auth.tags).toContainEqual(["x", hash1]);
+    expect(auth.tags).toContainEqual(["x", hash2]);
+  });
+
+  it("should handle Blob objects", async () => {
+    const blob = new Blob(["test content"]);
+    const hash = await getBlobSha256(blob);
+
+    const auth = await createUploadAuth(signer, blob);
+
+    expect(auth.tags).toContainEqual(["x", hash]);
+  });
+
+  it("should accept custom message and expiration", async () => {
+    const hash = "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890";
+    const customMessage = "Custom upload message";
+    const customExpiration = 1234567890;
+
+    const auth = await createUploadAuth(signer, hash, {
+      message: customMessage,
+      expiration: customExpiration,
+    });
+
+    expect(auth.content).toBe(customMessage);
+    expect(auth.tags).toContainEqual(["expiration", customExpiration.toString()]);
+  });
+
+  it("should accept server parameter", async () => {
+    const hash = "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890";
+    const server = "https://example.com";
+
+    const auth = await createUploadAuth(signer, hash, { servers: server });
+
+    expect(auth.tags).toContainEqual(["server", server]);
+  });
+});
+
+describe("createListAuth", () => {
+  it("should create a basic list auth event", async () => {
+    const auth = await createListAuth(signer);
+
+    expect(auth.kind).toBe(AUTH_EVENT_KIND);
+    expect(auth.tags).toContainEqual(["t", "list"]);
+    expect(auth.content).toBe("List Blobs");
+  });
+
+  it("should accept custom message", async () => {
+    const customMessage = "Custom list message";
+
+    const auth = await createListAuth(signer, { message: customMessage });
+
+    expect(auth.content).toBe(customMessage);
+  });
+
+  it("should accept custom expiration", async () => {
+    const customExpiration = 1234567890;
+
+    const auth = await createListAuth(signer, { expiration: customExpiration });
+
+    expect(auth.tags).toContainEqual(["expiration", customExpiration.toString()]);
+  });
+
+  it("should accept server parameter", async () => {
+    const server = "https://example.com";
+
+    const auth = await createListAuth(signer, { servers: server });
+
+    expect(auth.tags).toContainEqual(["server", server]);
+  });
+});
+
+describe("createDeleteAuth", () => {
+  it("should create a basic delete auth event", async () => {
+    const hash = "abcdef1234567890";
+    const auth = await createDeleteAuth(signer, hash);
+
+    expect(auth.kind).toBe(AUTH_EVENT_KIND);
+    expect(auth.tags).toContainEqual(["t", "delete"]);
+    expect(auth.content).toBe("Delete Blob");
+    expect(auth.tags).toContainEqual(["x", hash]);
+  });
+
+  it("should accept custom message", async () => {
+    const hash = "abcdef1234567890";
+    const customMessage = "Custom delete message";
+
+    const auth = await createDeleteAuth(signer, hash, { message: customMessage });
+
+    expect(auth.content).toBe(customMessage);
+  });
+
+  it("should accept custom expiration", async () => {
+    const hash = "abcdef1234567890";
+    const customExpiration = 1234567890;
+
+    const auth = await createDeleteAuth(signer, hash, { expiration: customExpiration });
+
+    expect(auth.tags).toContainEqual(["expiration", customExpiration.toString()]);
+  });
+
+  it("should handle multiple hashes", async () => {
+    const hash1 = "abcdef1234567890";
+    const hash2 = "0987654321fedcba";
+
+    const auth = await createDeleteAuth(signer, [hash1, hash2]);
+
+    expect(auth.tags).toContainEqual(["x", hash1]);
+    expect(auth.tags).toContainEqual(["x", hash2]);
+  });
+
+  it("should accept server parameter", async () => {
+    const hash = "abcdef1234567890";
+    const server = "https://example.com";
+
+    const auth = await createDeleteAuth(signer, hash, { servers: server });
+
+    expect(auth.tags).toContainEqual(["x", hash]);
+    expect(auth.tags).toContainEqual(["server", server]);
+  });
+
+  it("should handle multiple servers", async () => {
+    const hash = "abcdef1234567890";
+    const server1 = "https://example1.com";
+    const server2 = "https://example2.com";
+
+    const auth = await createDeleteAuth(signer, hash, { servers: [server1, server2] });
+
+    expect(auth.tags).toContainEqual(["x", hash]);
+    expect(auth.tags).toContainEqual(["server", server1]);
+    expect(auth.tags).toContainEqual(["server", server2]);
   });
 });

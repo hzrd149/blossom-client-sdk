@@ -41,6 +41,7 @@ describe.runIf(typeof document !== "undefined")("handleImageFallbacks", () => {
     });
 
     // Verify getServers was called with the correct pubkey
+    expect(getServers).toHaveBeenCalledTimes(1);
     expect(getServers).toHaveBeenCalledWith("test-pubkey");
   });
 

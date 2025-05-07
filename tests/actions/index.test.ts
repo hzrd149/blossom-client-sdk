@@ -3,15 +3,15 @@ import { expect, it } from "vitest";
 import * as actions from "../../src/actions/index";
 
 it("should export expected methods", () => {
-  expect(Object.keys(actions)).toMatchInlineSnapshot(`
+  expect(Object.keys(actions).sort()).toMatchInlineSnapshot(`
     [
-      "uploadBlob",
-      "mirrorBlob",
-      "listBlobs",
+      "MediaEndpointMissingError",
       "deleteBlob",
       "downloadBlob",
+      "listBlobs",
+      "mirrorBlob",
       "multiServerUpload",
-      "MediaEndpointMissingError",
+      "uploadBlob",
       "uploadMedia",
     ]
   `);

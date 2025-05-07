@@ -60,14 +60,22 @@ export async function createAuthEvent(signer: Signer, type: AuthType, options?: 
 
   // add blob tags
   if (options?.blobs) {
-    if (Array.isArray(options.blobs))
-      for (const blob of options.blobs) draft.tags.push(["x", await normalizeToHash(blob)]);
-    else draft.tags.push(["x", await normalizeToHash(options.blobs)]);
+    if (Array.isArray(options.blobs)) {
+      const seen = new Set<string>();
+      for (const blob of options.blobs) {
+        const hash = await normalizeToHash(blob);
+        if (!seen.has(hash)) {
+          draft.tags.push(["x", hash]);
+          seen.add(hash);
+        }
+      }
+    } else draft.tags.push(["x", await normalizeToHash(options.blobs)]);
   }
 
   // add server tags
   if (options?.servers) {
-    if (Array.isArray(options.servers)) for (const blob of options.servers) draft.tags.push(["server", blob]);
+    if (Array.isArray(options.servers))
+      for (const server of new Set(options.servers)) draft.tags.push(["server", server]);
     else draft.tags.push(["server", options.servers]);
   }
 
