@@ -39,3 +39,25 @@ export type BlobDescriptor = {
 };
 
 export type PaymentRequest = CashuPaymentRequest;
+
+// NOTE: hack for Token type not being exported from cashu-ts
+type SerializedDLEQ = {
+  s: string;
+  e: string;
+  r?: string;
+};
+type Proof = {
+  id: string;
+  amount: number;
+  secret: string;
+  C: string;
+  dleq?: SerializedDLEQ;
+};
+
+/** Copy of the Token type from cashu-ts */
+export type PaymentToken = {
+  mint: string;
+  proofs: Array<Proof>;
+  memo?: string;
+  unit?: string;
+};

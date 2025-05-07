@@ -1,7 +1,5 @@
-import { type Token } from "@cashu/cashu-ts";
-
 import { ServerType } from "../client.js";
-import { PaymentRequest, SignedEvent } from "../types.js";
+import { PaymentRequest, PaymentToken, SignedEvent } from "../types.js";
 import HTTPError from "../error.js";
 import { encodeAuthorizationHeader } from "../auth.js";
 import { fetchWithTimeout, getPaymentRequestFromHeaders } from "../helpers/index.js";
@@ -19,7 +17,7 @@ export type DownloadOptions<S extends ServerType> = {
    * @param sha256 the sha256 of the blob being uploaded or mirrored
    * @param request the payment request
    */
-  onPayment?: (server: S, sha256: string, request: PaymentRequest) => Promise<Token>;
+  onPayment?: (server: S, sha256: string, request: PaymentRequest) => Promise<PaymentToken>;
   /**
    * A method used to request a signed auth event for a server and sha256
    * @param server the server requesting the auth

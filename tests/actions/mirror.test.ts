@@ -44,7 +44,7 @@ describe("mirrorBlob", async () => {
     expect(request.headers.get("x-content-type")).toBe(mockBlob.type);
     expect(request.headers.get("content-type")).toBe("application/json");
     expect(request.method).toBe("PUT");
-    expect(request.text()).resolves.toEqual(JSON.stringify({ url: mockBlob.url }));
+    await expect(request.text()).resolves.toEqual(JSON.stringify({ url: mockBlob.url }));
   });
 
   it("should not include X-Content-Type if blob type is not set", async () => {

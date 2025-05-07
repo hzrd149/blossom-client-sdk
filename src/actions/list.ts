@@ -1,8 +1,6 @@
-import { type Token } from "@cashu/cashu-ts";
-
 import HTTPError from "../error.js";
 import { ServerType } from "../client.js";
-import { BlobDescriptor, PaymentRequest, SignedEvent } from "../types.js";
+import { BlobDescriptor, PaymentRequest, PaymentToken, SignedEvent } from "../types.js";
 import { encodeAuthorizationHeader } from "../auth.js";
 import { fetchWithTimeout, getPaymentRequestFromHeaders } from "../helpers/index.js";
 
@@ -20,7 +18,7 @@ export type ListOptions<S extends ServerType> = {
    * @param server the server requiring payment
    * @param request the payment request
    */
-  onPayment?: (server: S, request: PaymentRequest) => Promise<Token>;
+  onPayment?: (server: S, request: PaymentRequest) => Promise<PaymentToken>;
   /**
    * A method used to request a signed auth event for a server
    * @param server the server requesting the auth

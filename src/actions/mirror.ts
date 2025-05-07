@@ -1,9 +1,8 @@
-import { type Token } from "@cashu/cashu-ts";
-import { ServerType } from "../client.js";
-import { BlobDescriptor, SignedEvent, PaymentRequest } from "../types.js";
-import HTTPError from "../error.js";
 import { encodeAuthorizationHeader } from "../auth.js";
+import { ServerType } from "../client.js";
+import HTTPError from "../error.js";
 import { fetchWithTimeout } from "../helpers/index.js";
+import { BlobDescriptor, PaymentRequest, PaymentToken, SignedEvent } from "../types.js";
 
 export type MirrorOptions<S extends ServerType> = {
   /** AbortSignal to cancel the action */
@@ -19,7 +18,7 @@ export type MirrorOptions<S extends ServerType> = {
    * @param blob the original blob
    * @param request the payment request
    */
-  onPayment?: (server: S, sha256: string, blob: BlobDescriptor, request: PaymentRequest) => Promise<Token>;
+  onPayment?: (server: S, sha256: string, blob: BlobDescriptor, request: PaymentRequest) => Promise<PaymentToken>;
   /**
    * A method used to request a signed auth event for a server and sha256
    * @param server the server requesting the auth

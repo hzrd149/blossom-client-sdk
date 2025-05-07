@@ -1,11 +1,9 @@
-import { type Token } from "@cashu/cashu-ts";
-
 import { encodeAuthorizationHeader } from "../auth.js";
 import { ServerType } from "../client.js";
 import HTTPError from "../error.js";
 import { getPaymentRequestFromHeaders } from "../helpers/cashu.js";
 import { fetchWithTimeout } from "../helpers/fetch.js";
-import { PaymentRequest, SignedEvent } from "../types.js";
+import { PaymentRequest, PaymentToken, SignedEvent } from "../types.js";
 
 export type DeleteOptions<S extends ServerType> = {
   /** AbortSignal to cancel the action */
@@ -20,7 +18,7 @@ export type DeleteOptions<S extends ServerType> = {
    * @param sha256 the sha256 of the blob being uploaded or mirrored
    * @param request the payment request
    */
-  onPayment?: (server: S, sha256: string, request: PaymentRequest) => Promise<Token>;
+  onPayment?: (server: S, sha256: string, request: PaymentRequest) => Promise<PaymentToken>;
   /**
    * A method used to request a signed auth event for a server and sha256
    * @param server the server requesting the auth
