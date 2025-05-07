@@ -3,7 +3,7 @@ import { type Token } from "@cashu/cashu-ts";
 import { encodeAuthorizationHeader } from "../auth.js";
 import { ServerType } from "../client.js";
 import HTTPError from "../error.js";
-import { getPaymentRequestFromHeaders } from "../helpers/cachu.js";
+import { getPaymentRequestFromHeaders } from "../helpers/cashu.js";
 import { fetchWithTimeout } from "../helpers/fetch.js";
 import { PaymentRequest, SignedEvent } from "../types.js";
 

@@ -38,7 +38,11 @@ export async function listBlobs<S extends ServerType>(
   if (opts?.since) url.searchParams.append("since", String(opts.since));
   if (opts?.until) url.searchParams.append("until", String(opts.until));
 
-  let list = await fetchWithTimeout(url, { signal: opts?.signal, timeout: opts?.timeout });
+  // attach the auth if its already set
+  const headers: HeadersInit = {};
+  if (opts?.auth) headers["Authorization"] = encodeAuthorizationHeader(opts.auth);
+
+  let list = await fetchWithTimeout(url, { headers, signal: opts?.signal, timeout: opts?.timeout });
 
   // handle auth and payments
   switch (list.status) {
@@ -48,7 +52,7 @@ export async function listBlobs<S extends ServerType>(
 
       // Try list with auth
       list = await fetchWithTimeout(url, {
-        headers: { Authorization: encodeAuthorizationHeader(auth) },
+        headers: { ...headers, Authorization: encodeAuthorizationHeader(auth) },
         signal: opts?.signal,
         timeout: opts?.timeout,
       });
@@ -64,7 +68,7 @@ export async function listBlobs<S extends ServerType>(
 
       // Try list with payment
       list = await fetchWithTimeout(url, {
-        headers: { "X-Cashu": payment },
+        headers: { ...headers, "X-Cashu": payment },
         signal: opts?.signal,
         timeout: opts?.timeout,
       });

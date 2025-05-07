@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getPaymentRequestFromHeaders } from "../../src/helpers/cachu.js";
+import { getPaymentRequestFromHeaders } from "../../src/helpers/cashu.js";
 import { PaymentRequest, PaymentRequestTransportType } from "@cashu/cashu-ts";
 
 describe("getPaymentRequestFromHeaders", () => {
