@@ -4,6 +4,7 @@ import { ListOptions } from "./actions/list.js";
 import { MirrorOptions } from "./actions/mirror.js";
 import { UploadOptions } from "./actions/upload.js";
 import { ServerType, UploadType } from "./client.js";
+import { type PaymentRequest as CashuPaymentRequest } from "@cashu/cashu-ts";
 
 export type EventTemplate = {
   created_at: number;
@@ -37,9 +38,4 @@ export type BlobDescriptor = {
   url: string;
 };
 
-export type PaymentRequest = {
-  amount: number;
-  unit: string;
-  mints: string[];
-  pubkey?: string;
-};
+export type PaymentRequest = CashuPaymentRequest;
