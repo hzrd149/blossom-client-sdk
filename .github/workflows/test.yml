@@ -9,12 +9,12 @@ on:
       - master
 
 jobs:
-  test:
+  test-node:
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        node-version: [20.x, 22.x]
+        node-version: [18.x, 20.x, 22.x]
       fail-fast: false
 
     steps:
@@ -34,3 +34,31 @@ jobs:
 
       - name: Run tests
         run: pnpm vitest run
+
+  test-browser:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Install Dependencies
+        run: pnpm install
+
+      - name: Install Chromium
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y chromium-browser
+
+      - name: Run tests
+        run: pnpm vitest run --browser --browser.headless
+        env:
+          CHROME_BIN: /usr/bin/chromium-browser

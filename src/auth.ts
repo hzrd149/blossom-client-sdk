@@ -7,6 +7,7 @@ import { EventTemplate, SignedEvent, Signer } from "./types.js";
 export const now = () => Math.floor(new Date().valueOf() / 1000);
 export const oneHour = () => now() + 60 * 60;
 
+/** Encodes an auth event into a nostr authorization header */
 export function encodeAuthorizationHeader(event: SignedEvent) {
   return "Nostr " + btoa(JSON.stringify(event));
 }

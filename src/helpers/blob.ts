@@ -1,10 +1,12 @@
 import { bytesToHex } from "@noble/hashes/utils";
 import { UploadType } from "../client.js";
 
+/** Checks if a string is a 64 length hex string */
 export function isSha256(str: string) {
   return str.match(/^[0-9a-f]{64}$/);
 }
 
+/** A symbol use to store the sha256 hash of a blob on a Blob instance */
 export const BlobHashSymbol = Symbol.for("sha256");
 
 /** gets or calculates the sha2456 of a Blob */
@@ -19,7 +21,7 @@ export function getBlobSha256(blob: UploadType) {
 
 /** Calculates the sha2456 of a Blob */
 export async function computeBlobSha256(blob: UploadType) {
-  let buffer: ArrayBuffer;
+  let buffer: ArrayBuffer | Buffer;
   if (blob instanceof File || blob instanceof Blob) {
     buffer = await blob.arrayBuffer();
   } else {

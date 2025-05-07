@@ -1,11 +1,11 @@
 import { type Token } from "@cashu/cashu-ts";
 
-import { ServerType } from "../client.js";
-import { PaymentRequest, SignedEvent } from "../types.js";
-import HTTPError from "../error.js";
 import { encodeAuthorizationHeader } from "../auth.js";
+import { ServerType } from "../client.js";
+import HTTPError from "../error.js";
 import { getPaymentRequestFromHeaders } from "../helpers/cachu.js";
 import { fetchWithTimeout } from "../helpers/fetch.js";
+import { PaymentRequest, SignedEvent } from "../types.js";
 
 export type DeleteOptions<S extends ServerType> = {
   /** AbortSignal to cancel the action */

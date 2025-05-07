@@ -4,9 +4,9 @@ export default defineConfig({
   test: {
     environment: "node",
     browser: {
-      name: "chromium",
       provider: "playwright",
-      providerOptions: {},
+      instances: [{ browser: "chromium" }],
+      // headless: true,
     },
     coverage: {
       include: ["**/src/**"],

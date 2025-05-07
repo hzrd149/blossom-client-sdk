@@ -69,21 +69,36 @@ export function handleBrokenImages(root: HTMLElement, getServers: GetServersMeth
   const observer = new MutationObserver((changes) => {
     for (const change of changes) {
       if (change.type === "childList") {
-        // add "error" event handles to any new <img/> elements
-        change.addedNodes.forEach((el) => {
-          if (el instanceof HTMLImageElement && !listeners.has(el)) {
-            const listener = handleImageFallbacks(el, getServers);
-            listeners.set(el, listener);
+        // Process added nodes and their children for images
+        change.addedNodes.forEach((node) => {
+          if (!(node instanceof HTMLElement)) return;
+
+          // Find all img elements in the added node and its children
+          const children = Array.from(node.querySelectorAll("img[src]"));
+          const images = node instanceof HTMLImageElement ? [node, ...children] : children;
+
+          for (const image of images) {
+            if (image instanceof HTMLImageElement && !listeners.has(image)) {
+              const listener = handleImageFallbacks(image, getServers);
+              listeners.set(image, listener);
+            }
           }
         });
 
         // cleanup removed nodes
-        change.removedNodes.forEach((el) => {
-          if (el instanceof HTMLImageElement) {
-            const listener = listeners.get(el);
-            if (listener) {
-              listener();
-              listeners.delete(el);
+        change.removedNodes.forEach((node) => {
+          if (!(node instanceof HTMLElement)) return;
+
+          // Find all img elements in the removed node and its children
+          const children = Array.from(node.querySelectorAll("img[src]"));
+          const images = node instanceof HTMLImageElement ? [node, ...children] : children;
+          for (const image of images) {
+            if (image instanceof HTMLImageElement) {
+              const listener = listeners.get(image);
+              if (listener) {
+                listener();
+                listeners.delete(image);
+              }
             }
           }
         });

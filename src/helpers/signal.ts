@@ -8,7 +8,7 @@ export function wrapSignalWithTimeout(
 ): { cancel: () => void; signal: AbortSignal } {
   const controller = new AbortController();
 
-  if (signal) signal.addEventListener("abort", (err) => controller.abort(err));
+  if (signal) signal.addEventListener("abort", (err) => controller.abort(err), { once: true });
 
   const t = setTimeout(() => {
     controller.abort(new TimeoutError(message));
