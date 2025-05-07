@@ -54,11 +54,7 @@ jobs:
         run: pnpm install
 
       - name: Install Chromium
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y chromium-browser
+        run: pnpm exec playwright install
 
       - name: Run tests
         run: pnpm vitest run --browser --browser.headless
-        env:
-          CHROME_BIN: /usr/bin/chromium-browser
