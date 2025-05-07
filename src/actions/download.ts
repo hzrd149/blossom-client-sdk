@@ -2,7 +2,7 @@ import { ServerType } from "../client.js";
 import { PaymentRequest, PaymentToken, SignedEvent } from "../types.js";
 import HTTPError from "../error.js";
 import { encodeAuthorizationHeader } from "../auth.js";
-import { fetchWithTimeout, getPaymentRequestFromHeaders } from "../helpers/index.js";
+import { fetchWithTimeout } from "../helpers/index.js";
 
 export type DownloadOptions<S extends ServerType> = {
   /** AbortSignal to cancel the action */
@@ -59,6 +59,7 @@ export async function downloadBlob<S extends ServerType>(server: S, hash: string
     case 402: {
       if (!opts?.onPayment) throw new Error("Missing payment handler");
       const { getEncodedToken } = await import("@cashu/cashu-ts");
+      const { getPaymentRequestFromHeaders } = await import("../helpers/cashu.js");
       const request = getPaymentRequestFromHeaders(download.headers);
 
       const token = await opts.onPayment(server, hash, request);

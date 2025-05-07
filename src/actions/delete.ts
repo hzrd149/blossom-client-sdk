@@ -1,7 +1,6 @@
 import { encodeAuthorizationHeader } from "../auth.js";
 import { ServerType } from "../client.js";
 import HTTPError from "../error.js";
-import { getPaymentRequestFromHeaders } from "../helpers/cashu.js";
 import { fetchWithTimeout } from "../helpers/fetch.js";
 import { PaymentRequest, PaymentToken, SignedEvent } from "../types.js";
 
@@ -61,6 +60,7 @@ export async function deleteBlob<S extends ServerType>(server: S, hash: string, 
     case 402: {
       if (!opts?.onPayment) throw new Error("Missing payment handler");
       const { getEncodedToken } = await import("@cashu/cashu-ts");
+      const { getPaymentRequestFromHeaders } = await import("../helpers/cashu.js");
       const request = getPaymentRequestFromHeaders(res.headers);
 
       const token = await opts.onPayment(server, hash, request);
