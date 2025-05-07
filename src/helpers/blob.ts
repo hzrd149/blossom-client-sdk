@@ -36,7 +36,7 @@ export async function computeBlobSha256(blob: UploadType) {
     const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
     hash = new Uint8Array(hashBuffer);
   } else {
-    const { sha256 } = await import("@noble/hashes/sha256");
+    const { sha256 } = await import("@noble/hashes/sha2");
     hash = sha256.create().update(new Uint8Array(buffer)).digest();
   }
 

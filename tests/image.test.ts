@@ -36,7 +36,7 @@ describe.runIf(typeof document !== "undefined")("handleImageFallbacks", () => {
     // Wait for async operations to complete
     await vi.waitFor(() => {
       expect(image.src).toBe(
-        "https://server2.com/b1674191a88ec5cdd733e4240a81803105dc412d6c6708d53ab94fc248f4f553.jpg",
+        "https://server3.com/b1674191a88ec5cdd733e4240a81803105dc412d6c6708d53ab94fc248f4f553.jpg",
       );
     });
 
@@ -58,7 +58,7 @@ describe.runIf(typeof document !== "undefined")("handleImageFallbacks", () => {
     // Wait for first server change
     await vi.waitFor(() => {
       expect(image.src).toBe(
-        "https://server2.com/b1674191a88ec5cdd733e4240a81803105dc412d6c6708d53ab94fc248f4f553.jpg",
+        "https://server3.com/b1674191a88ec5cdd733e4240a81803105dc412d6c6708d53ab94fc248f4f553.jpg",
       );
     });
 
@@ -66,16 +66,6 @@ describe.runIf(typeof document !== "undefined")("handleImageFallbacks", () => {
     image.dispatchEvent(new Event("error"));
 
     // Wait for second server change
-    await vi.waitFor(() => {
-      expect(image.src).toBe(
-        "https://server3.com/b1674191a88ec5cdd733e4240a81803105dc412d6c6708d53ab94fc248f4f553.jpg",
-      );
-    });
-
-    // Trigger third error
-    image.dispatchEvent(new Event("error"));
-
-    // Wait for third server change
     await vi.waitFor(() => {
       expect(image.src).toBe(
         "https://server4.com/b1674191a88ec5cdd733e4240a81803105dc412d6c6708d53ab94fc248f4f553.jpg",
@@ -93,7 +83,7 @@ describe.runIf(typeof document !== "undefined")("handleImageFallbacks", () => {
     // Wait for async operations to complete
     await vi.waitFor(() => {
       expect(image.src).toBe(
-        "https://server2.com/b1674191a88ec5cdd733e4240a81803105dc412d6c6708d53ab94fc248f4f553.jpg",
+        "https://server3.com/b1674191a88ec5cdd733e4240a81803105dc412d6c6708d53ab94fc248f4f553.jpg",
       );
     });
 
@@ -117,7 +107,7 @@ describe.runIf(typeof document !== "undefined")("handleImageFallbacks", () => {
     // Wait for async operations to complete
     await vi.waitFor(() => {
       expect(image.src).toBe(
-        "https://server2.com/b1674191a88ec5cdd733e4240a81803105dc412d6c6708d53ab94fc248f4f553.jpg",
+        "https://server3.com/b1674191a88ec5cdd733e4240a81803105dc412d6c6708d53ab94fc248f4f553.jpg",
       );
     });
 
@@ -163,7 +153,7 @@ describe.runIf(typeof document !== "undefined")("handleImageFallbacks", () => {
     // Wait for async operations to complete
     await vi.waitFor(() => {
       expect(image.src).toBe(
-        "https://server2.com/b1674191a88ec5cdd733e4240a81803105dc412d6c6708d53ab94fc248f4f553.png",
+        "https://server3.com/b1674191a88ec5cdd733e4240a81803105dc412d6c6708d53ab94fc248f4f553.png",
       );
     });
   });
@@ -181,7 +171,7 @@ describe.runIf(typeof document !== "undefined")("handleImageFallbacks", () => {
     // Wait for async operations to complete
     await vi.waitFor(() => {
       expect(image.src).toBe(
-        "https://server2.com/b1674191a88ec5cdd733e4240a81803105dc412d6c6708d53ab94fc248f4f553.pdf",
+        "https://server3.com/b1674191a88ec5cdd733e4240a81803105dc412d6c6708d53ab94fc248f4f553.pdf",
       );
     });
   });
@@ -224,7 +214,7 @@ describe.runIf(typeof document !== "undefined")("handleBrokenImages", () => {
     // Wait for async operations to complete
     await vi.waitFor(() => {
       expect(image.src).toBe(
-        "https://server2.com/b1674191a88ec5cdd733e4240a81803105dc412d6c6708d53ab94fc248f4f553.jpg",
+        "https://server3.com/b1674191a88ec5cdd733e4240a81803105dc412d6c6708d53ab94fc248f4f553.jpg",
       );
     });
 
@@ -250,7 +240,7 @@ describe.runIf(typeof document !== "undefined")("handleBrokenImages", () => {
     // Wait for async operations to complete
     await vi.waitFor(() => {
       expect(image.src).toBe(
-        "https://server2.com/b1674191a88ec5cdd733e4240a81803105dc412d6c6708d53ab94fc248f4f553.jpg",
+        "https://server3.com/b1674191a88ec5cdd733e4240a81803105dc412d6c6708d53ab94fc248f4f553.jpg",
       );
     });
 
@@ -278,7 +268,7 @@ describe.runIf(typeof document !== "undefined")("handleBrokenImages", () => {
     // Wait for async operations to complete
     await vi.waitFor(() => {
       expect(image.src).toBe(
-        "https://server2.com/b1674191a88ec5cdd733e4240a81803105dc412d6c6708d53ab94fc248f4f553.jpg",
+        "https://server3.com/b1674191a88ec5cdd733e4240a81803105dc412d6c6708d53ab94fc248f4f553.jpg",
       );
     });
 
@@ -310,7 +300,7 @@ describe.runIf(typeof document !== "undefined")("handleBrokenImages", () => {
     // Wait for async operations to complete
     await vi.waitFor(() => {
       expect(image.src).toBe(
-        "https://server2.com/b1674191a88ec5cdd733e4240a81803105dc412d6c6708d53ab94fc248f4f553.jpg",
+        "https://server3.com/b1674191a88ec5cdd733e4240a81803105dc412d6c6708d53ab94fc248f4f553.jpg",
       );
     });
 

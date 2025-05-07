@@ -177,7 +177,7 @@ export async function multiServerUpload<S extends ServerType, B extends UploadTy
         }
       }
 
-      // attempt to upload
+      // attempt to upload if first upload or mirror failed
       if (!metadata) {
         const sha256 = await getBlobSha256(blob);
         options.onStart?.(server, sha256, blob);
