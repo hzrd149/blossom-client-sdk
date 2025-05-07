@@ -1,5 +1,17 @@
 # blossom-client-sdk
 
+## 4.0.0
+
+### Major Changes
+
+- 70e7cd8: Update payment requests to use cashu-ts payment requests according to NUT-23
+
+### Patch Changes
+
+- 238b0e4: Fix `handleBrokenImages` not handling child `<img/>` elements
+- 6077c99: Fix `listBlobs` action not including auth header
+- 494eac7: Fix duplicate hashes when creating auth event
+
 ## 3.0.1
 
 ### Patch Changes
