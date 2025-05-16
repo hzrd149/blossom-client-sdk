@@ -1,5 +1,11 @@
 # blossom-client-sdk
 
+## 4.1.0
+
+### Minor Changes
+
+- 64e0b8a: Extend `auth` option to allow for preemptively sending authorization or disabling authorization.
+
 ## 4.0.0
 
 ### Major Changes
