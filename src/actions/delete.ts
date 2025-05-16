@@ -7,8 +7,8 @@ import { PaymentRequest, PaymentToken, SignedEvent } from "../types.js";
 export type DeleteOptions<S extends ServerType> = {
   /** AbortSignal to cancel the action */
   signal?: AbortSignal;
-  /** Override auth event to use */
-  auth?: SignedEvent;
+  /** Override authorization event, or true to always use authorization, false to disable authorization */
+  auth?: SignedEvent | boolean;
   /** Request timeout */
   timeout?: number;
   /**
@@ -32,8 +32,15 @@ export async function deleteBlob<S extends ServerType>(server: S, hash: string, 
 
   const headers: HeadersInit = {};
 
-  // attach the auth if its already set
-  if (opts?.auth) headers["Authorization"] = encodeAuthorizationHeader(opts.auth);
+  // attach the authorization if its already set
+  if (opts?.auth) {
+    if (typeof opts.auth === "boolean") {
+      if (!opts.onAuth) throw new Error("Missing onAuth handler");
+      headers["Authorization"] = encodeAuthorizationHeader(await opts.onAuth(server, hash));
+    } else {
+      headers["Authorization"] = encodeAuthorizationHeader(opts.auth);
+    }
+  }
 
   let res = await fetchWithTimeout(url, {
     method: "DELETE",
@@ -45,7 +52,11 @@ export async function deleteBlob<S extends ServerType>(server: S, hash: string, 
   // handle auth and payment
   switch (res.status) {
     case 401: {
-      const auth = opts?.auth || (await opts?.onAuth?.(server, hash));
+      // throw an error if authorization is required but disabled
+      if (opts?.auth === false) throw new Error("Authorization disabled");
+
+      // request authorization for this request
+      const auth = await opts?.onAuth?.(server, hash);
       if (!auth) throw new Error("Missing auth handler");
 
       // Try delete with auth

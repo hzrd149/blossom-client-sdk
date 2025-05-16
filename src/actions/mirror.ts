@@ -7,8 +7,8 @@ import { BlobDescriptor, PaymentRequest, PaymentToken, SignedEvent } from "../ty
 export type MirrorOptions<S extends ServerType> = {
   /** AbortSignal to cancel the action */
   signal?: AbortSignal;
-  /** Override auth event to use */
-  auth?: SignedEvent;
+  /** Override authorization event, or true to always use authorization, false to disable authorization */
+  auth?: SignedEvent | boolean;
   /** Request timeout */
   timeout?: number;
   /**
@@ -43,8 +43,15 @@ export async function mirrorBlob<S extends ServerType>(
   };
   if (blob.type) headers["X-Content-Type"] = blob.type;
 
-  // attach the auth if its already set
-  if (opts?.auth) headers["Authorization"] = encodeAuthorizationHeader(opts.auth);
+  // attach the authorization if its already set
+  if (opts?.auth) {
+    if (typeof opts.auth === "boolean") {
+      if (!opts.onAuth) throw new Error("Missing onAuth handler");
+      headers["Authorization"] = encodeAuthorizationHeader(await opts.onAuth(server, blob.sha256, blob));
+    } else {
+      headers["Authorization"] = encodeAuthorizationHeader(opts.auth);
+    }
+  }
 
   const body = JSON.stringify({ url: blob.url });
   let mirror = await fetchWithTimeout(url, {
@@ -57,7 +64,11 @@ export async function mirrorBlob<S extends ServerType>(
 
   switch (mirror.status) {
     case 401: {
-      const auth = opts?.auth || (await opts?.onAuth?.(server, blob.sha256, blob));
+      // throw an error if auth is requested and disabled
+      if (opts?.auth === false) throw new Error("Authorization disabled");
+
+      // Request authorization event for this mirror
+      const auth = await opts?.onAuth?.(server, blob.sha256, blob);
       if (!auth) throw new Error("Missing auth handler");
 
       // Try mirror with auth

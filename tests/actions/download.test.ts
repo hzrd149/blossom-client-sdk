@@ -136,4 +136,23 @@ describe("downloadBlob", async () => {
     expect(response).toBeDefined();
     expect(await response.text()).toBe(mockResponseData);
   });
+
+  it("should preset authorization if auth=true", async () => {
+    fetchMock.mockResponseOnce("mock response", { status: 200 });
+
+    const onAuth = vi.fn().mockResolvedValue(mockAuth);
+    await downloadBlob(mockServer, mockSha256, { auth: true, onAuth });
+
+    // Check that both requests have the authorization header
+    expect(fetchMock.requests()[0].headers.get("Authorization")).toBe(encodeAuthorizationHeader(mockAuth));
+  });
+
+  it("should throw an error if auth=true and no onAuth handler is provided", async () => {
+    await expect(downloadBlob(mockServer, mockSha256, { auth: true })).rejects.toThrow("Missing onAuth handler");
+  });
+
+  it("should throw an error if authorization is requested but is disabled auth=false", async () => {
+    fetchMock.mockResponseOnce(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+    await expect(downloadBlob(mockServer, mockSha256, { auth: false })).rejects.toThrow("Authorization disabled");
+  });
 });

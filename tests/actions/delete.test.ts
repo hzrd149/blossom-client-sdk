@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from "vitest";
 import { getEncodedToken, PaymentRequest, Token } from "@cashu/cashu-ts";
+import { describe, expect, it, vi } from "vitest";
 
 import { finalizeEvent, generateSecretKey } from "nostr-tools";
 import { deleteBlob } from "../../src/actions/delete.js";
@@ -116,5 +116,24 @@ describe("deleteBlob", async () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
 
     await expect(promise).rejects.toThrow();
+  });
+
+  it("should preset authorization if auth=true", async () => {
+    fetchMock.mockResponseOnce(JSON.stringify({ success: true }));
+
+    const onAuth = vi.fn().mockResolvedValue(mockAuth);
+    await deleteBlob(mockServer, mockSha256, { auth: true, onAuth });
+
+    // Check that both requests have the authorization header
+    expect(fetchMock.requests()[0].headers.get("Authorization")).toBe(encodeAuthorizationHeader(mockAuth));
+  });
+
+  it("should throw an error if auth=true and no onAuth handler is provided", async () => {
+    await expect(deleteBlob(mockServer, mockSha256, { auth: true })).rejects.toThrow("Missing onAuth handler");
+  });
+
+  it("should throw an error if authorization is requested but is disabled auth=false", async () => {
+    fetchMock.mockResponseOnce(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+    await expect(deleteBlob(mockServer, mockSha256, { auth: false })).rejects.toThrow("Authorization disabled");
   });
 });

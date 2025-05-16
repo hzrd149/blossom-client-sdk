@@ -19,6 +19,7 @@ it("should export expected methods", () => {
       "createListAuth",
       "createMirrorAuth",
       "createUploadAuth",
+      "doseAuthMatchBlob",
       "doseAuthMatchUpload",
       "encodeAuthorizationHeader",
       "fetchWithTimeout",

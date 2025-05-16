@@ -10,7 +10,7 @@ import {
   createListAuth,
   createMirrorAuth,
   createUploadAuth,
-  doseAuthMatchUpload,
+  doseAuthMatchBlob,
 } from "../src/auth.js";
 import { getBlobSha256 } from "../src/helpers/index.js";
 import { AUTH_EVENT_KIND } from "../src";
@@ -133,25 +133,22 @@ describe("createMirrorAuth", () => {
   });
 });
 
-describe("doseAuthMatchUpload", () => {
+describe("doseAuthMatchBlob", () => {
   it("should return false if auth event type is not upload or media", async () => {
     const auth = await createAuthEvent(signer, "list");
-    const result = await doseAuthMatchUpload(auth, "https://example.com", "test-hash");
-    expect(result).toBe(false);
+    expect(await doseAuthMatchBlob(auth, "https://example.com", "test-hash")).toBe(false);
   });
 
   it("should return true if blob hash matches x tag", async () => {
     const hash = "abcdef1234567890";
     const auth = await createAuthEvent(signer, "upload", { blobs: hash });
-    const result = await doseAuthMatchUpload(auth, "https://example.com", hash);
-    expect(result).toBe(true);
+    expect(await doseAuthMatchBlob(auth, "https://example.com", hash)).toBe(true);
   });
 
   it("should return true if server matches server tag", async () => {
     const server = "https://example.com";
     const auth = await createAuthEvent(signer, "upload", { servers: server });
-    const result = await doseAuthMatchUpload(auth, server, "non-matching-hash");
-    expect(result).toBe(true);
+    expect(await doseAuthMatchBlob(auth, server, "non-matching-hash")).toBe(true);
   });
 
   it("should return false if neither blob hash nor server matches", async () => {
@@ -159,23 +156,19 @@ describe("doseAuthMatchUpload", () => {
       blobs: "some-hash",
       servers: "https://example.com",
     });
-    const result = await doseAuthMatchUpload(auth, "https://different.com", "different-hash");
-    expect(result).toBe(false);
-  });
-
-  it("should work with media type auth events", async () => {
-    const hash = "abcdef1234567890";
-    const auth = await createAuthEvent(signer, "media", { blobs: hash });
-    const result = await doseAuthMatchUpload(auth, "https://example.com", hash);
-    expect(result).toBe(true);
+    expect(await doseAuthMatchBlob(auth, "https://different.com", "different-hash")).toBe(false);
   });
 
   it("should handle Blob objects as input", async () => {
     const blob = new Blob(["test content"]);
     const hash = await getBlobSha256(blob);
     const auth = await createAuthEvent(signer, "upload", { blobs: hash });
-    const result = await doseAuthMatchUpload(auth, "https://example.com", blob);
-    expect(result).toBe(true);
+    expect(await doseAuthMatchBlob(auth, "https://example.com", blob)).toBe(true);
+  });
+
+  it("shoudl return false if type does not match", async () => {
+    const auth = await createAuthEvent(signer, "upload", { blobs: "hash" });
+    expect(await doseAuthMatchBlob(auth, "https://example.com", "hash", "media")).toBe(false);
   });
 });
 

@@ -176,4 +176,28 @@ describe("uploadMedia", async () => {
 
     await expect(uploadMedia(mockServer, mockBlob, { timeout: 50 })).rejects.toThrow();
   });
+
+  it("should always attach authorization  if auth=true", async () => {
+    fetchMock.mockResponses(
+      // HEAD response
+      ["", { status: 200 }],
+      // PUT response
+      [JSON.stringify(mockResponse), { status: 200 }],
+    );
+
+    const onAuth = vi.fn().mockResolvedValue(mockAuth);
+    await uploadMedia(mockServer, mockBlob, { auth: true, onAuth });
+
+    expect(fetchMock.requests()[0].headers.get("Authorization")).toBe(encodeAuthorizationHeader(mockAuth));
+    expect(fetchMock.requests()[1].headers.get("Authorization")).toBe(encodeAuthorizationHeader(mockAuth));
+  });
+
+  it("should throw an error if auth=true and no onAuth handler is provided", async () => {
+    await expect(uploadMedia(mockServer, mockBlob, { auth: true })).rejects.toThrow("Missing onAuth handler");
+  });
+
+  it("should throw an error if auth=false and authorization is requested", async () => {
+    fetchMock.mockResponseOnce(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+    await expect(uploadMedia(mockServer, mockBlob, { auth: false })).rejects.toThrow("Authorization disabled");
+  });
 });

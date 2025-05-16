@@ -23,8 +23,15 @@ export async function uploadMedia<S extends ServerType, B extends UploadType>(
     "X-SHA-256": sha256,
   };
 
-  // attach the auth if its already set
-  if (opts?.auth) headers["Authorization"] = encodeAuthorizationHeader(opts.auth);
+  // attach the authorization if its already set
+  if (opts?.auth) {
+    if (typeof opts.auth === "boolean") {
+      if (!opts.onAuth) throw new Error("Missing onAuth handler");
+      headers["Authorization"] = encodeAuthorizationHeader(await opts.onAuth(server, sha256, "media", blob));
+    } else {
+      headers["Authorization"] = encodeAuthorizationHeader(opts.auth);
+    }
+  }
 
   // build check headers
   const checkHeaders: Record<string, string> = {
@@ -51,7 +58,11 @@ export async function uploadMedia<S extends ServerType, B extends UploadType>(
   // handle auth and payment
   switch (firstTry.status) {
     case 401: {
-      const auth = opts?.auth || (await opts?.onAuth?.(server, sha256, "media", blob));
+      // throw an error if auth is requested and disabled
+      if (opts?.auth === false) throw new Error("Authorization disabled");
+
+      // Request authorization event for this upload
+      const auth = await opts?.onAuth?.(server, sha256, "media", blob);
       if (!auth) throw new Error("Missing auth handler");
 
       // Try upload with auth

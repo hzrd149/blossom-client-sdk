@@ -6,17 +6,17 @@ import { createUploadAuth } from "../../src/auth";
 import { EventTemplate, PaymentToken, Signer } from "../../src/types.js";
 import fetchMock from "../fetch.js";
 import {
-	expectNoErrors,
-	MockBrokenServer,
-	MockOfflineServer,
-	MockServer,
-	MockServerNoMedia,
-	MockServerRequireAuth,
-	MockServerRequirePayment,
-	MockUnauthorizedServer,
-	modifiedHash,
-	uploadBlob,
-	uploadHash,
+  expectNoErrors,
+  MockBrokenServer,
+  MockOfflineServer,
+  MockServer,
+  MockServerNoMedia,
+  MockServerRequireAuth,
+  MockServerRequirePayment,
+  MockUnauthorizedServer,
+  modifiedHash,
+  uploadBlob,
+  uploadHash,
 } from "../mock-servers";
 
 const key = generateSecretKey();
@@ -227,8 +227,61 @@ describe("multiServerUpload", async () => {
       mockServers = [new MockServerRequireAuth("https://server1.com"), new MockServer("https://server2.com")];
 
       const onError = vi.fn();
-      await multiServerUpload(mockServers.map((s) => s.url), uploadBlob, { onError });
+      await multiServerUpload(
+        mockServers.map((s) => s.url),
+        uploadBlob,
+        { onError },
+      );
       expect(onError).toHaveBeenCalledWith(mockServers[0].url, uploadHash, uploadBlob, expect.any(Error));
+    });
+
+    it("should reuse auth events for multiple servers", async () => {
+      mockServers = [
+        new MockServerRequireAuth("https://server1.com"),
+        new MockServerRequireAuth("https://server2.com"),
+      ];
+
+      const onAuth = vi.fn().mockResolvedValue(createUploadAuth(signer, uploadHash));
+      await multiServerUpload(
+        mockServers.map((s) => s.url),
+        uploadBlob,
+        { onAuth },
+      );
+
+      expect(onAuth).toHaveBeenCalledTimes(1);
+    });
+
+    it("should set authorization header on all requests if auth=true", async () => {
+      mockServers = [new MockServer("https://server1.com"), new MockServer("https://server2.com")];
+
+      const onAuth = vi.fn().mockResolvedValue(createUploadAuth(signer, uploadHash));
+      await multiServerUpload(
+        mockServers.map((s) => s.url),
+        uploadBlob,
+        { onAuth, auth: true },
+      );
+
+      // it should send authorization header on all requests
+      expect(mockServers[0].endpoints).toEqual([
+        expect.objectContaining({
+          pathname: "/upload",
+          method: "HEAD",
+          headers: expect.objectContaining({ authorization: expect.any(String) }),
+        }),
+        expect.objectContaining({
+          pathname: "/upload",
+          method: "PUT",
+          headers: expect.objectContaining({ authorization: expect.any(String) }),
+        }),
+      ]);
+
+      expect(mockServers[1].endpoints).toEqual([
+        expect.objectContaining({
+          pathname: "/mirror",
+          method: "PUT",
+          headers: expect.objectContaining({ authorization: expect.any(String) }),
+        }),
+      ]);
     });
   });
 
@@ -319,7 +372,11 @@ describe("multiServerUpload", async () => {
       mockServers = [new MockServerRequirePayment("https://server1.com"), new MockServer("https://server2.com")];
 
       const onError = vi.fn();
-      await multiServerUpload(mockServers.map((s) => s.url), uploadBlob, { onError });
+      await multiServerUpload(
+        mockServers.map((s) => s.url),
+        uploadBlob,
+        { onError },
+      );
       expect(onError).toHaveBeenCalledWith(mockServers[0].url, uploadHash, uploadBlob, expect.any(Error));
     });
   });

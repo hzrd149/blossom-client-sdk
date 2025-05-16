@@ -7,8 +7,8 @@ import { fetchWithTimeout } from "../helpers/index.js";
 export type ListOptions<S extends ServerType> = {
   /** AbortSignal to cancel the action */
   signal?: AbortSignal;
-  /** Override auth event to use */
-  auth?: SignedEvent;
+  /** Override authorization event, or true to always use authorization, false to disable authorization */
+  auth?: SignedEvent | boolean;
   /** Request timeout */
   timeout?: number;
   since?: number;
@@ -38,14 +38,26 @@ export async function listBlobs<S extends ServerType>(
 
   // attach the auth if its already set
   const headers: HeadersInit = {};
-  if (opts?.auth) headers["Authorization"] = encodeAuthorizationHeader(opts.auth);
+
+  // attach the authorization if its already set
+  if (opts?.auth) {
+    if (typeof opts.auth === "boolean") {
+      if (!opts.onAuth) throw new Error("Missing onAuth handler");
+      headers["Authorization"] = encodeAuthorizationHeader(await opts.onAuth(server));
+    } else {
+      headers["Authorization"] = encodeAuthorizationHeader(opts.auth);
+    }
+  }
 
   let list = await fetchWithTimeout(url, { headers, signal: opts?.signal, timeout: opts?.timeout });
 
   // handle auth and payments
   switch (list.status) {
     case 401: {
-      const auth = opts?.auth || (await opts?.onAuth?.(server));
+      // throw an error if auth is requested and disabled
+      if (opts?.auth === false) throw new Error("Authorization disabled");
+
+      const auth = await opts?.onAuth?.(server);
       if (!auth) throw new Error("Missing auth handler");
 
       // Try list with auth

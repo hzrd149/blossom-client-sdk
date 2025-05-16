@@ -1,4 +1,4 @@
-import { doseAuthMatchUpload } from "../auth.js";
+import { doseAuthMatchBlob } from "../auth.js";
 import { ServerType, UploadType } from "../client.js";
 import { getBlobSha256 } from "../helpers/index.js";
 import { BlobDescriptor, PaymentRequest } from "../types.js";
@@ -86,11 +86,11 @@ export async function multiServerUpload<S extends ServerType, B extends UploadTy
   const results = new Map<S, BlobDescriptor>();
 
   // reuse auth events
-  let authEvents = options.auth ? [options.auth] : [];
+  let authEvents = typeof options.auth === "object" ? [options.auth] : [];
   const handleAuthRequest = async (server: S, sha256: string, type: "upload" | "media") => {
     // check if any existing auth events match
     for (const auth of authEvents) {
-      if (await doseAuthMatchUpload(auth, server, sha256)) return auth;
+      if (await doseAuthMatchBlob(auth, server, sha256, type)) return auth;
     }
 
     // create a new auth event
@@ -122,6 +122,10 @@ export async function multiServerUpload<S extends ServerType, B extends UploadTy
 
         // attempt to upload media
         initialUpload = await uploadMedia(server, blob, {
+          // pass through abort signal
+          signal: options.signal,
+          // pass through authorization flag
+          auth: typeof options.auth === "boolean" ? options.auth : undefined,
           onAuth: handleAuthRequest,
           onPayment: handlePaymentRequest,
         });
@@ -166,7 +170,10 @@ export async function multiServerUpload<S extends ServerType, B extends UploadTy
           options.onStart?.(server, initialUpload.sha256, blob);
 
           metadata = await mirrorBlob(server, initialUpload, {
+            // pass through abort signal
             signal: options.signal,
+            // pass through authorization flag
+            auth: typeof options.auth === "boolean" ? options.auth : undefined,
             onAuth: (server, sha256) => handleAuthRequest(server, sha256, "upload"),
             onPayment: handlePaymentRequest,
             timeout: options.mirrorTimeout,
@@ -183,6 +190,10 @@ export async function multiServerUpload<S extends ServerType, B extends UploadTy
         options.onStart?.(server, sha256, blob);
 
         metadata = await uploadBlob(server, blob, {
+          // pass through abort signal
+          signal: options.signal,
+          // pass through authorization flag
+          auth: typeof options.auth === "boolean" ? options.auth : undefined,
           onAuth: handleAuthRequest,
           onPayment: handlePaymentRequest,
           timeout: options.mirrorTimeout,
