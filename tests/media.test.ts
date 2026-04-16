@@ -224,6 +224,22 @@ describe.runIf(typeof document !== "undefined")("handleMediaFallbacks", () => {
     removeListener();
     audio.remove();
   });
+
+  it("should proactively resolve blossom: URIs without waiting for error event", async () => {
+    const image = document.createElement("img");
+    image.setAttribute("src", `blossom:${HASH}.png?xs=https://server1.com`);
+    document.body.appendChild(image);
+
+    const removeListener = handleMediaFallbacks(image, getServers);
+
+    // Don't dispatch an error — the handler should resolve the blossom: URI on attach
+    await vi.waitFor(() => {
+      expect(image.src).toBe(`https://server1.com/${HASH}.png`);
+    });
+
+    removeListener();
+    image.remove();
+  });
 });
 
 describe.runIf(typeof document !== "undefined")("handleBrokenMedia", () => {

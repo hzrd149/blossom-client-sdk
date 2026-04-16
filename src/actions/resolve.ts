@@ -66,10 +66,7 @@ export type GetBlobUrlsOptions = {
  *
  * Accepts a blossom URI string, URL, or pre-parsed BlossomURI.
  */
-export async function getBlobUrls(
-  uri: string | URL | BlossomURI,
-  opts?: GetBlobUrlsOptions,
-): Promise<string[]> {
+export async function getBlobUrls(uri: string | URL | BlossomURI, opts?: GetBlobUrlsOptions): Promise<string[]> {
   const parsed = parseInput(uri);
   const collector = createServerCollector(buildBlobPath(parsed.sha256, parsed.ext));
   const urls: string[] = [];

@@ -3,10 +3,7 @@ import { PaymentRequest } from "../types.js";
 /** Extracts a cashu-ts PaymentRequest from Headers. Loads @cashu/cashu-ts on demand. */
 export async function getPaymentRequestFromHeaders(headers: Headers): Promise<PaymentRequest>;
 export async function getPaymentRequestFromHeaders(headers: Headers, quite: false): Promise<PaymentRequest>;
-export async function getPaymentRequestFromHeaders(
-  headers: Headers,
-  quite: true,
-): Promise<PaymentRequest | undefined>;
+export async function getPaymentRequestFromHeaders(headers: Headers, quite: true): Promise<PaymentRequest | undefined>;
 export async function getPaymentRequestFromHeaders(headers: Headers, quite = false) {
   const header = headers.get("X-Cashu");
   if (!header) {

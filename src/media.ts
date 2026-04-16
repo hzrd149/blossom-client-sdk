@@ -1,6 +1,6 @@
-import { getHashFromURL } from "./helpers/url.js";
-import { parseBlossomURI } from "./helpers/blossom-uri.js";
 import { getBlobUrls } from "./actions/resolve.js";
+import { parseBlossomURI } from "./helpers/blossom-uri.js";
+import { getHashFromURL } from "./helpers/url.js";
 
 type MediaElement = HTMLImageElement | HTMLVideoElement | HTMLAudioElement;
 
@@ -28,9 +28,7 @@ export function handleMediaFallbacks(element: MediaElement, getServers: GetServe
   const resolveBlossomUri = async (src: string): Promise<string[]> => {
     const parsed = parseBlossomURI(src);
     return getBlobUrls(parsed, {
-      getServers: getServers
-        ? async (pubkey) => (await getServers(pubkey)) ?? undefined
-        : undefined,
+      getServers: getServers ? async (pubkey) => (await getServers(pubkey)) ?? undefined : undefined,
     });
   };
 
@@ -40,7 +38,6 @@ export function handleMediaFallbacks(element: MediaElement, getServers: GetServe
     if (!hash) return undefined;
 
     const url = new URL(element.src);
-    const ext = url.pathname.match(/\.\w+$/i);
 
     let pubkey = overridePubkey;
 
@@ -59,15 +56,7 @@ export function handleMediaFallbacks(element: MediaElement, getServers: GetServe
     const servers = (await getServers(pubkey))?.map((s) => (s instanceof URL ? s : new URL(s)));
     if (!servers) return undefined;
 
-    return servers
-      .filter((s) => s.hostname !== url.hostname)
-      .map((s) => {
-        const u = new URL(url);
-        u.hostname = s.hostname;
-        u.protocol = s.protocol;
-        u.pathname = "/" + hash + (ext?.[0] ?? "");
-        return u.toString();
-      });
+    return servers.filter((s) => s.hostname !== url.hostname).map((s) => new URL(url.pathname, s).toString());
   };
 
   const onError = async () => {
@@ -100,7 +89,24 @@ export function handleMediaFallbacks(element: MediaElement, getServers: GetServe
 
   element.addEventListener("error", onError);
 
+  // Trigger resolution immediately if:
+  // - src is a blossom: URI (browser can't load it natively)
+  // - element already failed to load before we attached the listener
+  const rawSrc = element.getAttribute("src") || "";
+  if (rawSrc.startsWith("blossom:") || hasFailedToLoad(element)) {
+    onError();
+  }
+
   return () => element.removeEventListener("error", onError);
+}
+
+/** Returns true if a media element has already finished loading and failed */
+function hasFailedToLoad(element: MediaElement): boolean {
+  if (element instanceof HTMLImageElement) {
+    return element.complete && element.naturalWidth === 0;
+  }
+  // video/audio — check if loading resulted in an error
+  return element.error !== null;
 }
 
 const MEDIA_SELECTOR = "img[src], video[src], audio[src]";

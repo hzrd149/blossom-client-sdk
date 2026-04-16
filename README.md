@@ -117,7 +117,9 @@ cleanup();
 Media elements can use `blossom:` URIs directly in the `src` attribute. The fallback handler will automatically resolve the URI to HTTP URLs using the server hints:
 
 ```html
-<img src="blossom:b1674191a88ec5cdd733e4240a81803105dc412d6c6708d53ab94fc248f4f553.png?xs=https://cdn1.com&xs=https://cdn2.com" />
+<img
+  src="blossom:b1674191a88ec5cdd733e4240a81803105dc412d6c6708d53ab94fc248f4f553.png?xs=https://cdn1.com&xs=https://cdn2.com"
+/>
 ```
 
 When the browser can't load the `blossom:` protocol, the error handler parses the URI, resolves server URLs from `xs` and `as` hints, and sets the first working URL.
