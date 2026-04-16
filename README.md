@@ -80,37 +80,99 @@ console.log(getHashFromURL("https://example.com/index.html"));
 // -> null
 ```
 
-### Handling broken images
+### Media fallbacks
 
-This package also exports a few helper methods for handling broken images
+The SDK provides several methods for handling broken media elements (`<img>`, `<video>`, `<audio>`) by automatically trying alternative blossom servers. Both regular HTTP blob URLs and `blossom:` URIs are supported.
 
-The `handleImageFallbacks(image, getServers)` method listen for an `error` event on an `<img/>` element and if the element has a `data-pubkey` attribute. it will call `getServers` to ask for a list of blossom servers for the pubkey
+All the media fallback methods require a `getServers` callback to resolve pubkeys to server lists:
 
 ```js
-import { handleImageFallbacks, USER_BLOSSOM_SERVER_LIST_KIND, getServersFromServerListEvent } from "blossom-client-sdk";
+import { USER_BLOSSOM_SERVER_LIST_KIND, getServersFromServerListEvent } from "blossom-client-sdk";
 
-const image = new Image();
-image.src = "https://cdn.censorship.com/72cb99b689b4cfe1a9fb6937f779f3f9c65094bf0e6ac72a8f8261efa96653f5.png";
-
-// set the pubkey from the kind 1 event this image was found it
-image.dataset.pubkey = event.pubkey;
-
-// this is called when
 async function getServers(pubkey) {
   if (pubkey) {
-    // use NDK to find the users blossom server list event (k:10063)
     const event = await ndk.fetchEvent({ kinds: [USER_BLOSSOM_SERVER_LIST_KIND], authors: [pubkey] });
-
-    // if its found return a list of blossom servers
     if (event) return getServersFromServerListEvent(event);
   }
   return undefined;
 }
+```
 
-// listen for "error" events
-handleImageFallbacks(image, getServers);
+#### Automatic fallbacks for a DOM tree
 
-document.body.appendChild(image);
+`handleBrokenMedia` watches a DOM tree for any `<img>`, `<video>`, or `<audio>` elements and automatically handles server fallbacks. It uses a `MutationObserver` to handle dynamically added elements. Returns a cleanup function to remove all listeners and stop observing.
+
+```js
+import { handleBrokenMedia } from "blossom-client-sdk";
+
+// start watching for broken media in the document
+const cleanup = handleBrokenMedia(document.body, getServers);
+
+// later, to remove all listeners and stop watching
+cleanup();
+```
+
+#### Blossom URIs in media elements
+
+Media elements can use `blossom:` URIs directly in the `src` attribute. The fallback handler will automatically resolve the URI to HTTP URLs using the server hints:
+
+```html
+<img src="blossom:b1674191a88ec5cdd733e4240a81803105dc412d6c6708d53ab94fc248f4f553.png?xs=https://cdn1.com&xs=https://cdn2.com" />
+```
+
+When the browser can't load the `blossom:` protocol, the error handler parses the URI, resolves server URLs from `xs` and `as` hints, and sets the first working URL.
+
+#### Single element fallbacks
+
+`handleMediaFallbacks` attaches an error listener to a single element. For regular HTTP URLs, it extracts the blob hash and looks up alternative servers using a `data-pubkey` attribute on the element or its parents:
+
+```js
+import { handleMediaFallbacks } from "blossom-client-sdk";
+
+const video = document.createElement("video");
+video.src = "https://cdn.example.com/b1674191a88ec5cdd733e4240a81803105dc412d6c6708d53ab94fc248f4f553.mp4";
+video.dataset.pubkey = event.pubkey;
+
+const removeListener = handleMediaFallbacks(video, getServers);
+```
+
+#### Get blob URLs without fetching
+
+`getBlobUrls` returns an ordered list of URLs for a blob from a blossom URI without fetching anything. Useful for building custom UI or populating `<source>` elements:
+
+```js
+import { Actions } from "blossom-client-sdk";
+
+const urls = await Actions.getBlobUrls("blossom:b167...4f553.mp4?xs=https://cdn1.com&xs=https://cdn2.com", {
+  getServers,
+  fallbackServers: ["https://fallback.cdn.com"],
+});
+// -> ["https://cdn1.com/b167...4f553.mp4", "https://cdn2.com/b167...4f553.mp4", "https://fallback.cdn.com/b167...4f553.mp4"]
+```
+
+#### Create `<source>` elements for video/audio
+
+`createSourceElements` generates `<source>` elements from a URL list, giving the browser native fallback for `<video>` and `<audio>`:
+
+```js
+import { Actions, createSourceElements } from "blossom-client-sdk";
+
+const urls = await Actions.getBlobUrls("blossom:b167...4f553.mp4?xs=https://cdn1.com&xs=https://cdn2.com");
+const sources = createSourceElements(urls, "video/mp4");
+
+const video = document.createElement("video");
+video.append(...sources);
+```
+
+#### Resolve to an object URL
+
+`resolveToObjectURL` fetches a blob with server fallback and returns a `blob:` object URL that works anywhere:
+
+```js
+import { Actions } from "blossom-client-sdk";
+
+const objectUrl = await Actions.resolveToObjectURL("blossom:b167...4f553.png?xs=https://cdn1.com", { getServers });
+image.src = objectUrl;
 ```
 
 ## Other Examples
@@ -309,10 +371,9 @@ const backToParsed = blossomURIFromURL(url);
 The `resolveBlob` function tries servers from the URI hints sequentially and returns the first successful response. Author hints are only resolved if server hints fail.
 
 ```js
-import { resolveBlob } from "blossom-client-sdk/actions/resolve";
-import { getServersFromServerListEvent, USER_BLOSSOM_SERVER_LIST_KIND } from "blossom-client-sdk";
+import { Actions } from "blossom-client-sdk";
 
-const response = await resolveBlob("blossom:b167...4f553.pdf?xs=cdn.example.com&as=2668...08a5", {
+const response = await Actions.resolveBlob("blossom:b167...4f553.pdf?xs=cdn.example.com&as=2668...08a5", {
   // resolve author pubkeys to server lists (only called if xs servers fail)
   getServers: async (pubkey) => {
     const event = await ndk.fetchEvent({ kinds: [USER_BLOSSOM_SERVER_LIST_KIND], authors: [pubkey] });
