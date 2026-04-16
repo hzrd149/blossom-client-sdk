@@ -258,3 +258,44 @@ import { hasBlob } from "blossom-client-sdk/actions/has";
 
 const exists = await hasBlob("https://cdn.example.com", "b1674191a88ec5cdd733e4240a81803105dc412d6c6708d53ab94fc248f4f553");
 ```
+
+### Blossom URIs (BUD-10)
+
+Parse and build `blossom:` URIs for referencing blobs across servers
+
+```js
+import { parseBlossomURI, buildBlossomURI, blossomURIToURL, blossomURIFromURL } from "blossom-client-sdk";
+
+// parse a blossom URI
+const parsed = parseBlossomURI("blossom:b1674191a88ec5cdd733e4240a81803105dc412d6c6708d53ab94fc248f4f553.pdf?xs=cdn.example.com&as=266815e0c9210dfa324c6cba3573b14bee49da4209a9456f9484e5106cd408a5&sz=1024");
+// -> { sha256: "b167...", ext: "pdf", servers: ["cdn.example.com"], authors: ["2668..."], size: 1024 }
+
+// build a blossom URI
+const uri = buildBlossomURI({ sha256: "b167...", ext: "pdf", servers: ["cdn.example.com"], authors: [], size: 1024 });
+// -> "blossom:b167....pdf?xs=cdn.example.com&sz=1024"
+
+// convert to/from native URL objects
+const url = blossomURIToURL(parsed);
+const backToParsed = blossomURIFromURL(url);
+```
+
+### Resolve and download from a blossom URI
+
+The `resolveBlob` function tries servers from the URI hints sequentially and returns the first successful response. Author hints are only resolved if server hints fail.
+
+```js
+import { resolveBlob } from "blossom-client-sdk/actions/resolve";
+import { getServersFromServerListEvent, USER_BLOSSOM_SERVER_LIST_KIND } from "blossom-client-sdk";
+
+const response = await resolveBlob("blossom:b167...4f553.pdf?xs=cdn.example.com&as=2668...08a5", {
+  // resolve author pubkeys to server lists (only called if xs servers fail)
+  getServers: async (pubkey) => {
+    const event = await ndk.fetchEvent({ kinds: [USER_BLOSSOM_SERVER_LIST_KIND], authors: [pubkey] });
+    return event ? getServersFromServerListEvent(event) : undefined;
+  },
+  // additional servers to try as a last resort
+  fallbackServers: ["https://fallback.cdn.com"],
+});
+
+const blob = await response.blob();
+```

@@ -4,5 +4,6 @@ export * from "./list.js";
 export * from "./delete.js";
 export * from "./download.js";
 export * from "./has.js";
+export * from "./resolve.js";
 export * from "./multi-server.js";
 export * from "./media.js";
