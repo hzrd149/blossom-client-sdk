@@ -25,11 +25,7 @@
       "import": "./lib/index.js",
       "types": "./lib/index.d.ts"
     },
-    "./client": {
-      "import": "./lib/client.js",
-      "types": "./lib/client.d.ts"
-    },
-    "./image": {
+"./image": {
       "import": "./lib/image.js",
       "types": "./lib/image.d.ts"
     },

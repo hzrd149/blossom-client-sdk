@@ -1,4 +1,4 @@
-import { ServerType, UploadType } from "./client.js";
+import { ServerType, UploadType } from "./types.js";
 import { AUTH_EVENT_KIND } from "./const.js";
 import { getBlobSha256, isSha256 } from "./helpers/blob.js";
 import { areServersEqual } from "./helpers/url.js";

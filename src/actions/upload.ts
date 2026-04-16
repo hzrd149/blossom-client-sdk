@@ -1,5 +1,5 @@
 import { encodeAuthorizationHeader } from "../auth.js";
-import { ServerType, UploadType } from "../client.js";
+import { ServerType, UploadType } from "../types.js";
 import HTTPError from "../error.js";
 import { fetchWithTimeout, getBlobSha256, getBlobSize, getBlobType } from "../helpers/index.js";
 import { BlobDescriptor, PaymentRequest, PaymentToken, SignedEvent } from "../types.js";

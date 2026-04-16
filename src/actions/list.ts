@@ -1,5 +1,5 @@
 import HTTPError from "../error.js";
-import { ServerType } from "../client.js";
+import { ServerType } from "../types.js";
 import { BlobDescriptor, PaymentRequest, PaymentToken, SignedEvent } from "../types.js";
 import { encodeAuthorizationHeader } from "../auth.js";
 import { fetchWithTimeout } from "../helpers/index.js";

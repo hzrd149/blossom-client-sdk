@@ -3,7 +3,8 @@ import { DownloadOptions } from "./actions/download.js";
 import { ListOptions } from "./actions/list.js";
 import { MirrorOptions } from "./actions/mirror.js";
 import { UploadOptions } from "./actions/upload.js";
-import { ServerType, UploadType } from "./client.js";
+export type ServerType = string | URL;
+export type UploadType = Blob | File | Buffer;
 import { type PaymentRequest as CashuPaymentRequest } from "@cashu/cashu-ts";
 
 export type EventTemplate = {

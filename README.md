@@ -1,25 +1,25 @@
 # 🌸 blossom-client-sdk
 
-A client for manage blobs on blossom servers
+A client for managing blobs on blossom servers
 
-[Documentation](https://hzrd149.github.io/blossom-client-sdk/classes/BlossomClient)
+[Documentation](https://hzrd149.github.io/blossom-client-sdk/)
 
-## Using the client
-
-### Using the static methods
+## Basic Usage
 
 ```js
-import { BlossomClient } from "blossom-client-sdk/client";
+import { uploadBlob, createUploadAuth, encodeAuthorizationHeader } from "blossom-client-sdk";
 
 async function signer(event) {
   return await window.nostr.signEvent(event);
 }
 
+const server = "https://cdn.example.com";
+
 // create an upload auth event
-const uploadAuth = await BlossomClient.createUploadAuth(file, server, "Upload bitcoin.pdf");
+const uploadAuth = await createUploadAuth(signer, file);
 
 // encode it using base64
-const encodedAuthHeader = BlossomClient.encodeAuthorizationHeader(auth);
+const encodedAuthHeader = encodeAuthorizationHeader(uploadAuth);
 
 // manually make the request
 const res = await fetch(new URL("/upload", server), {
@@ -28,36 +28,15 @@ const res = await fetch(new URL("/upload", server), {
   headers: { authorization: encodedAuthHeader },
 });
 
-// or use the static method
-const res = await BlossomClient.uploadBlob(server, file, uploadAuth);
-
-// check if successful
-if (res.ok) {
-  console.log("Blob uploaded!");
-}
-```
-
-### Using the class
-
-The `BlossomClient` class can be used to talk to a single server
-
-```js
-import { BlossomClient } from "blossom-client-sdk";
-
-async function signer(event) {
-  return await window.nostr.signEvent(event);
-}
-
-const client = new BlossomClient("https://cdn.example.com", signer);
-
-const pubkey = "266815e0c9210dfa324c6cba3573b14bee49da4209a9456f9484e5106cd408a5";
-const blobs = await client.listBlobs(pubkey, undefined, true);
-// passing true as the last argument will make it send an auth event with the list request
+// or use the action function
+const blob = await uploadBlob(server, file, {
+  onAuth: async (server, sha256, type) => createUploadAuth(signer, sha256, { type }),
+});
 ```
 
 ### Using with NDK
 
-The `BlossomClient` class and methods optionally take a `signer` method that is used to sign the upload auth events
+The auth and action functions optionally take a `signer` method that is used to sign the auth events
 
 If your using NDK in your app you can use this method
 
@@ -139,7 +118,7 @@ document.body.appendChild(image);
 ### List all blobs on a server
 
 ```js
-import { BlossomClient } from "blossom-client-sdk";
+import { listBlobs, createListAuth } from "blossom-client-sdk";
 
 async function signer(event) {
   return await window.nostr.signEvent(event);
@@ -148,38 +127,31 @@ async function signer(event) {
 const pubkey = "266815e0c9210dfa324c6cba3573b14bee49da4209a9456f9484e5106cd408a5";
 const server = "https://cdn.example.com";
 
-async function listBlobs() {
-  try {
-    return BlossomClient.listBlobs(server, pubkey);
-  } catch (e) {
-    if (e.status === 401) {
-      const auth = await BlossomClient.createListAuth(signer, "List Blobs from " + server);
-      return BlossomClient.listBlobs(server, pubkey, undefined, auth);
-    }
-  }
-}
+const blobs = await listBlobs(server, pubkey, {
+  onAuth: async () => createListAuth(signer),
+});
 ```
 
 ### Upload a single blob
 
 ```js
-import { BlossomClient } from "blossom-client-sdk";
+import { uploadBlob, createUploadAuth } from "blossom-client-sdk";
 
 async function signer(event) {
   return await window.nostr.signEvent(event);
 }
 
-const client = new BlossomClient("https://cdn.example.com", signer);
+const server = "https://cdn.example.com";
 
-const blobs = await client.listBlobs();
-
-await client.uploadBlob(new File(["testing"], "test.txt"));
+const blob = await uploadBlob(server, new File(["testing"], "test.txt"), {
+  onAuth: async (server, sha256, type) => createUploadAuth(signer, sha256, { type }),
+});
 ```
 
 ### Upload a single blob to multiple servers
 
 ```js
-import { BlossomClient } from "blossom-client-sdk";
+import { uploadBlob, createUploadAuth } from "blossom-client-sdk";
 
 async function signer(event) {
   return await window.nostr.signEvent(event);
@@ -188,10 +160,10 @@ async function signer(event) {
 const servers = ["https://cdn.example.com", "https://cdn.other.com"];
 const file = new File(["testing"], "test.txt");
 
-const auth = await BlossomClient.createUploadAuth(file, signer, { message: "Upload test.txt" });
+const auth = await createUploadAuth(signer, file, { message: "Upload test.txt" });
 
 for (let server of servers) {
-  await BlossomClient.uploadBlob(server, file, auth);
+  await uploadBlob(server, file, { auth });
 }
 ```
 
@@ -202,7 +174,7 @@ The `multiServerUpload` method can be used to upload a single blob to multiple s
 Example of uploading to each server one at time
 
 ```ts
-import { multiServerUpload, createUploadAuth } from "blossom-server-sdk";
+import { multiServerUpload, createUploadAuth } from "blossom-client-sdk";
 
 async function signer(event: any) {
   // @ts-expect-error
@@ -228,7 +200,7 @@ const results = await multiServerUpload(servers, file, {
 The `multiServerUpload` method can also be used to upload media blobs and mirror them
 
 ```ts
-import { multiServerUpload, createUploadAuth } from "blossom-server-sdk";
+import { multiServerUpload, createUploadAuth } from "blossom-client-sdk";
 
 async function signer(event: any) {
   // @ts-expect-error
@@ -258,7 +230,7 @@ const results = await multiServerUpload(servers, media, {
 ### Upload and Mirror manually
 
 ```js
-import { BlossomClient } from "blossom-client-sdk";
+import { uploadBlob, mirrorBlob, createUploadAuth } from "blossom-client-sdk";
 
 async function signer(event) {
   return await window.nostr.signEvent(event);
@@ -268,14 +240,21 @@ const mainServer = "https://cdn.server-a.com";
 const mirrorServers = ["https://cdn.example.com", "https://cdn.other.com"];
 const file = new File(["testing"], "test.txt");
 
-const auth = await BlossomClient.createUploadAuth(file, signer, { message: "Upload test.txt" });
+const auth = await createUploadAuth(signer, file, { message: "Upload test.txt" });
 
 // first upload blob to main server
-const blob = await BlossomClient.uploadBlob(mainServer, file, auth);
+const blob = await uploadBlob(mainServer, file, { auth });
 
 // then tell mirror servers to download it
 for (let server of mirrorServers) {
-  // reuse the same auth for mirroring
-  await BlossomClient.mirrorBlob(server, blob.url, auth);
+  await mirrorBlob(server, blob, { auth });
 }
+```
+
+### Check if a blob exists
+
+```js
+import { hasBlob } from "blossom-client-sdk/actions/has";
+
+const exists = await hasBlob("https://cdn.example.com", "b1674191a88ec5cdd733e4240a81803105dc412d6c6708d53ab94fc248f4f553");
 ```

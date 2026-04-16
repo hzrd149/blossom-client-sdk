@@ -1,5 +1,5 @@
 import { doseAuthMatchBlob } from "../auth.js";
-import { ServerType, UploadType } from "../client.js";
+import { ServerType, UploadType } from "../types.js";
 import { getBlobSha256 } from "../helpers/index.js";
 import { BlobDescriptor, PaymentRequest } from "../types.js";
 import { MediaEndpointMissingError, uploadMedia } from "./media.js";

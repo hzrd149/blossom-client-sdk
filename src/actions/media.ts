@@ -1,4 +1,4 @@
-import { ServerType, UploadType } from "../client.js";
+import { ServerType, UploadType } from "../types.js";
 import { BlobDescriptor } from "../types.js";
 import { getBlobSha256, getBlobSize, getBlobType } from "../helpers/index.js";
 import HTTPError from "../error.js";

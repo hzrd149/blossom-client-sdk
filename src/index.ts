@@ -1,6 +1,5 @@
 export * from "./const.js";
 export * from "./auth.js";
-export * from "./client.js";
 export * from "./helpers/index.js";
 export * from "./image.js";
 export * from "./nostr.js";

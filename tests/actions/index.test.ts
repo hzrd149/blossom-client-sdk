@@ -8,6 +8,7 @@ it("should export expected methods", () => {
       "MediaEndpointMissingError",
       "deleteBlob",
       "downloadBlob",
+      "hasBlob",
       "listBlobs",
       "mirrorBlob",
       "multiServerUpload",

@@ -8,7 +8,6 @@ it("should export expected methods", () => {
       "AUTH_EVENT_KIND",
       "Actions",
       "BlobHashSymbol",
-      "BlossomClient",
       "TimeoutError",
       "USER_BLOSSOM_SERVER_LIST_KIND",
       "areServersEqual",
