@@ -49,3 +49,7 @@ it("should export expected methods", () => {
     ]
   `);
 });
+
+it("should export reportBlobs from Actions", () => {
+  expect(library.Actions.reportBlobs).toBeTypeOf("function");
+});

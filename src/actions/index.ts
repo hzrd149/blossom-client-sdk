@@ -7,3 +7,4 @@ export * from "./has.js";
 export * from "./resolve.js";
 export * from "./multi-server.js";
 export * from "./media.js";
+export * from "./report.js";
