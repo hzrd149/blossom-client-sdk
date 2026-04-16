@@ -175,6 +175,54 @@ const objectUrl = await Actions.resolveToObjectURL("blossom:b167...4f553.png?xs=
 image.src = objectUrl;
 ```
 
+### HLS Video Streaming with Multi-Server Fallback
+
+The SDK provides a loader factory for `hls.js` that automatically retries failed playlist and fragment requests across multiple Blossom servers. This enables resilient HLS playback even when some servers have missing or unavailable segments.
+
+```ts
+import Hls from "hls.js";
+import { createBlossomHlsLoaders } from "blossom-client-sdk/hls";
+
+// Create fallback loaders for hls.js
+const { pLoader, fLoader } = createBlossomHlsLoaders({
+  // Servers to try when the primary fails
+  fallbackServers: ["https://cdn-backup1.example", "https://cdn-backup2.example"],
+  // Penalize failed origins briefly to prefer healthy ones (default: false)
+  stickyFailover: true,
+  // How long to penalize failed servers in ms (default: 30000)
+  penalizeMs: 30000,
+  // HTTP status codes to retry (default: [404])
+  retryStatuses: [404, 502, 503],
+  // Callback when a fallback occurs
+  onFallback: (info) => {
+    console.log(`Falling back from ${info.from} to ${info.to} for ${info.kind}`);
+    console.log(`Attempt ${info.attempt} for ${info.url}`);
+  },
+});
+
+// Initialize hls.js with the fallback loaders
+const hls = new Hls({
+  pLoader,
+  fLoader,
+});
+
+// Load a master playlist from any Blossom server
+hls.loadSource("https://cdn.example.com/abc123def456.m3u8");
+hls.attachMedia(videoElement);
+```
+
+**How it works:**
+
+- The loaders keep the original playlist/fragment path and query string but swap the origin
+- If the primary server returns a retryable error (404, 5xx, timeout), it automatically tries the next server
+- With `stickyFailover` enabled, failed servers are briefly penalized so subsequent requests prefer healthy ones
+- The loader preserves HTTP headers, byte-range requests, and response type
+
+**Requirements:**
+
+- `hls.js` must be installed as a peer dependency
+- Blossom HLS playlists should use relative paths with SHA256 hashes as documented in the HLS formatting guide
+
 ## Other Examples
 
 ### List a page of blobs on a server

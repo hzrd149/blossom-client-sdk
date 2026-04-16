@@ -29,6 +29,10 @@
       "import": "./lib/media.js",
       "types": "./lib/media.d.ts"
     },
+    "./hls": {
+      "import": "./lib/hls.js",
+      "types": "./lib/hls.d.ts"
+    },
     "./helpers": {
       "import": "./lib/helpers/index.js",
       "types": "./lib/helpers/index.d.ts"
@@ -60,6 +64,14 @@
   "dependencies": {
     "@cashu/cashu-ts": "^2.4.3",
     "@noble/hashes": "^1.8.0"
+  },
+  "peerDependencies": {
+    "hls.js": "^1.6.16"
+  },
+  "peerDependenciesMeta": {
+    "hls.js": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.3",
