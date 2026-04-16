@@ -26,8 +26,7 @@ function normalizeServer(server: string | URL): string {
 
 /** Resolves a blossom URI to a downloaded blob by trying servers from hints sequentially */
 export async function resolveBlob(uri: string | URL | BlossomURI, opts?: ResolveOptions): Promise<Response> {
-  const parsed =
-    uri instanceof URL ? blossomURIFromURL(uri) : typeof uri === "string" ? parseBlossomURI(uri) : uri;
+  const parsed = uri instanceof URL ? blossomURIFromURL(uri) : typeof uri === "string" ? parseBlossomURI(uri) : uri;
 
   const seen = new Set<string>();
 

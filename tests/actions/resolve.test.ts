@@ -144,7 +144,12 @@ describe("resolveBlob", () => {
 
   it("should skip servers that fail with network errors", async () => {
     fetchMock.mockResponses(
-      [() => { throw new Error("Network error"); }, { status: 500 }],
+      [
+        () => {
+          throw new Error("Network error");
+        },
+        { status: 500 },
+      ],
       ["blob data", { status: 200 }], // GET server2
     );
 
@@ -158,9 +163,7 @@ describe("resolveBlob", () => {
       ["blob data", { status: 200 }], // GET server
     );
 
-    const res = await resolveBlob(
-      { sha256: HASH, ext: "png", servers: ["https://server.com"], authors: [] },
-    );
+    const res = await resolveBlob({ sha256: HASH, ext: "png", servers: ["https://server.com"], authors: [] });
 
     expect(await res.text()).toBe("blob data");
   });

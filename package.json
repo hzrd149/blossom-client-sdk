@@ -25,7 +25,7 @@
       "import": "./lib/index.js",
       "types": "./lib/index.d.ts"
     },
-"./image": {
+    "./image": {
       "import": "./lib/image.js",
       "types": "./lib/image.d.ts"
     },

@@ -12,6 +12,7 @@ it("should export expected methods", () => {
       "iterateBlobs",
       "listBlobs",
       "mirrorBlob",
+      "multiServerMediaUpload",
       "multiServerUpload",
       "resolveBlob",
       "uploadBlob",

@@ -128,7 +128,13 @@ describe("blossomURIToURL", () => {
   });
 
   it("should convert a BlossomURI object to a URL object", () => {
-    const url = blossomURIToURL({ sha256: HASH, ext: "pdf", servers: ["cdn.example.com"], authors: [PUBKEY], size: 512 });
+    const url = blossomURIToURL({
+      sha256: HASH,
+      ext: "pdf",
+      servers: ["cdn.example.com"],
+      authors: [PUBKEY],
+      size: 512,
+    });
     expect(url.protocol).toBe("blossom:");
     expect(url.pathname).toBe(`${HASH}.pdf`);
     expect(url.searchParams.get("xs")).toBe("cdn.example.com");

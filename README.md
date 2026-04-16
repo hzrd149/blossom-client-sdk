@@ -189,9 +189,7 @@ for (let server of servers) {
 
 ### Uploading and mirroring to multiple servers
 
-The `multiServerUpload` method can be used to upload a single blob to multiple servers
-
-Example of uploading to each server one at time
+The `multiServerUpload` method uploads a blob to the first server, then mirrors it to the remaining servers. It runs parallel preflight checks (`HEAD /<sha256>`) to detect which servers already have the blob, using `/mirror` to register ownership on those servers instead of re-uploading.
 
 ```ts
 import { multiServerUpload, createUploadAuth } from "blossom-client-sdk";
@@ -204,23 +202,29 @@ async function signer(event: any) {
 const servers = ["https://cdn.server-a.com", "https://cdn.example.com", "https://cdn.other.com"];
 const file = new File(["testing"], "test.txt");
 
-// create async generator for upload
 const results = await multiServerUpload(servers, file, {
   onAuth: async (server, sha256, type) => createUploadAuth(signer, sha256, { type }),
-  onUpload: (server, blob) => {},
-  onError: (server, blob, error) => {
+  onUpload: (server, sha256, blob) => {},
+  onError: (server, sha256, blob, error) => {
     console.log("Failed to upload to", server);
     console.log(error);
   },
+  // handle server rejections (413 too large, 415 unsupported type, etc.)
+  onRejection: (server, sha256, blob, error) => {
+    console.log(`Server ${server} rejected: ${error.code}`);
+    return "skip"; // or "cancel" to abort entirely
+  },
+  // disable preflight checks if not needed (default: true)
+  // preflight: false,
 });
 ```
 
 ### Uploading media and mirroring
 
-The `multiServerUpload` method can also be used to upload media blobs and mirror them
+The `multiServerMediaUpload` method is designed for media files (images, videos) that should be optimized before distribution. It uploads the blob to a single server's BUD-05 `/media` endpoint for processing, then mirrors the optimized result to all other servers. The original unprocessed blob is never uploaded to other servers since the `/media` endpoint may transform it (resize, re-encode, etc.).
 
 ```ts
-import { multiServerUpload, createUploadAuth } from "blossom-client-sdk";
+import { multiServerMediaUpload, createUploadAuth } from "blossom-client-sdk";
 
 async function signer(event: any) {
   // @ts-expect-error
@@ -230,17 +234,13 @@ async function signer(event: any) {
 const servers = ["https://cdn.server-a.com", "https://cdn.example.com", "https://cdn.other.com"];
 const media = new File(["image data"], "image.png");
 
-// create async generator for upload
-const results = await multiServerUpload(servers, media, {
-  // use media upload endpoint
-  isMedia: true,
-  // use any servers media endpoint
+const results = await multiServerMediaUpload(servers, media, {
+  // try any server's /media endpoint, not just the first (default: "first")
   mediaUploadBehavior: "any",
-  // if the media endpoint isn't found fallback to the /upload endpoint
+  // fall back to regular upload if no /media endpoint is found (default: false)
   mediaUploadFallback: true,
-  // handle auth requests
   onAuth: async (server, sha256, type) => createUploadAuth(signer, sha256, { type }),
-  onError: (server, blob, error) => {
+  onError: (server, sha256, blob, error) => {
     console.log("Failed to upload to", server);
     console.log(error);
   },

@@ -41,6 +41,8 @@ export type BlobDescriptor = {
 
 export type PaymentRequest = CashuPaymentRequest;
 
+export type RejectionAction = "skip" | "cancel";
+
 // NOTE: hack for Token type not being exported from cashu-ts
 type SerializedDLEQ = {
   s: string;
