@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { getEncodedToken, PaymentRequest, Token } from "@cashu/cashu-ts";
 
 import { finalizeEvent, generateSecretKey } from "nostr-tools";
-import { listBlobs } from "../../src/actions/list.js";
+import { iterateBlobs, listBlobs } from "../../src/actions/list.js";
 import { createListAuth, encodeAuthorizationHeader } from "../../src/auth.js";
 import { BlobDescriptor, EventTemplate, Signer } from "../../src/types.js";
 import fetchMock from "../fetch.js";
@@ -55,6 +55,17 @@ describe("listBlobs", async () => {
     const request = fetchMock.requests()[0];
 
     expect(request.url).toBe(`https://example.com/list/${mockPubkey}?since=1000000000&until=1000000100`);
+  });
+
+  it("should include cursor and limit parameters when provided", async () => {
+    fetchMock.mockResponseOnce(JSON.stringify(mockBlobs));
+
+    await listBlobs(mockServer, mockPubkey, { cursor: mockBlobs[1].sha256, limit: 10 });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const request = fetchMock.requests()[0];
+
+    expect(request.url).toBe(`https://example.com/list/${mockPubkey}?cursor=${mockBlobs[1].sha256}&limit=10`);
   });
 
   it("should include Authorization header if auth is provided", async () => {
@@ -184,5 +195,52 @@ describe("listBlobs", async () => {
   it("should throw an error if authorization is requested but is disabled auth=false", async () => {
     fetchMock.mockResponseOnce(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
     await expect(listBlobs(mockServer, mockPubkey, { auth: false })).rejects.toThrow("Authorization disabled");
+  });
+
+  it("should iterate pages with cursor pagination", async () => {
+    const pageOne = mockBlobs;
+    const pageTwo: BlobDescriptor[] = [
+      {
+        uploaded: 1000000002,
+        sha256: "94f81fe167d99b4cb41d6d0ccda82278caee9f3e2f25d5e5a3936ff3dcec60d2",
+        size: 4096,
+        type: "image/webp",
+        url: "https://example.com/blobs/94f81fe167d99b4cb41d6d0ccda82278caee9f3e2f25d5e5a3936ff3dcec60d2",
+      },
+      {
+        uploaded: 1000000003,
+        sha256: "a4f81fe167d99b4cb41d6d0ccda82278caee9f3e2f25d5e5a3936ff3dcec60d3",
+        size: 8192,
+        type: "image/gif",
+        url: "https://example.com/blobs/a4f81fe167d99b4cb41d6d0ccda82278caee9f3e2f25d5e5a3936ff3dcec60d3",
+      },
+    ];
+
+    fetchMock.mockResponses(
+      [JSON.stringify(pageOne), { status: 200 }],
+      [JSON.stringify(pageTwo), { status: 200 }],
+      [JSON.stringify([]), { status: 200 }],
+    );
+
+    const pages: BlobDescriptor[][] = [];
+    for await (const page of iterateBlobs(mockServer, mockPubkey, { limit: 2 })) pages.push(page);
+
+    expect(pages).toEqual([pageOne, pageTwo]);
+    expect(fetchMock.requests().map((request) => request.url)).toEqual([
+      `https://example.com/list/${mockPubkey}?limit=2`,
+      `https://example.com/list/${mockPubkey}?cursor=${pageOne[pageOne.length - 1].sha256}&limit=2`,
+      `https://example.com/list/${mockPubkey}?cursor=${pageTwo[pageTwo.length - 1].sha256}&limit=2`,
+    ]);
+  });
+
+  it("should stop iterating when a page is shorter than the requested limit", async () => {
+    const pageOne = [mockBlobs[0]];
+    fetchMock.mockResponseOnce(JSON.stringify(pageOne));
+
+    const pages: BlobDescriptor[][] = [];
+    for await (const page of iterateBlobs(mockServer, mockPubkey, { limit: 2 })) pages.push(page);
+
+    expect(pages).toEqual([pageOne]);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

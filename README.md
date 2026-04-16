@@ -115,7 +115,7 @@ document.body.appendChild(image);
 
 ## Other Examples
 
-### List all blobs on a server
+### List a page of blobs on a server
 
 ```js
 import { listBlobs, createListAuth } from "blossom-client-sdk";
@@ -130,6 +130,26 @@ const server = "https://cdn.example.com";
 const blobs = await listBlobs(server, pubkey, {
   onAuth: async () => createListAuth(signer),
 });
+```
+
+### Iterate blob pages on a server
+
+```js
+import { iterateBlobs, createListAuth } from "blossom-client-sdk/actions";
+
+async function signer(event) {
+  return await window.nostr.signEvent(event);
+}
+
+const pubkey = "266815e0c9210dfa324c6cba3573b14bee49da4209a9456f9484e5106cd408a5";
+const server = "https://cdn.example.com";
+
+for await (const page of iterateBlobs(server, pubkey, {
+  limit: 100,
+  onAuth: async () => createListAuth(signer),
+})) {
+  console.log(page);
+}
 ```
 
 ### Upload a single blob
@@ -256,7 +276,10 @@ for (let server of mirrorServers) {
 ```js
 import { hasBlob } from "blossom-client-sdk/actions/has";
 
-const exists = await hasBlob("https://cdn.example.com", "b1674191a88ec5cdd733e4240a81803105dc412d6c6708d53ab94fc248f4f553");
+const exists = await hasBlob(
+  "https://cdn.example.com",
+  "b1674191a88ec5cdd733e4240a81803105dc412d6c6708d53ab94fc248f4f553",
+);
 ```
 
 ### Blossom URIs (BUD-10)
@@ -267,7 +290,9 @@ Parse and build `blossom:` URIs for referencing blobs across servers
 import { parseBlossomURI, buildBlossomURI, blossomURIToURL, blossomURIFromURL } from "blossom-client-sdk";
 
 // parse a blossom URI
-const parsed = parseBlossomURI("blossom:b1674191a88ec5cdd733e4240a81803105dc412d6c6708d53ab94fc248f4f553.pdf?xs=cdn.example.com&as=266815e0c9210dfa324c6cba3573b14bee49da4209a9456f9484e5106cd408a5&sz=1024");
+const parsed = parseBlossomURI(
+  "blossom:b1674191a88ec5cdd733e4240a81803105dc412d6c6708d53ab94fc248f4f553.pdf?xs=cdn.example.com&as=266815e0c9210dfa324c6cba3573b14bee49da4209a9456f9484e5106cd408a5&sz=1024",
+);
 // -> { sha256: "b167...", ext: "pdf", servers: ["cdn.example.com"], authors: ["2668..."], size: 1024 }
 
 // build a blossom URI

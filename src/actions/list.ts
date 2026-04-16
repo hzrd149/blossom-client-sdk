@@ -13,6 +13,8 @@ export type ListOptions<S extends ServerType> = {
   authEvents?: Set<SignedEvent>;
   /** Request timeout */
   timeout?: number;
+  cursor?: string;
+  limit?: number;
   since?: number;
   until?: number;
   /**
@@ -28,13 +30,15 @@ export type ListOptions<S extends ServerType> = {
   onAuth?: (server: S) => Promise<SignedEvent>;
 };
 
-/** Mirrors a blob to a server */
+/** Lists a page of blobs from a server */
 export async function listBlobs<S extends ServerType>(
   server: S,
   pubkey: string,
   opts?: ListOptions<S>,
 ): Promise<BlobDescriptor[]> {
   const url = new URL(`/list/` + pubkey, server);
+  if (opts?.cursor) url.searchParams.append("cursor", opts.cursor);
+  if (opts?.limit) url.searchParams.append("limit", String(opts.limit));
   if (opts?.since) url.searchParams.append("since", String(opts.since));
   if (opts?.until) url.searchParams.append("until", String(opts.until));
   const resolveAuth = async (preset: boolean = false) => {
@@ -102,4 +106,25 @@ export async function listBlobs<S extends ServerType>(
 
   // return blob descriptor
   return list.json();
+}
+
+/** Iterates through blob pages using cursor-based pagination */
+export async function* iterateBlobs<S extends ServerType>(
+  server: S,
+  pubkey: string,
+  opts?: ListOptions<S>,
+): AsyncGenerator<BlobDescriptor[], void, void> {
+  let cursor = opts?.cursor;
+
+  while (true) {
+    const page = await listBlobs(server, pubkey, { ...opts, cursor });
+    if (page.length === 0) return;
+
+    yield page;
+
+    if (opts?.limit && page.length < opts.limit) return;
+    cursor = page[page.length - 1]?.sha256;
+
+    if (!cursor) return;
+  }
 }

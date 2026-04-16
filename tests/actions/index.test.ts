@@ -9,6 +9,7 @@ it("should export expected methods", () => {
       "deleteBlob",
       "downloadBlob",
       "hasBlob",
+      "iterateBlobs",
       "listBlobs",
       "mirrorBlob",
       "multiServerUpload",
