@@ -19,9 +19,9 @@ describe("resolveBlob", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
 
     expect(fetchMock.requests()[0].method).toBe("GET");
-    expect(fetchMock.requests()[0].url).toBe(`https://server1.com/${HASH}`);
+    expect(fetchMock.requests()[0].url).toBe(`https://server1.com/${HASH}.png`);
     expect(fetchMock.requests()[1].method).toBe("GET");
-    expect(fetchMock.requests()[1].url).toBe(`https://server2.com/${HASH}`);
+    expect(fetchMock.requests()[1].url).toBe(`https://server2.com/${HASH}.png`);
   });
 
   it("should return response from first server when successful", async () => {
@@ -48,7 +48,7 @@ describe("resolveBlob", () => {
 
     expect(getServers).toHaveBeenCalledWith(PUBKEY);
     expect(await res.text()).toBe("blob data");
-    expect(fetchMock.requests()[0].url).toBe(`https://author-server.com/${HASH}`);
+    expect(fetchMock.requests()[0].url).toBe(`https://author-server.com/${HASH}.png`);
   });
 
   it("should NOT resolve author hints if xs server succeeds", async () => {
@@ -79,9 +79,9 @@ describe("resolveBlob", () => {
 
     expect(await res.text()).toBe("blob data");
     expect(getServers).toHaveBeenCalledWith(PUBKEY);
-    expect(fetchMock.requests()[0].url).toBe(`https://xs1.com/${HASH}`);
-    expect(fetchMock.requests()[1].url).toBe(`https://xs2.com/${HASH}`);
-    expect(fetchMock.requests()[2].url).toBe(`https://author-server.com/${HASH}`);
+    expect(fetchMock.requests()[0].url).toBe(`https://xs1.com/${HASH}.png`);
+    expect(fetchMock.requests()[1].url).toBe(`https://xs2.com/${HASH}.png`);
+    expect(fetchMock.requests()[2].url).toBe(`https://author-server.com/${HASH}.png`);
   });
 
   it("should try fallback servers after URI hints", async () => {
@@ -94,7 +94,7 @@ describe("resolveBlob", () => {
     const res = await resolveBlob(uri, { fallbackServers: ["https://fallback.com"] });
 
     expect(await res.text()).toBe("blob data");
-    expect(fetchMock.requests()[1].url).toBe(`https://fallback.com/${HASH}`);
+    expect(fetchMock.requests()[1].url).toBe(`https://fallback.com/${HASH}.png`);
   });
 
   it("should try fallback servers only after author hints fail", async () => {
@@ -110,9 +110,9 @@ describe("resolveBlob", () => {
     const res = await resolveBlob(uri, { getServers, fallbackServers: ["https://fallback.com"] });
 
     expect(await res.text()).toBe("blob data");
-    expect(fetchMock.requests()[0].url).toBe(`https://xs-server.com/${HASH}`);
-    expect(fetchMock.requests()[1].url).toBe(`https://author-server.com/${HASH}`);
-    expect(fetchMock.requests()[2].url).toBe(`https://fallback.com/${HASH}`);
+    expect(fetchMock.requests()[0].url).toBe(`https://xs-server.com/${HASH}.png`);
+    expect(fetchMock.requests()[1].url).toBe(`https://author-server.com/${HASH}.png`);
+    expect(fetchMock.requests()[2].url).toBe(`https://fallback.com/${HASH}.png`);
   });
 
   it("should deduplicate servers", async () => {
@@ -176,6 +176,6 @@ describe("resolveBlob", () => {
     const uri = `blossom:${HASH}.png?xs=cdn.example.com`;
     await resolveBlob(uri);
 
-    expect(fetchMock.requests()[0].url).toBe(`https://cdn.example.com/${HASH}`);
+    expect(fetchMock.requests()[0].url).toBe(`https://cdn.example.com/${HASH}.png`);
   });
 });

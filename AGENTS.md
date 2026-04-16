@@ -1,60 +1,39 @@
-# CLAUDE.md
+# blossom-client-sdk
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+## Repo Shape
 
-## Project Overview
-
-blossom-client-sdk is a TypeScript client SDK for managing blobs on [Blossom](https://github.com/hzrd149/blossom) servers. It uses Nostr-based authorization (kind 24242 events) and supports Cashu payments. Published as an ES module (`"type": "module"`).
-
-## Commands
-
-- **Build:** `pnpm build` (runs `tsc`, outputs to `lib/`)
-- **Test:** `pnpm test` (vitest, node environment)
-- **Single test:** `pnpm vitest run tests/auth.test.ts`
-- **Browser tests:** `pnpm vitest run --browser --browser.headless`
-- **Coverage:** `pnpm coverage`
-- **Format:** `pnpm format` (prettier)
-- **Docs:** `pnpm docs` (typedoc)
-
-Package manager is **pnpm** (10.10.0). Node >=18.
+- Single-package TypeScript ESM library. Build output goes to `lib/` via `pnpm build` (`tsc`). There is no monorepo or app runtime.
+- Public entrypoints are defined in `package.json` `exports`. Root import maps to `src/index.ts`; action functions also have dedicated `./actions` and `./actions/*` subpath exports.
+- `src/index.ts` re-exports `const`, `auth`, `helpers`, `media`, `nostr`, `error`, and `types`, plus `Actions` as a namespace. Do not assume every action is flattened onto the root export.
 
 ## Architecture
 
-### Module Structure
+- `src/auth.ts` is the auth core: it builds and matches Nostr kind `24242` events, normalizes server tags, and manages reusable auth events.
+- `src/actions/*.ts` are the main behavior layer. Individual actions handle their own retry flow for `401` auth challenges and `402` Cashu payment challenges.
+- `src/actions/multi-server.ts` is the non-obvious orchestration path: `multiServerUpload()` does parallel preflight `HEAD /<sha256>` checks by default, uploads once, then mirrors or skips per server; `multiServerMediaUpload()` uploads to one `/media` endpoint first, then mirrors the optimized blob.
 
-The SDK exposes multiple entry points via package.json `exports`:
+## Commands
 
-- `blossom-client-sdk` — main barrel export (`src/index.ts`)
-- `blossom-client-sdk/client` — `BlossomClient` class
-- `blossom-client-sdk/auth` — auth event creation functions
-- `blossom-client-sdk/actions` — low-level action functions
-- `blossom-client-sdk/actions/*` — individual actions (upload, download, list, delete, mirror, media, multi-server)
-- `blossom-client-sdk/helpers` — utility functions (blob hashing, fetch, URL, signals)
-- `blossom-client-sdk/image` — DOM image fallback handling
-- `blossom-client-sdk/nostr` — nostr server list constants
+- `pnpm test`: node Vitest suite.
+- `pnpm vitest run tests/auth.test.ts`: run one test file.
+- `pnpm vitest run --browser --browser.headless`: browser suite for DOM/media helpers.
+- `pnpm coverage`: coverage run.
+- `pnpm build`: compile `src/` to `lib/` and emit declarations.
+- `pnpm docs`: TypeDoc build; CI publishes the generated `docs/` directory on version tags.
+- `pnpm format`: Prettier over the whole repo.
 
-### Two API Layers
+## Verification
 
-1. **Action functions** (`src/actions/`): Stateless functions that each take a server, payload, and options object. These are the building blocks. Each action handles its own auth negotiation (retry with auth on 401) and payment flow (retry with payment on 402).
+- CI runs node tests on Node `18`, `20`, and `22`, plus a separate browser job on Node `22` after `pnpm exec playwright install`.
+- If you touch DOM-facing media helpers in `src/media.ts`, run the browser suite, not just node tests.
+- There is no lint script. Formatting is enforced by Prettier (`2` spaces, `printWidth: 120`).
 
-2. **BlossomClient class** (`src/client.ts`): Wraps action functions with a bound server and signer. Exposes both static methods (delegating directly to actions/auth) and instance methods that auto-attach auth and payment handlers from the instance.
+## Tests
 
-### Auth System
+- HTTP-facing tests use the global fetch mock initialized in `tests/fetch.ts` via `vitest-fetch-mock`.
+- Browser-only tests are gated inline with `describe.runIf(typeof document !== "undefined")`; they only execute under the browser runner.
 
-`src/auth.ts` creates Nostr kind-24242 signed events. The `Signer` type (`(draft: EventTemplate) => Promise<SignedEvent>`) is the key integration point — consumers provide their own signing implementation (NIP-07 window.nostr, NDK, etc.). Auth events include `t` (action type), `x` (sha256), and `expiration` tags.
+## Release Workflow
 
-### Payment Flow
-
-Actions support a 402 payment flow: server returns a `PaymentRequest` (Cashu NUT-23), the `onPayment` callback processes it and returns a `PaymentToken`, then the request is retried with a `Payment` header.
-
-### Multi-Server Orchestration
-
-`src/actions/multi-server.ts` handles uploading to multiple servers with media upload optimization (BUD-05), auth event reuse across servers, and partial failure callbacks.
-
-## Testing
-
-Tests are in `tests/` mirroring `src/` structure. Uses `vitest-fetch-mock` for HTTP mocking and `nostr-tools` for key generation in tests. Some tests use `.skipIf()` to separate browser-only and node-only tests.
-
-## Versioning
-
-Uses [changesets](https://github.com/changesets/changesets). Base branch is `master`. Run `pnpm changeset` to create a changeset for new changes.
+- Default branch is `master`.
+- Releases are driven by Changesets in CI (`.github/workflows/version-or-publish.yml`). If you change published behavior, add a changeset with `pnpm changeset` unless the user asks not to.
