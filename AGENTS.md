@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-blossom-client-sdk is a TypeScript client SDK for managing blobs on [Blossom](https://github.com/hzrd149/blossom) servers. It uses Nostr-based authentication (kind 24242 events) and supports Cashu payments. Published as an ES module (`"type": "module"`).
+blossom-client-sdk is a TypeScript client SDK for managing blobs on [Blossom](https://github.com/hzrd149/blossom) servers. It uses Nostr-based authorization (kind 24242 events) and supports Cashu payments. Published as an ES module (`"type": "module"`).
 
 ## Commands
 

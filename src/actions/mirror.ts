@@ -1,4 +1,4 @@
-import { encodeAuthorizationHeader } from "../auth.js";
+import { encodeAuthorizationHeader, getReusableAuthEvent, storeAuthEvent } from "../auth.js";
 import { ServerType } from "../types.js";
 import HTTPError from "../error.js";
 import { fetchWithTimeout } from "../helpers/index.js";
@@ -9,6 +9,8 @@ export type MirrorOptions<S extends ServerType> = {
   signal?: AbortSignal;
   /** Override authorization event, or true to always use authorization, false to disable authorization */
   auth?: SignedEvent | boolean;
+  /** Shared auth event store used to reuse non-expired auth events between requests */
+  authEvents?: Set<SignedEvent>;
   /** Request timeout */
   timeout?: number;
   /**
@@ -35,6 +37,18 @@ export async function mirrorBlob<S extends ServerType>(
   opts?: MirrorOptions<S>,
 ): Promise<BlobDescriptor> {
   const url = new URL("/mirror", server);
+  const resolveAuth = async (preset: boolean = false) => {
+    const reused = opts?.authEvents
+      ? await getReusableAuthEvent(opts.authEvents, { server, type: "upload", blob: blob.sha256 })
+      : undefined;
+    if (reused) return reused;
+
+    const auth = await opts?.onAuth?.(server, blob.sha256, blob);
+    if (!auth) throw new Error(preset ? "Missing onAuth handler" : "Missing auth handler");
+
+    if (opts?.authEvents) storeAuthEvent(opts.authEvents, auth);
+    return auth;
+  };
 
   const headers: Record<string, string> = {
     "X-SHA-256": blob.sha256,
@@ -46,8 +60,7 @@ export async function mirrorBlob<S extends ServerType>(
   // attach the authorization if its already set
   if (opts?.auth) {
     if (typeof opts.auth === "boolean") {
-      if (!opts.onAuth) throw new Error("Missing onAuth handler");
-      headers["Authorization"] = encodeAuthorizationHeader(await opts.onAuth(server, blob.sha256, blob));
+      headers["Authorization"] = encodeAuthorizationHeader(await resolveAuth(true));
     } else {
       headers["Authorization"] = encodeAuthorizationHeader(opts.auth);
     }
@@ -68,8 +81,7 @@ export async function mirrorBlob<S extends ServerType>(
       if (opts?.auth === false) throw new Error("Authorization disabled");
 
       // Request authorization event for this mirror
-      const auth = await opts?.onAuth?.(server, blob.sha256, blob);
-      if (!auth) throw new Error("Missing auth handler");
+      const auth = await resolveAuth();
 
       // Try mirror with auth
       mirror = await fetchWithTimeout(url, {

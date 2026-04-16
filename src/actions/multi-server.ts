@@ -1,7 +1,7 @@
-import { doseAuthMatchBlob } from "../auth.js";
+import { getReusableAuthEvent, storeAuthEvent } from "../auth.js";
 import { ServerType, UploadType } from "../types.js";
 import { getBlobSha256 } from "../helpers/index.js";
-import { BlobDescriptor, PaymentRequest } from "../types.js";
+import { BlobDescriptor, PaymentRequest, SignedEvent } from "../types.js";
 import { MediaEndpointMissingError, uploadMedia } from "./media.js";
 import { mirrorBlob } from "./mirror.js";
 import { uploadBlob, UploadOptions } from "./upload.js";
@@ -84,20 +84,18 @@ export async function multiServerUpload<S extends ServerType, B extends UploadTy
   const options = { ...defaultMultiServerOptions, ...opts };
   let initialUpload: BlobDescriptor | undefined;
   const results = new Map<S, BlobDescriptor>();
+  const authEvents = options.authEvents ?? new Set<SignedEvent>();
 
-  // reuse auth events
-  let authEvents = typeof options.auth === "object" ? [options.auth] : [];
+  if (typeof options.auth === "object") authEvents.add(options.auth);
+
   const handleAuthRequest = async (server: S, sha256: string, type: "upload" | "media") => {
-    // check if any existing auth events match
-    for (const auth of authEvents) {
-      if (await doseAuthMatchBlob(auth, server, sha256, type)) return auth;
-    }
+    const reused = await getReusableAuthEvent(authEvents, { server, type, blob: sha256 });
+    if (reused) return reused;
 
     // create a new auth event
     if (options.onAuth) {
       const auth = await options.onAuth(server, sha256, type, blob);
-      authEvents.push(auth);
-      return auth;
+      return storeAuthEvent(authEvents, auth);
     } else throw new Error("Missing onAuth handler");
   };
 

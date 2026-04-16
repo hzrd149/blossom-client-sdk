@@ -3,7 +3,7 @@ import { getEncodedToken, PaymentRequest, Token } from "@cashu/cashu-ts";
 
 import { finalizeEvent, generateSecretKey } from "nostr-tools";
 import { listBlobs } from "../../src/actions/list.js";
-import { createMirrorAuth, encodeAuthorizationHeader } from "../../src/auth.js";
+import { createListAuth, encodeAuthorizationHeader } from "../../src/auth.js";
 import { BlobDescriptor, EventTemplate, Signer } from "../../src/types.js";
 import fetchMock from "../fetch.js";
 
@@ -13,7 +13,7 @@ const signer: Signer = async (t: EventTemplate) => finalizeEvent(t, key);
 describe("listBlobs", async () => {
   const mockServer = "https://example.com";
   const mockPubkey = "npub1abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqr";
-  const mockAuth = await createMirrorAuth(signer, "");
+  const mockAuth = await createListAuth(signer);
 
   const mockBlobs: BlobDescriptor[] = [
     {
@@ -168,6 +168,17 @@ describe("listBlobs", async () => {
 
   it("should throw an error if auth=true and no onAuth handler is provided", async () => {
     await expect(listBlobs(mockServer, mockPubkey, { auth: true })).rejects.toThrow("Missing onAuth handler");
+  });
+
+  it("should reuse scoped list auth from authEvents", async () => {
+    fetchMock.mockResponseOnce(JSON.stringify(mockBlobs));
+
+    const authEvents = new Set([await createListAuth(signer, { servers: mockServer })]);
+    const onAuth = vi.fn();
+    await listBlobs(mockServer, mockPubkey, { auth: true, authEvents, onAuth });
+
+    expect(onAuth).not.toHaveBeenCalled();
+    expect(fetchMock.requests()[0].headers.get("Authorization")).toBeTruthy();
   });
 
   it("should throw an error if authorization is requested but is disabled auth=false", async () => {

@@ -3,7 +3,7 @@ import { getEncodedToken, PaymentRequest, Token } from "@cashu/cashu-ts";
 
 import { finalizeEvent, generateSecretKey } from "nostr-tools";
 import { downloadBlob } from "../../src/actions/download.js";
-import { createMirrorAuth, encodeAuthorizationHeader } from "../../src/auth.js";
+import { createDownloadAuth, encodeAuthorizationHeader } from "../../src/auth.js";
 import { EventTemplate, Signer } from "../../src/types.js";
 import fetchMock from "../fetch.js";
 
@@ -13,7 +13,7 @@ const signer: Signer = async (t: EventTemplate) => finalizeEvent(t, key);
 describe("downloadBlob", async () => {
   const mockServer = "https://example.com";
   const mockSha256 = "74f81fe167d99b4cb41d6d0ccda82278caee9f3e2f25d5e5a3936ff3dcec60d0";
-  const mockAuth = await createMirrorAuth(signer, mockSha256);
+  const mockAuth = await createDownloadAuth(signer, mockSha256);
 
   it("should send the correct request", async () => {
     fetchMock.mockResponseOnce("mock response data", { status: 200 });
@@ -149,6 +149,30 @@ describe("downloadBlob", async () => {
 
   it("should throw an error if auth=true and no onAuth handler is provided", async () => {
     await expect(downloadBlob(mockServer, mockSha256, { auth: true })).rejects.toThrow("Missing onAuth handler");
+  });
+
+  it("should reuse auth from authEvents before calling onAuth", async () => {
+    fetchMock.mockResponseOnce("mock response", { status: 200 });
+
+    const onAuth = vi.fn();
+    const authEvents = new Set([mockAuth]);
+    await downloadBlob(mockServer, mockSha256, { auth: true, authEvents, onAuth });
+
+    expect(onAuth).not.toHaveBeenCalled();
+    expect(fetchMock.requests()[0].headers.get("Authorization")).toBe(encodeAuthorizationHeader(mockAuth));
+  });
+
+  it("should store newly created auth events after a 401", async () => {
+    fetchMock.mockResponses(
+      [JSON.stringify({ error: "Unauthorized" }), { status: 401 }],
+      ["mock response data", { status: 200 }],
+    );
+
+    const authEvents = new Set([mockAuth]);
+    authEvents.delete(mockAuth);
+    await downloadBlob(mockServer, mockSha256, { authEvents, onAuth: vi.fn().mockResolvedValue(mockAuth) });
+
+    expect(authEvents.has(mockAuth)).toBe(true);
   });
 
   it("should throw an error if authorization is requested but is disabled auth=false", async () => {

@@ -10,7 +10,13 @@ import {
   createListAuth,
   createMirrorAuth,
   createUploadAuth,
+  doesAuthMatchRequest,
   doseAuthMatchBlob,
+  encodeAuthorizationHeader,
+  getReusableAuthEvent,
+  isAuthExpired,
+  normalizeServerTag,
+  now,
 } from "../src/auth.js";
 import { getBlobSha256 } from "../src/helpers/index.js";
 import { AUTH_EVENT_KIND } from "../src";
@@ -77,9 +83,16 @@ describe("createAuthEvent", () => {
     const serverTags = event.tags.filter((tag) => tag[0] === "server");
 
     // Check for unique servers
-    const uniqueServers = [...new Set(servers)];
+    const uniqueServers = [...new Set(servers.map((server) => normalizeServerTag(server)))];
 
     expect(serverTags).toEqual(uniqueServers.sort().map((server) => ["server", server]));
+  });
+
+  it("should normalize server tags to lowercase hostnames", async () => {
+    const event = await createAuthEvent(signer, "upload", { servers: ["HTTPS://Example.COM/path", "cdn.example.com"] });
+
+    expect(event.tags).toContainEqual(["server", "example.com"]);
+    expect(event.tags).toContainEqual(["server", "cdn.example.com"]);
   });
 
   it("should remove duplicate hashes", async () => {
@@ -145,10 +158,10 @@ describe("doseAuthMatchBlob", () => {
     expect(await doseAuthMatchBlob(auth, "https://example.com", hash)).toBe(true);
   });
 
-  it("should return true if server matches server tag", async () => {
+  it("should return false if upload auth only has a matching server tag", async () => {
     const server = "https://example.com";
     const auth = await createAuthEvent(signer, "upload", { servers: server });
-    expect(await doseAuthMatchBlob(auth, server, "non-matching-hash")).toBe(true);
+    expect(await doseAuthMatchBlob(auth, server, "non-matching-hash")).toBe(false);
   });
 
   it("should return false if neither blob hash nor server matches", async () => {
@@ -172,6 +185,84 @@ describe("doseAuthMatchBlob", () => {
   });
 });
 
+describe("auth event store", () => {
+  it("should report expired auth events", async () => {
+    const auth = await createAuthEvent(signer, "get", { expiration: now() - 1 });
+    expect(isAuthExpired(auth)).toBe(true);
+  });
+
+  it("should reuse unscoped list auth for any server", async () => {
+    const auth = await createListAuth(signer);
+    expect(await doesAuthMatchRequest(auth, { server: "https://example.com", type: "list" })).toBe(true);
+    expect(await doesAuthMatchRequest(auth, { server: "https://other.example.com", type: "list" })).toBe(true);
+  });
+
+  it("should require server match for scoped list auth", async () => {
+    const auth = await createListAuth(signer, { servers: "https://example.com" });
+    expect(await doesAuthMatchRequest(auth, { server: "https://example.com", type: "list" })).toBe(true);
+    expect(await doesAuthMatchRequest(auth, { server: "https://other.example.com", type: "list" })).toBe(false);
+  });
+
+  it("should allow unscoped get auth without x tags", async () => {
+    const auth = await createAuthEvent(signer, "get");
+    expect(
+      await doesAuthMatchRequest(auth, {
+        server: "https://example.com",
+        type: "get",
+        blob: "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+      }),
+    ).toBe(true);
+  });
+
+  it("should require x tags for delete auth", async () => {
+    const auth = await createAuthEvent(signer, "delete");
+    expect(
+      await doesAuthMatchRequest(auth, {
+        server: "https://example.com",
+        type: "delete",
+        blob: "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+      }),
+    ).toBe(false);
+  });
+
+  it("should require x tags for upload auth", async () => {
+    const auth = await createAuthEvent(signer, "upload", { servers: "https://example.com" });
+    expect(
+      await doesAuthMatchRequest(auth, {
+        server: "https://example.com",
+        type: "upload",
+        blob: "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+      }),
+    ).toBe(false);
+  });
+
+  it("should reuse hash scoped download auth", async () => {
+    const hash = "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890";
+    const auth = await createDownloadAuth(signer, hash);
+    expect(await doesAuthMatchRequest(auth, { server: "https://example.com", type: "get", blob: hash })).toBe(true);
+    expect(
+      await doesAuthMatchRequest(auth, {
+        server: "https://example.com",
+        type: "get",
+        blob: "0987654321fedcba0987654321fedcba0987654321fedcba0987654321fedcba",
+      }),
+    ).toBe(false);
+  });
+
+  it("should prune expired auth events from a store", async () => {
+    const hash = "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890";
+    const expired = await createDownloadAuth(signer, hash, { expiration: now() - 1 });
+    const valid = await createDownloadAuth(signer, hash);
+    const authEvents = new Set([expired, valid]);
+
+    const reused = await getReusableAuthEvent(authEvents, { server: "https://example.com", type: "get", blob: hash });
+
+    expect(reused).toBe(valid);
+    expect(authEvents.has(expired)).toBe(false);
+    expect(authEvents.has(valid)).toBe(true);
+  });
+});
+
 describe("createDownloadAuth", () => {
   it("should create a GET auth event with blob hash", async () => {
     const hash = "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890";
@@ -189,7 +280,7 @@ describe("createDownloadAuth", () => {
 
     expect(auth.kind).toBe(AUTH_EVENT_KIND);
     expect(auth.tags).toContainEqual(["t", "get"]);
-    expect(auth.tags).toContainEqual(["server", server]);
+    expect(auth.tags).toContainEqual(["server", "example.com"]);
     expect(auth.content).toBe("Download Blob");
   });
 
@@ -205,8 +296,8 @@ describe("createDownloadAuth", () => {
     expect(auth.tags).toContainEqual(["t", "get"]);
     expect(auth.tags).toContainEqual(["x", hash1]);
     expect(auth.tags).toContainEqual(["x", hash2]);
-    expect(auth.tags).toContainEqual(["server", server1]);
-    expect(auth.tags).toContainEqual(["server", server2]);
+    expect(auth.tags).toContainEqual(["server", "example.com"]);
+    expect(auth.tags).toContainEqual(["server", "example.org"]);
   });
 
   it("should create a GET auth event with Blob object", async () => {
@@ -247,7 +338,7 @@ describe("createDownloadAuth", () => {
     expect(auth.kind).toBe(AUTH_EVENT_KIND);
     expect(auth.tags).toContainEqual(["t", "get"]);
     expect(auth.tags).toContainEqual(["x", hash]);
-    expect(auth.tags).toContainEqual(["server", server]);
+    expect(auth.tags).toContainEqual(["server", "example.com"]);
 
     // The invalid input should not be included
     expect(auth.tags).not.toContainEqual(["x", invalidInput]);
@@ -315,7 +406,7 @@ describe("createUploadAuth", () => {
 
     const auth = await createUploadAuth(signer, hash, { servers: server });
 
-    expect(auth.tags).toContainEqual(["server", server]);
+    expect(auth.tags).toContainEqual(["server", "example.com"]);
   });
 });
 
@@ -349,7 +440,7 @@ describe("createListAuth", () => {
 
     const auth = await createListAuth(signer, { servers: server });
 
-    expect(auth.tags).toContainEqual(["server", server]);
+    expect(auth.tags).toContainEqual(["server", "example.com"]);
   });
 });
 
@@ -399,7 +490,7 @@ describe("createDeleteAuth", () => {
     const auth = await createDeleteAuth(signer, hash, { servers: server });
 
     expect(auth.tags).toContainEqual(["x", hash]);
-    expect(auth.tags).toContainEqual(["server", server]);
+    expect(auth.tags).toContainEqual(["server", "example.com"]);
   });
 
   it("should handle multiple servers", async () => {
@@ -410,7 +501,20 @@ describe("createDeleteAuth", () => {
     const auth = await createDeleteAuth(signer, hash, { servers: [server1, server2] });
 
     expect(auth.tags).toContainEqual(["x", hash]);
-    expect(auth.tags).toContainEqual(["server", server1]);
-    expect(auth.tags).toContainEqual(["server", server2]);
+    expect(auth.tags).toContainEqual(["server", "example1.com"]);
+    expect(auth.tags).toContainEqual(["server", "example2.com"]);
+  });
+});
+
+describe("encodeAuthorizationHeader", () => {
+  it("should encode auth events using base64url without padding", async () => {
+    const auth = await createListAuth(signer);
+    const header = encodeAuthorizationHeader(auth);
+    const encoded = header.slice("Nostr ".length);
+
+    expect(header.startsWith("Nostr ")).toBe(true);
+    expect(encoded).not.toContain("+");
+    expect(encoded).not.toContain("/");
+    expect(encoded).not.toContain("=");
   });
 });

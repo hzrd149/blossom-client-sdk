@@ -1,7 +1,7 @@
 import { ServerType } from "../types.js";
 import { PaymentRequest, PaymentToken, SignedEvent } from "../types.js";
 import HTTPError from "../error.js";
-import { encodeAuthorizationHeader } from "../auth.js";
+import { encodeAuthorizationHeader, getReusableAuthEvent, storeAuthEvent } from "../auth.js";
 import { fetchWithTimeout } from "../helpers/index.js";
 
 export type DownloadOptions<S extends ServerType> = {
@@ -9,6 +9,8 @@ export type DownloadOptions<S extends ServerType> = {
   signal?: AbortSignal;
   /** Override authorization event, or true to always use authorization, false to disable authorization */
   auth?: SignedEvent | boolean;
+  /** Shared auth event store used to reuse non-expired auth events between requests */
+  authEvents?: Set<SignedEvent>;
   /** Request timeout */
   timeout?: number;
   /**
@@ -29,14 +31,25 @@ export type DownloadOptions<S extends ServerType> = {
 /** Downloads a blob from a server and returns the Response */
 export async function downloadBlob<S extends ServerType>(server: S, hash: string, opts?: DownloadOptions<S>) {
   const url = new URL("/" + hash, server);
+  const resolveAuth = async (preset: boolean = false) => {
+    const reused = opts?.authEvents
+      ? await getReusableAuthEvent(opts.authEvents, { server, type: "get", blob: hash })
+      : undefined;
+    if (reused) return reused;
+
+    const auth = await opts?.onAuth?.(server, hash);
+    if (!auth) throw new Error(preset ? "Missing onAuth handler" : "Missing auth handler");
+
+    if (opts?.authEvents) storeAuthEvent(opts.authEvents, auth);
+    return auth;
+  };
 
   const headers: HeadersInit = {};
 
   // attach the authorization if its already set
   if (opts?.auth) {
     if (typeof opts.auth === "boolean") {
-      if (!opts.onAuth) throw new Error("Missing onAuth handler");
-      headers["Authorization"] = encodeAuthorizationHeader(await opts.onAuth(server, hash));
+      headers["Authorization"] = encodeAuthorizationHeader(await resolveAuth(true));
     } else {
       headers["Authorization"] = encodeAuthorizationHeader(opts.auth);
     }
@@ -55,8 +68,7 @@ export async function downloadBlob<S extends ServerType>(server: S, hash: string
       if (opts?.auth === false) throw new Error("Authorization disabled");
 
       // Request authorization for this request
-      const auth = await opts?.onAuth?.(server, hash);
-      if (!auth) throw new Error("Missing auth handler");
+      const auth = await resolveAuth();
 
       // Try download with auth
       download = await fetchWithTimeout(url, {

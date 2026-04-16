@@ -58,7 +58,7 @@
 
 ### Patch Changes
 
-- 157af49: Fix download, delete, and list authentication
+- 157af49: Fix download, delete, and list authorization
 
 ## 2.0.0
 
