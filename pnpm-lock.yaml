@@ -8,13 +8,13 @@ importers:
 
   .:
     dependencies:
-      '@cashu/cashu-ts':
-        specifier: ^2.4.3
-        version: 2.4.3
       '@noble/hashes':
         specifier: ^1.8.0
         version: 1.8.0
     devDependencies:
+      '@cashu/cashu-ts':
+        specifier: ^2.4.3
+        version: 2.4.3
       '@changesets/cli':
         specifier: ^2.29.3
         version: 2.29.3

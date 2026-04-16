@@ -86,7 +86,7 @@ export async function listBlobs<S extends ServerType>(
       if (!opts?.onPayment) throw new Error("Missing payment handler");
       const { getEncodedToken } = await import("@cashu/cashu-ts");
       const { getPaymentRequestFromHeaders } = await import("../helpers/cashu.js");
-      const request = getPaymentRequestFromHeaders(list.headers);
+      const request = await getPaymentRequestFromHeaders(list.headers);
 
       const token = await opts.onPayment(server, request);
       const payment = getEncodedToken(token);

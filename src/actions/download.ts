@@ -83,7 +83,7 @@ export async function downloadBlob<S extends ServerType>(server: S, hash: string
       if (!opts?.onPayment) throw new Error("Missing payment handler");
       const { getEncodedToken } = await import("@cashu/cashu-ts");
       const { getPaymentRequestFromHeaders } = await import("../helpers/cashu.js");
-      const request = getPaymentRequestFromHeaders(download.headers);
+      const request = await getPaymentRequestFromHeaders(download.headers);
 
       const token = await opts.onPayment(server, hash, request);
       const payment = getEncodedToken(token);

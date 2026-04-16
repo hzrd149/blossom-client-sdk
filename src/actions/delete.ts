@@ -84,7 +84,7 @@ export async function deleteBlob<S extends ServerType>(server: S, hash: string, 
       if (!opts?.onPayment) throw new Error("Missing payment handler");
       const { getEncodedToken } = await import("@cashu/cashu-ts");
       const { getPaymentRequestFromHeaders } = await import("../helpers/cashu.js");
-      const request = getPaymentRequestFromHeaders(res.headers);
+      const request = await getPaymentRequestFromHeaders(res.headers);
 
       const token = await opts.onPayment(server, hash, request);
       const payment = getEncodedToken(token);

@@ -97,7 +97,7 @@ export async function mirrorBlob<S extends ServerType>(
       if (!opts?.onPayment) throw new Error("Missing payment handler");
       const { getEncodedToken } = await import("@cashu/cashu-ts");
       const { getPaymentRequestFromHeaders } = await import("../helpers/cashu.js");
-      const request = getPaymentRequestFromHeaders(mirror.headers);
+      const request = await getPaymentRequestFromHeaders(mirror.headers);
 
       const token = await opts.onPayment(server, blob.sha256, blob, request);
       const payment = getEncodedToken(token);

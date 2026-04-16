@@ -115,7 +115,7 @@ export async function uploadBlob<S extends ServerType, B extends UploadType>(
       if (!opts?.onPayment) throw new Error("Missing payment handler");
       const { getEncodedToken } = await import("@cashu/cashu-ts");
       const { getPaymentRequestFromHeaders } = await import("../helpers/cashu.js");
-      const request = getPaymentRequestFromHeaders(firstTry.headers);
+      const request = await getPaymentRequestFromHeaders(firstTry.headers);
 
       const token = await opts.onPayment(server, sha256, blob, request);
       const payment = getEncodedToken(token);

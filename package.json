@@ -62,18 +62,22 @@
     "node": ">=18"
   },
   "dependencies": {
-    "@cashu/cashu-ts": "^2.4.3",
     "@noble/hashes": "^1.8.0"
   },
   "peerDependencies": {
+    "@cashu/cashu-ts": "^2.4.3",
     "hls.js": "^1.6.16"
   },
   "peerDependenciesMeta": {
+    "@cashu/cashu-ts": {
+      "optional": true
+    },
     "hls.js": {
       "optional": true
     }
   },
   "devDependencies": {
+    "@cashu/cashu-ts": "^2.4.3",
     "@changesets/cli": "^2.29.3",
     "@testing-library/dom": "^10.4.0",
     "@types/node": "^22.15.14",
