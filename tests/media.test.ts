@@ -1,7 +1,28 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
+import { describe, expect, it, vi, beforeAll, afterAll, beforeEach, afterEach } from "vitest";
 import { handleMediaFallbacks, handleBrokenMedia, createSourceElements } from "../src/media";
 
 const HASH = "b1674191a88ec5cdd733e4240a81803105dc412d6c6708d53ab94fc248f4f553";
+
+// The media tests use fake URLs (server1.com, server2.com, ...) that the browser actually tries to
+// load. Those failed loads fire real (isTrusted=true) error events with unpredictable timing,
+// which race with the tests' manually-dispatched error events and make the suite flaky.
+// Block real error events on the capture phase so only manual dispatches (isTrusted=false) reach
+// the handler, making every test advance exactly one fallback slot per manual dispatch.
+function stopBrowserErrors(e: Event) {
+  if (e.isTrusted) e.stopPropagation();
+}
+
+beforeAll(() => {
+  if (typeof document !== "undefined") {
+    document.addEventListener("error", stopBrowserErrors, true);
+  }
+});
+
+afterAll(() => {
+  if (typeof document !== "undefined") {
+    document.removeEventListener("error", stopBrowserErrors, true);
+  }
+});
 
 describe.runIf(typeof document !== "undefined")("handleMediaFallbacks", () => {
   let getServers: any;
@@ -25,7 +46,7 @@ describe.runIf(typeof document !== "undefined")("handleMediaFallbacks", () => {
     image.dispatchEvent(new Event("error"));
 
     await vi.waitFor(() => {
-      expect(image.src).toBe(`https://server3.com/${HASH}.jpg`);
+      expect(image.src).toBe(`https://server2.com/${HASH}.jpg`);
     });
 
     removeListener();
@@ -43,7 +64,7 @@ describe.runIf(typeof document !== "undefined")("handleMediaFallbacks", () => {
     video.dispatchEvent(new Event("error"));
 
     await vi.waitFor(() => {
-      expect(video.src).toBe(`https://server3.com/${HASH}.mp4`);
+      expect(video.src).toBe(`https://server2.com/${HASH}.mp4`);
     });
 
     removeListener();
@@ -61,7 +82,7 @@ describe.runIf(typeof document !== "undefined")("handleMediaFallbacks", () => {
     audio.dispatchEvent(new Event("error"));
 
     await vi.waitFor(() => {
-      expect(audio.src).toBe(`https://server3.com/${HASH}.mp3`);
+      expect(audio.src).toBe(`https://server2.com/${HASH}.mp3`);
     });
 
     removeListener();
@@ -78,12 +99,12 @@ describe.runIf(typeof document !== "undefined")("handleMediaFallbacks", () => {
 
     video.dispatchEvent(new Event("error"));
     await vi.waitFor(() => {
-      expect(video.src).toBe(`https://server3.com/${HASH}.mp4`);
+      expect(video.src).toBe(`https://server2.com/${HASH}.mp4`);
     });
 
     video.dispatchEvent(new Event("error"));
     await vi.waitFor(() => {
-      expect(video.src).toBe(`https://server4.com/${HASH}.mp4`);
+      expect(video.src).toBe(`https://server3.com/${HASH}.mp4`);
     });
 
     removeListener();
@@ -100,7 +121,7 @@ describe.runIf(typeof document !== "undefined")("handleMediaFallbacks", () => {
     image.dispatchEvent(new Event("error"));
 
     await vi.waitFor(() => {
-      expect(image.src).toBe(`https://server3.com/${HASH}.jpg`);
+      expect(image.src).toBe(`https://server2.com/${HASH}.jpg`);
     });
 
     expect(getServers).toHaveBeenCalledWith("override-pubkey");
@@ -122,7 +143,7 @@ describe.runIf(typeof document !== "undefined")("handleMediaFallbacks", () => {
     video.dispatchEvent(new Event("error"));
 
     await vi.waitFor(() => {
-      expect(video.src).toBe(`https://server3.com/${HASH}.mp4`);
+      expect(video.src).toBe(`https://server2.com/${HASH}.mp4`);
     });
 
     expect(getServers).toHaveBeenCalledWith("parent-pubkey");
@@ -270,7 +291,7 @@ describe.runIf(typeof document !== "undefined")("handleBrokenMedia", () => {
     image.dispatchEvent(new Event("error"));
 
     await vi.waitFor(() => {
-      expect(image.src).toBe(`https://server3.com/${HASH}.jpg`);
+      expect(image.src).toBe(`https://server2.com/${HASH}.jpg`);
     });
   });
 
@@ -285,7 +306,7 @@ describe.runIf(typeof document !== "undefined")("handleBrokenMedia", () => {
     video.dispatchEvent(new Event("error"));
 
     await vi.waitFor(() => {
-      expect(video.src).toBe(`https://server3.com/${HASH}.mp4`);
+      expect(video.src).toBe(`https://server2.com/${HASH}.mp4`);
     });
   });
 
@@ -300,7 +321,7 @@ describe.runIf(typeof document !== "undefined")("handleBrokenMedia", () => {
     audio.dispatchEvent(new Event("error"));
 
     await vi.waitFor(() => {
-      expect(audio.src).toBe(`https://server3.com/${HASH}.mp3`);
+      expect(audio.src).toBe(`https://server2.com/${HASH}.mp3`);
     });
   });
 
@@ -317,7 +338,7 @@ describe.runIf(typeof document !== "undefined")("handleBrokenMedia", () => {
     video.dispatchEvent(new Event("error"));
 
     await vi.waitFor(() => {
-      expect(video.src).toBe(`https://server3.com/${HASH}.mp4`);
+      expect(video.src).toBe(`https://server2.com/${HASH}.mp4`);
     });
   });
 
@@ -356,7 +377,7 @@ describe.runIf(typeof document !== "undefined")("handleBrokenMedia", () => {
     video.dispatchEvent(new Event("error"));
 
     await vi.waitFor(() => {
-      expect(video.src).toBe(`https://server3.com/${HASH}.mp4`);
+      expect(video.src).toBe(`https://server2.com/${HASH}.mp4`);
     });
 
     expect(getServers).toHaveBeenCalledTimes(1);
