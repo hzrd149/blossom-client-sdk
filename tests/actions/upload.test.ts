@@ -90,6 +90,27 @@ describe("uploadBlob", async () => {
       await expect(uploadBlob(mockServer, mockBlob)).rejects.toThrow("Missing auth handler");
     });
 
+    it("should reuse auth from authEvents before calling onAuth", async () => {
+      fetchMock.mockResponses(["", { status: 200 }], [JSON.stringify(mockResponse), { status: 200 }]);
+
+      const onAuth = vi.fn();
+      const authEvents = new Set([mockAuth]);
+      await uploadBlob(mockServer, mockBlob, { auth: true, authEvents, onAuth });
+
+      expect(onAuth).not.toHaveBeenCalled();
+      expect(fetchMock.requests()[0].headers.get("Authorization")).toBe(encodeAuthorizationHeader(mockAuth));
+    });
+
+    it("should store newly created auth events after a 401", async () => {
+      fetchMock.mockResponses(["", { status: 401 }], [JSON.stringify(mockResponse), { status: 200 }]);
+
+      const authEvents = new Set([mockAuth]);
+      authEvents.delete(mockAuth);
+      await uploadBlob(mockServer, mockBlob, { authEvents, onAuth: vi.fn().mockResolvedValue(mockAuth) });
+
+      expect(authEvents.has(mockAuth)).toBe(true);
+    });
+
     it("should retry with payment when receiving 402 status on HEAD", async () => {
       const paymentRequest = new PaymentRequest([], "upload-6846354183", 100, "sat", ["https://mint.example.com"]);
       // First response is 402 with payment headers

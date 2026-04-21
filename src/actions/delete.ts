@@ -1,5 +1,5 @@
-import { encodeAuthorizationHeader } from "../auth.js";
-import { ServerType } from "../client.js";
+import { encodeAuthorizationHeader, getReusableAuthEvent, storeAuthEvent } from "../auth.js";
+import { ServerType } from "../types.js";
 import HTTPError from "../error.js";
 import { fetchWithTimeout } from "../helpers/fetch.js";
 import { PaymentRequest, PaymentToken, SignedEvent } from "../types.js";
@@ -9,6 +9,8 @@ export type DeleteOptions<S extends ServerType> = {
   signal?: AbortSignal;
   /** Override authorization event, or true to always use authorization, false to disable authorization */
   auth?: SignedEvent | boolean;
+  /** Shared auth event store used to reuse non-expired auth events between requests */
+  authEvents?: Set<SignedEvent>;
   /** Request timeout */
   timeout?: number;
   /**
@@ -29,14 +31,25 @@ export type DeleteOptions<S extends ServerType> = {
 /** Deletes a blob to a server */
 export async function deleteBlob<S extends ServerType>(server: S, hash: string, opts?: DeleteOptions<S>) {
   const url = new URL("/" + hash, server);
+  const resolveAuth = async (preset: boolean = false) => {
+    const reused = opts?.authEvents
+      ? await getReusableAuthEvent(opts.authEvents, { server, type: "delete", blob: hash })
+      : undefined;
+    if (reused) return reused;
+
+    const auth = await opts?.onAuth?.(server, hash);
+    if (!auth) throw new Error(preset ? "Missing onAuth handler" : "Missing auth handler");
+
+    if (opts?.authEvents) storeAuthEvent(opts.authEvents, auth);
+    return auth;
+  };
 
   const headers: HeadersInit = {};
 
   // attach the authorization if its already set
   if (opts?.auth) {
     if (typeof opts.auth === "boolean") {
-      if (!opts.onAuth) throw new Error("Missing onAuth handler");
-      headers["Authorization"] = encodeAuthorizationHeader(await opts.onAuth(server, hash));
+      headers["Authorization"] = encodeAuthorizationHeader(await resolveAuth(true));
     } else {
       headers["Authorization"] = encodeAuthorizationHeader(opts.auth);
     }
@@ -56,8 +69,7 @@ export async function deleteBlob<S extends ServerType>(server: S, hash: string, 
       if (opts?.auth === false) throw new Error("Authorization disabled");
 
       // request authorization for this request
-      const auth = await opts?.onAuth?.(server, hash);
-      if (!auth) throw new Error("Missing auth handler");
+      const auth = await resolveAuth();
 
       // Try delete with auth
       res = await fetchWithTimeout(url, {
@@ -72,7 +84,7 @@ export async function deleteBlob<S extends ServerType>(server: S, hash: string, 
       if (!opts?.onPayment) throw new Error("Missing payment handler");
       const { getEncodedToken } = await import("@cashu/cashu-ts");
       const { getPaymentRequestFromHeaders } = await import("../helpers/cashu.js");
-      const request = getPaymentRequestFromHeaders(res.headers);
+      const request = await getPaymentRequestFromHeaders(res.headers);
 
       const token = await opts.onPayment(server, hash, request);
       const payment = getEncodedToken(token);

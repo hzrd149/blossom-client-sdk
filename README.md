@@ -1,25 +1,25 @@
 # 🌸 blossom-client-sdk
 
-A client for manage blobs on blossom servers
+A client for managing blobs on blossom servers
 
-[Documentation](https://hzrd149.github.io/blossom-client-sdk/classes/BlossomClient)
+[Documentation](https://hzrd149.github.io/blossom-client-sdk/)
 
-## Using the client
-
-### Using the static methods
+## Basic Usage
 
 ```js
-import { BlossomClient } from "blossom-client-sdk/client";
+import { uploadBlob, createUploadAuth, encodeAuthorizationHeader } from "blossom-client-sdk";
 
 async function signer(event) {
   return await window.nostr.signEvent(event);
 }
 
+const server = "https://cdn.example.com";
+
 // create an upload auth event
-const uploadAuth = await BlossomClient.createUploadAuth(file, server, "Upload bitcoin.pdf");
+const uploadAuth = await createUploadAuth(signer, file);
 
 // encode it using base64
-const encodedAuthHeader = BlossomClient.encodeAuthorizationHeader(auth);
+const encodedAuthHeader = encodeAuthorizationHeader(uploadAuth);
 
 // manually make the request
 const res = await fetch(new URL("/upload", server), {
@@ -28,36 +28,15 @@ const res = await fetch(new URL("/upload", server), {
   headers: { authorization: encodedAuthHeader },
 });
 
-// or use the static method
-const res = await BlossomClient.uploadBlob(server, file, uploadAuth);
-
-// check if successful
-if (res.ok) {
-  console.log("Blob uploaded!");
-}
-```
-
-### Using the class
-
-The `BlossomClient` class can be used to talk to a single server
-
-```js
-import { BlossomClient } from "blossom-client-sdk";
-
-async function signer(event) {
-  return await window.nostr.signEvent(event);
-}
-
-const client = new BlossomClient("https://cdn.example.com", signer);
-
-const pubkey = "266815e0c9210dfa324c6cba3573b14bee49da4209a9456f9484e5106cd408a5";
-const blobs = await client.listBlobs(pubkey, undefined, true);
-// passing true as the last argument will make it send an auth event with the list request
+// or use the action function
+const blob = await uploadBlob(server, file, {
+  onAuth: async (server, sha256, type) => createUploadAuth(signer, sha256, { type }),
+});
 ```
 
 ### Using with NDK
 
-The `BlossomClient` class and methods optionally take a `signer` method that is used to sign the upload auth events
+The auth and action functions optionally take a `signer` method that is used to sign the auth events
 
 If your using NDK in your app you can use this method
 
@@ -101,45 +80,157 @@ console.log(getHashFromURL("https://example.com/index.html"));
 // -> null
 ```
 
-### Handling broken images
+### Media fallbacks
 
-This package also exports a few helper methods for handling broken images
+The SDK provides several methods for handling broken media elements (`<img>`, `<video>`, `<audio>`) by automatically trying alternative blossom servers. Both regular HTTP blob URLs and `blossom:` URIs are supported.
 
-The `handleImageFallbacks(image, getServers)` method listen for an `error` event on an `<img/>` element and if the element has a `data-pubkey` attribute. it will call `getServers` to ask for a list of blossom servers for the pubkey
+All the media fallback methods require a `getServers` callback to resolve pubkeys to server lists:
 
 ```js
-import { handleImageFallbacks, USER_BLOSSOM_SERVER_LIST_KIND, getServersFromServerListEvent } from "blossom-client-sdk";
+import { USER_BLOSSOM_SERVER_LIST_KIND, getServersFromServerListEvent } from "blossom-client-sdk";
 
-const image = new Image();
-image.src = "https://cdn.censorship.com/72cb99b689b4cfe1a9fb6937f779f3f9c65094bf0e6ac72a8f8261efa96653f5.png";
-
-// set the pubkey from the kind 1 event this image was found it
-image.dataset.pubkey = event.pubkey;
-
-// this is called when
 async function getServers(pubkey) {
   if (pubkey) {
-    // use NDK to find the users blossom server list event (k:10063)
     const event = await ndk.fetchEvent({ kinds: [USER_BLOSSOM_SERVER_LIST_KIND], authors: [pubkey] });
-
-    // if its found return a list of blossom servers
     if (event) return getServersFromServerListEvent(event);
   }
   return undefined;
 }
-
-// listen for "error" events
-handleImageFallbacks(image, getServers);
-
-document.body.appendChild(image);
 ```
+
+#### Automatic fallbacks for a DOM tree
+
+`handleBrokenMedia` watches a DOM tree for any `<img>`, `<video>`, or `<audio>` elements and automatically handles server fallbacks. It uses a `MutationObserver` to handle dynamically added elements. Returns a cleanup function to remove all listeners and stop observing.
+
+```js
+import { handleBrokenMedia } from "blossom-client-sdk";
+
+// start watching for broken media in the document
+const cleanup = handleBrokenMedia(document.body, getServers);
+
+// later, to remove all listeners and stop watching
+cleanup();
+```
+
+#### Blossom URIs in media elements
+
+Media elements can use `blossom:` URIs directly in the `src` attribute. The fallback handler will automatically resolve the URI to HTTP URLs using the server hints:
+
+```html
+<img
+  src="blossom:b1674191a88ec5cdd733e4240a81803105dc412d6c6708d53ab94fc248f4f553.png?xs=https://cdn1.com&xs=https://cdn2.com"
+/>
+```
+
+When the browser can't load the `blossom:` protocol, the error handler parses the URI, resolves server URLs from `xs` and `as` hints, and sets the first working URL.
+
+#### Single element fallbacks
+
+`handleMediaFallbacks` attaches an error listener to a single element. For regular HTTP URLs, it extracts the blob hash and looks up alternative servers using a `data-pubkey` attribute on the element or its parents:
+
+```js
+import { handleMediaFallbacks } from "blossom-client-sdk";
+
+const video = document.createElement("video");
+video.src = "https://cdn.example.com/b1674191a88ec5cdd733e4240a81803105dc412d6c6708d53ab94fc248f4f553.mp4";
+video.dataset.pubkey = event.pubkey;
+
+const removeListener = handleMediaFallbacks(video, getServers);
+```
+
+#### Get blob URLs without fetching
+
+`getBlobUrls` returns an ordered list of URLs for a blob from a blossom URI without fetching anything. Useful for building custom UI or populating `<source>` elements:
+
+```js
+import { Actions } from "blossom-client-sdk";
+
+const urls = await Actions.getBlobUrls("blossom:b167...4f553.mp4?xs=https://cdn1.com&xs=https://cdn2.com", {
+  getServers,
+  fallbackServers: ["https://fallback.cdn.com"],
+});
+// -> ["https://cdn1.com/b167...4f553.mp4", "https://cdn2.com/b167...4f553.mp4", "https://fallback.cdn.com/b167...4f553.mp4"]
+```
+
+#### Create `<source>` elements for video/audio
+
+`createSourceElements` generates `<source>` elements from a URL list, giving the browser native fallback for `<video>` and `<audio>`:
+
+```js
+import { Actions, createSourceElements } from "blossom-client-sdk";
+
+const urls = await Actions.getBlobUrls("blossom:b167...4f553.mp4?xs=https://cdn1.com&xs=https://cdn2.com");
+const sources = createSourceElements(urls, "video/mp4");
+
+const video = document.createElement("video");
+video.append(...sources);
+```
+
+#### Resolve to an object URL
+
+`resolveToObjectURL` fetches a blob with server fallback and returns a `blob:` object URL that works anywhere:
+
+```js
+import { Actions } from "blossom-client-sdk";
+
+const objectUrl = await Actions.resolveToObjectURL("blossom:b167...4f553.png?xs=https://cdn1.com", { getServers });
+image.src = objectUrl;
+```
+
+### HLS Video Streaming with Multi-Server Fallback
+
+The SDK provides a loader factory for `hls.js` that automatically retries failed playlist and fragment requests across multiple Blossom servers. This enables resilient HLS playback even when some servers have missing or unavailable segments.
+
+```ts
+import Hls from "hls.js";
+import { createBlossomHlsLoaders } from "blossom-client-sdk/hls";
+
+// Create fallback loaders for hls.js
+const { pLoader, fLoader } = createBlossomHlsLoaders({
+  // Servers to try when the primary fails
+  fallbackServers: ["https://cdn-backup1.example", "https://cdn-backup2.example"],
+  // Penalize failed origins briefly to prefer healthy ones (default: false)
+  stickyFailover: true,
+  // How long to penalize failed servers in ms (default: 30000)
+  penalizeMs: 30000,
+  // HTTP status codes to retry (default: [404])
+  retryStatuses: [404, 502, 503],
+  // Callback when a fallback occurs
+  onFallback: (info) => {
+    console.log(`Falling back from ${info.from} to ${info.to} for ${info.kind}`);
+    console.log(`Attempt ${info.attempt} for ${info.url}`);
+  },
+});
+
+// Initialize hls.js with the fallback loaders
+const hls = new Hls({
+  pLoader,
+  fLoader,
+});
+
+// Load a master playlist from any Blossom server
+hls.loadSource("https://cdn.example.com/abc123def456.m3u8");
+hls.attachMedia(videoElement);
+```
+
+**How it works:**
+
+- The loaders keep the original playlist/fragment path and query string but swap the origin
+- If the primary server returns a retryable error (404, 5xx, timeout), it automatically tries the next server
+- With `stickyFailover` enabled, failed servers are briefly penalized so subsequent requests prefer healthy ones
+- The loader preserves HTTP headers, byte-range requests, and response type
+
+**Requirements:**
+
+- `hls.js` must be installed as a peer dependency
+- Blossom HLS playlists should use relative paths with SHA256 hashes as documented in the HLS formatting guide
 
 ## Other Examples
 
-### List all blobs on a server
+### List a page of blobs on a server
 
 ```js
-import { BlossomClient } from "blossom-client-sdk";
+import { listBlobs, createListAuth } from "blossom-client-sdk";
 
 async function signer(event) {
   return await window.nostr.signEvent(event);
@@ -148,38 +239,51 @@ async function signer(event) {
 const pubkey = "266815e0c9210dfa324c6cba3573b14bee49da4209a9456f9484e5106cd408a5";
 const server = "https://cdn.example.com";
 
-async function listBlobs() {
-  try {
-    return BlossomClient.listBlobs(server, pubkey);
-  } catch (e) {
-    if (e.status === 401) {
-      const auth = await BlossomClient.createListAuth(signer, "List Blobs from " + server);
-      return BlossomClient.listBlobs(server, pubkey, undefined, auth);
-    }
-  }
+const blobs = await listBlobs(server, pubkey, {
+  onAuth: async () => createListAuth(signer),
+});
+```
+
+### Iterate blob pages on a server
+
+```js
+import { iterateBlobs, createListAuth } from "blossom-client-sdk/actions";
+
+async function signer(event) {
+  return await window.nostr.signEvent(event);
+}
+
+const pubkey = "266815e0c9210dfa324c6cba3573b14bee49da4209a9456f9484e5106cd408a5";
+const server = "https://cdn.example.com";
+
+for await (const page of iterateBlobs(server, pubkey, {
+  limit: 100,
+  onAuth: async () => createListAuth(signer),
+})) {
+  console.log(page);
 }
 ```
 
 ### Upload a single blob
 
 ```js
-import { BlossomClient } from "blossom-client-sdk";
+import { uploadBlob, createUploadAuth } from "blossom-client-sdk";
 
 async function signer(event) {
   return await window.nostr.signEvent(event);
 }
 
-const client = new BlossomClient("https://cdn.example.com", signer);
+const server = "https://cdn.example.com";
 
-const blobs = await client.listBlobs();
-
-await client.uploadBlob(new File(["testing"], "test.txt"));
+const blob = await uploadBlob(server, new File(["testing"], "test.txt"), {
+  onAuth: async (server, sha256, type) => createUploadAuth(signer, sha256, { type }),
+});
 ```
 
 ### Upload a single blob to multiple servers
 
 ```js
-import { BlossomClient } from "blossom-client-sdk";
+import { uploadBlob, createUploadAuth } from "blossom-client-sdk";
 
 async function signer(event) {
   return await window.nostr.signEvent(event);
@@ -188,21 +292,19 @@ async function signer(event) {
 const servers = ["https://cdn.example.com", "https://cdn.other.com"];
 const file = new File(["testing"], "test.txt");
 
-const auth = await BlossomClient.createUploadAuth(file, signer, { message: "Upload test.txt" });
+const auth = await createUploadAuth(signer, file, { message: "Upload test.txt" });
 
 for (let server of servers) {
-  await BlossomClient.uploadBlob(server, file, auth);
+  await uploadBlob(server, file, { auth });
 }
 ```
 
 ### Uploading and mirroring to multiple servers
 
-The `multiServerUpload` method can be used to upload a single blob to multiple servers
-
-Example of uploading to each server one at time
+The `multiServerUpload` method uploads a blob to the first server, then mirrors it to the remaining servers. It runs parallel preflight checks (`HEAD /<sha256>`) to detect which servers already have the blob, using `/mirror` to register ownership on those servers instead of re-uploading.
 
 ```ts
-import { multiServerUpload, createUploadAuth } from "blossom-server-sdk";
+import { multiServerUpload, createUploadAuth } from "blossom-client-sdk";
 
 async function signer(event: any) {
   // @ts-expect-error
@@ -212,23 +314,29 @@ async function signer(event: any) {
 const servers = ["https://cdn.server-a.com", "https://cdn.example.com", "https://cdn.other.com"];
 const file = new File(["testing"], "test.txt");
 
-// create async generator for upload
 const results = await multiServerUpload(servers, file, {
   onAuth: async (server, sha256, type) => createUploadAuth(signer, sha256, { type }),
-  onUpload: (server, blob) => {},
-  onError: (server, blob, error) => {
+  onUpload: (server, sha256, blob) => {},
+  onError: (server, sha256, blob, error) => {
     console.log("Failed to upload to", server);
     console.log(error);
   },
+  // handle server rejections (413 too large, 415 unsupported type, etc.)
+  onRejection: (server, sha256, blob, error) => {
+    console.log(`Server ${server} rejected: ${error.code}`);
+    return "skip"; // or "cancel" to abort entirely
+  },
+  // disable preflight checks if not needed (default: true)
+  // preflight: false,
 });
 ```
 
 ### Uploading media and mirroring
 
-The `multiServerUpload` method can also be used to upload media blobs and mirror them
+The `multiServerMediaUpload` method is designed for media files (images, videos) that should be optimized before distribution. It uploads the blob to a single server's BUD-05 `/media` endpoint for processing, then mirrors the optimized result to all other servers. The original unprocessed blob is never uploaded to other servers since the `/media` endpoint may transform it (resize, re-encode, etc.).
 
 ```ts
-import { multiServerUpload, createUploadAuth } from "blossom-server-sdk";
+import { multiServerMediaUpload, createUploadAuth } from "blossom-client-sdk";
 
 async function signer(event: any) {
   // @ts-expect-error
@@ -238,17 +346,13 @@ async function signer(event: any) {
 const servers = ["https://cdn.server-a.com", "https://cdn.example.com", "https://cdn.other.com"];
 const media = new File(["image data"], "image.png");
 
-// create async generator for upload
-const results = await multiServerUpload(servers, media, {
-  // use media upload endpoint
-  isMedia: true,
-  // use any servers media endpoint
+const results = await multiServerMediaUpload(servers, media, {
+  // try any server's /media endpoint, not just the first (default: "first")
   mediaUploadBehavior: "any",
-  // if the media endpoint isn't found fallback to the /upload endpoint
+  // fall back to regular upload if no /media endpoint is found (default: false)
   mediaUploadFallback: true,
-  // handle auth requests
   onAuth: async (server, sha256, type) => createUploadAuth(signer, sha256, { type }),
-  onError: (server, blob, error) => {
+  onError: (server, sha256, blob, error) => {
     console.log("Failed to upload to", server);
     console.log(error);
   },
@@ -258,7 +362,7 @@ const results = await multiServerUpload(servers, media, {
 ### Upload and Mirror manually
 
 ```js
-import { BlossomClient } from "blossom-client-sdk";
+import { uploadBlob, mirrorBlob, createUploadAuth } from "blossom-client-sdk";
 
 async function signer(event) {
   return await window.nostr.signEvent(event);
@@ -268,14 +372,66 @@ const mainServer = "https://cdn.server-a.com";
 const mirrorServers = ["https://cdn.example.com", "https://cdn.other.com"];
 const file = new File(["testing"], "test.txt");
 
-const auth = await BlossomClient.createUploadAuth(file, signer, { message: "Upload test.txt" });
+const auth = await createUploadAuth(signer, file, { message: "Upload test.txt" });
 
 // first upload blob to main server
-const blob = await BlossomClient.uploadBlob(mainServer, file, auth);
+const blob = await uploadBlob(mainServer, file, { auth });
 
 // then tell mirror servers to download it
 for (let server of mirrorServers) {
-  // reuse the same auth for mirroring
-  await BlossomClient.mirrorBlob(server, blob.url, auth);
+  await mirrorBlob(server, blob, { auth });
 }
+```
+
+### Check if a blob exists
+
+```js
+import { hasBlob } from "blossom-client-sdk/actions/has";
+
+const exists = await hasBlob(
+  "https://cdn.example.com",
+  "b1674191a88ec5cdd733e4240a81803105dc412d6c6708d53ab94fc248f4f553",
+);
+```
+
+### Blossom URIs (BUD-10)
+
+Parse and build `blossom:` URIs for referencing blobs across servers
+
+```js
+import { parseBlossomURI, buildBlossomURI, blossomURIToURL, blossomURIFromURL } from "blossom-client-sdk";
+
+// parse a blossom URI
+const parsed = parseBlossomURI(
+  "blossom:b1674191a88ec5cdd733e4240a81803105dc412d6c6708d53ab94fc248f4f553.pdf?xs=cdn.example.com&as=266815e0c9210dfa324c6cba3573b14bee49da4209a9456f9484e5106cd408a5&sz=1024",
+);
+// -> { sha256: "b167...", ext: "pdf", servers: ["cdn.example.com"], authors: ["2668..."], size: 1024 }
+
+// build a blossom URI
+const uri = buildBlossomURI({ sha256: "b167...", ext: "pdf", servers: ["cdn.example.com"], authors: [], size: 1024 });
+// -> "blossom:b167....pdf?xs=cdn.example.com&sz=1024"
+
+// convert to/from native URL objects
+const url = blossomURIToURL(parsed);
+const backToParsed = blossomURIFromURL(url);
+```
+
+### Resolve and download from a blossom URI
+
+The `resolveBlob` function tries servers from the URI hints sequentially and returns the first successful response. Author hints are only resolved if server hints fail.
+
+```js
+import { Actions } from "blossom-client-sdk";
+
+const response = await Actions.resolveBlob("blossom:b167...4f553.pdf?xs=cdn.example.com&as=2668...08a5", {
+  // resolve author pubkeys to server lists (only called if xs servers fail)
+  getServers: async (pubkey) => {
+    const event = await ndk.fetchEvent({ kinds: [USER_BLOSSOM_SERVER_LIST_KIND], authors: [pubkey] });
+    return event ? getServersFromServerListEvent(event) : undefined;
+  },
+  // additional servers to try as a last resort
+  fallbackServers: ["https://fallback.cdn.com"],
+});
+
+const blob = await response.blob();
 ```

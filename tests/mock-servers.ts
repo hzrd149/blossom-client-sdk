@@ -29,6 +29,7 @@ export class MockServer {
   upload: Mock<(req: Request) => ResponseLike | Promise<ResponseLike>>;
   mirror: Mock<(req: Request) => ResponseLike | Promise<ResponseLike>>;
   media: Mock<(req: Request) => ResponseLike | Promise<ResponseLike>>;
+  has: Mock<(req: Request) => ResponseLike | Promise<ResponseLike>>;
 
   constructor(public url: string) {
     this.upload = vi.fn().mockReturnValue({
@@ -45,6 +46,8 @@ export class MockServer {
       status: 200,
       body: JSON.stringify(createMockResponse(this.url, true)),
     });
+
+    this.has = vi.fn().mockReturnValue({ status: 404 });
   }
 
   async handleRequest(req: Request): Promise<ResponseLike> {
@@ -58,6 +61,11 @@ export class MockServer {
       headers: Object.fromEntries(req.headers.entries()),
       body: req.headers.get("Content-Type") === "application/json" ? await req.json() : await req.text(),
     });
+
+    // HEAD /<sha256> — blob existence check
+    if (req.method === "HEAD" && /^\/[0-9a-f]{64}$/.test(pathname)) {
+      return this.has(req);
+    }
 
     switch (pathname) {
       case "/upload":
@@ -189,5 +197,36 @@ export class MockUnauthorizedServer extends MockServer {
     this.upload.mockReturnValue({ status: 401 });
     this.mirror.mockReturnValue({ status: 401 });
     this.media.mockReturnValue({ status: 401 });
+  }
+}
+
+/** A server that already has the blob (HEAD /<sha256> returns 200) */
+export class MockServerHasBlob extends MockServer {
+  constructor(url: string) {
+    super(url);
+
+    this.has.mockReturnValue({ status: 200 });
+  }
+}
+
+/** A server that rejects uploads as too large (413) */
+export class MockServerRejectsTooLarge extends MockServer {
+  constructor(url: string) {
+    super(url);
+
+    this.upload.mockReturnValue({ status: 413, headers: { "x-reason": "Blob exceeds size limit" } });
+    this.mirror.mockReturnValue({ status: 413, headers: { "x-reason": "Blob exceeds size limit" } });
+    this.media.mockReturnValue({ status: 413, headers: { "x-reason": "Blob exceeds size limit" } });
+  }
+}
+
+/** A server that rejects uploads with unsupported type (415) */
+export class MockServerRejectsType extends MockServer {
+  constructor(url: string) {
+    super(url);
+
+    this.upload.mockReturnValue({ status: 415, headers: { "x-reason": "Unsupported media type" } });
+    this.mirror.mockReturnValue({ status: 415, headers: { "x-reason": "Unsupported media type" } });
+    this.media.mockReturnValue({ status: 415, headers: { "x-reason": "Unsupported media type" } });
   }
 }

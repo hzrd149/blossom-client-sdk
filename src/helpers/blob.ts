@@ -1,5 +1,5 @@
 import { bytesToHex } from "@noble/hashes/utils";
-import { UploadType } from "../client.js";
+import { UploadType } from "../types.js";
 
 /** Checks if a string is a 64 length hex string */
 export function isSha256(str: string) {

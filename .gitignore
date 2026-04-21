@@ -3,3 +3,5 @@ lib
 /docs
 .netrc
 coverage
+.claude/settings.local.json
+.planning

@@ -3,8 +3,8 @@ import { DownloadOptions } from "./actions/download.js";
 import { ListOptions } from "./actions/list.js";
 import { MirrorOptions } from "./actions/mirror.js";
 import { UploadOptions } from "./actions/upload.js";
-import { ServerType, UploadType } from "./client.js";
-import { type PaymentRequest as CashuPaymentRequest } from "@cashu/cashu-ts";
+export type ServerType = string | URL;
+export type UploadType = Blob | File | Buffer;
 
 export type EventTemplate = {
   created_at: number;
@@ -38,9 +38,47 @@ export type BlobDescriptor = {
   url: string;
 };
 
-export type PaymentRequest = CashuPaymentRequest;
+export type RejectionAction = "skip" | "cancel";
 
-// NOTE: hack for Token type not being exported from cashu-ts
+// NOTE: structural copies of cashu-ts types so @cashu/cashu-ts can stay an
+// optional peer dependency. Keep field shapes in sync with cashu-ts upstream.
+
+export type PaymentRequestTransport = {
+  type: string;
+  target: string;
+  tags?: Array<Array<string>>;
+};
+
+export type RawTransport = {
+  t: string;
+  a: string;
+  g?: Array<Array<string>>;
+};
+
+export type RawPaymentRequest = {
+  i?: string;
+  a?: number;
+  u?: string;
+  s?: boolean;
+  m?: Array<string>;
+  d?: string;
+  t: Array<RawTransport>;
+};
+
+/** Copy of the PaymentRequest class shape from cashu-ts */
+export type PaymentRequest = {
+  transport: Array<PaymentRequestTransport>;
+  id?: string;
+  amount?: number;
+  unit?: string;
+  mints?: Array<string>;
+  description?: string;
+  singleUse: boolean;
+  toRawRequest(): RawPaymentRequest;
+  toEncodedRequest(): string;
+  getTransport(type: string): PaymentRequestTransport | undefined;
+};
+
 type SerializedDLEQ = {
   s: string;
   e: string;

@@ -1,15 +1,27 @@
-import { ServerType, UploadType } from "./client.js";
+import { ServerType, UploadType } from "./types.js";
 import { AUTH_EVENT_KIND } from "./const.js";
 import { getBlobSha256, isSha256 } from "./helpers/blob.js";
-import { areServersEqual } from "./helpers/url.js";
+import { areServersEqual, getServerHostname } from "./helpers/url.js";
 import { EventTemplate, SignedEvent, Signer } from "./types.js";
 
 export const now = () => Math.floor(new Date().valueOf() / 1000);
 export const oneHour = () => now() + 60 * 60;
 
+export type AuthRequest = {
+  server: ServerType;
+  type: AuthType;
+  blob?: string | UploadType;
+};
+
 /** Encodes an auth event into a nostr authorization header */
 export function encodeAuthorizationHeader(event: SignedEvent) {
-  return "Nostr " + btoa(JSON.stringify(event));
+  const json = JSON.stringify(event);
+  const bytes = new TextEncoder().encode(json);
+  let binary = "";
+
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+
+  return "Nostr " + btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
 }
 
 /** Checks if an auth event matches a server / blob upload */
@@ -19,23 +31,80 @@ export async function doseAuthMatchBlob(
   blob: string | UploadType,
   type: string = "upload",
 ) {
-  const authType = auth.tags.find((t) => t[0] === "t")?.[1];
-  if (authType !== type) return false;
+  if (type !== "upload" && type !== "media") return false;
+  return doesAuthMatchRequest(auth, { server, type, blob });
+}
 
-  const sha256 = typeof blob === "string" ? blob : await getBlobSha256(blob);
+/** Returns all tag values for a specific tag name */
+export function getAuthTagValues(auth: SignedEvent, tagName: string) {
+  return auth.tags.filter((tag) => tag[0] === tagName).map((tag) => tag[1]);
+}
 
-  for (const tag of auth.tags) {
-    switch (tag[0]) {
-      case "x":
-        if (tag[1] === sha256) return true;
-        break;
-      case "server":
-        if (areServersEqual(tag[1], server)) return true;
-        break;
+/** Returns the auth event expiration timestamp if one exists */
+export function getAuthExpiration(auth: SignedEvent) {
+  const expiration = auth.tags.find((tag) => tag[0] === "expiration")?.[1];
+  if (!expiration) return undefined;
+
+  const timestamp = Number(expiration);
+  if (!Number.isFinite(timestamp)) return undefined;
+
+  return timestamp;
+}
+
+/** Returns true if an auth event has expired */
+export function isAuthExpired(auth: SignedEvent, timestamp: number = now()) {
+  const expiration = getAuthExpiration(auth);
+  return expiration !== undefined && expiration <= timestamp;
+}
+
+/** Normalizes a server tag value to a lowercase hostname */
+export function normalizeServerTag(server: string | URL) {
+  return getServerHostname(server);
+}
+
+function requestRequiresHashTag(type: AuthType) {
+  return type === "upload" || type === "media" || type === "delete";
+}
+
+/** Checks if an auth event can be reused for a request */
+export async function doesAuthMatchRequest(auth: SignedEvent, request: AuthRequest) {
+  if (isAuthExpired(auth)) return false;
+
+  const authType = auth.tags.find((tag) => tag[0] === "t")?.[1];
+  if (authType !== request.type) return false;
+
+  const serverTags = getAuthTagValues(auth, "server");
+  if (serverTags.length > 0 && !serverTags.some((server) => areServersEqual(server, request.server))) return false;
+
+  if (request.type === "list") return true;
+
+  const blobTags = getAuthTagValues(auth, "x");
+  if (!request.blob) return false;
+
+  const sha256 = typeof request.blob === "string" ? request.blob : await getBlobSha256(request.blob);
+
+  if (blobTags.length === 0) return !requestRequiresHashTag(request.type);
+  return blobTags.includes(sha256);
+}
+
+/** Finds a reusable auth event in a store and prunes expired events */
+export async function getReusableAuthEvent(authEvents: Set<SignedEvent>, request: AuthRequest) {
+  for (const auth of authEvents) {
+    if (isAuthExpired(auth)) {
+      authEvents.delete(auth);
+      continue;
     }
+
+    if (await doesAuthMatchRequest(auth, request)) return auth;
   }
 
-  return false;
+  return undefined;
+}
+
+/** Stores a new auth event in the shared store */
+export function storeAuthEvent(authEvents: Set<SignedEvent>, auth: SignedEvent) {
+  authEvents.add(auth);
+  return auth;
 }
 
 /** @deprecated Use `doseAuthMatchBlob` instead */
@@ -43,6 +112,15 @@ export const doseAuthMatchUpload = doseAuthMatchBlob;
 
 async function normalizeToHash(blob: string | UploadType) {
   return typeof blob === "string" ? blob : getBlobSha256(blob);
+}
+
+function normalizeServers(servers: string | string[]) {
+  const values = Array.isArray(servers) ? servers : [servers];
+  return [...new Set(values.map((server) => normalizeServerTag(server)))];
+}
+
+function isDomainName(value: string) {
+  return /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/i.test(value);
 }
 
 export type AuthType = "upload" | "list" | "delete" | "get" | "media";
@@ -82,9 +160,7 @@ export async function createAuthEvent(signer: Signer, type: AuthType, options?: 
 
   // add server tags
   if (options?.servers) {
-    if (Array.isArray(options.servers))
-      for (const server of new Set(options.servers)) draft.tags.push(["server", server]);
-    else draft.tags.push(["server", options.servers]);
+    for (const server of normalizeServers(options.servers)) draft.tags.push(["server", server]);
   }
 
   return await signer(draft);
@@ -103,7 +179,9 @@ export async function createDownloadAuth(
     message: "Download Blob",
     ...options,
     blobs: serverOrHash.filter((s) => (typeof s === "string" ? isSha256(s) : true)) as string[] | UploadType[],
-    servers: serverOrHash.filter((s) => typeof s === "string" && !isSha256(s) && URL.canParse(s)) as string[],
+    servers: serverOrHash.filter(
+      (s) => typeof s === "string" && !isSha256(s) && (URL.canParse(s) || isDomainName(s)),
+    ) as string[],
   });
 }
 

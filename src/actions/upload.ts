@@ -1,5 +1,5 @@
-import { encodeAuthorizationHeader } from "../auth.js";
-import { ServerType, UploadType } from "../client.js";
+import { encodeAuthorizationHeader, getReusableAuthEvent, storeAuthEvent } from "../auth.js";
+import { ServerType, UploadType } from "../types.js";
 import HTTPError from "../error.js";
 import { fetchWithTimeout, getBlobSha256, getBlobSize, getBlobType } from "../helpers/index.js";
 import { BlobDescriptor, PaymentRequest, PaymentToken, SignedEvent } from "../types.js";
@@ -9,6 +9,8 @@ export type UploadOptions<S extends ServerType, B extends UploadType> = {
   signal?: AbortSignal;
   /** Override authorization event, or true to always use authorization, false to disable authorization */
   auth?: SignedEvent | boolean;
+  /** Shared auth event store used to reuse non-expired auth events between requests */
+  authEvents?: Set<SignedEvent>;
   /** Request timeout */
   timeout?: number;
   /**
@@ -36,6 +38,18 @@ export async function uploadBlob<S extends ServerType, B extends UploadType>(
 ): Promise<BlobDescriptor> {
   const url = new URL("/upload", server);
   const sha256 = await getBlobSha256(blob);
+  const resolveAuth = async (preset: boolean = false) => {
+    const reused = opts?.authEvents
+      ? await getReusableAuthEvent(opts.authEvents, { server, type: "upload", blob: sha256 })
+      : undefined;
+    if (reused) return reused;
+
+    const auth = await opts?.onAuth?.(server, sha256, "upload", blob);
+    if (!auth) throw new Error(preset ? "Missing onAuth handler" : "Missing auth handler");
+
+    if (opts?.authEvents) storeAuthEvent(opts.authEvents, auth);
+    return auth;
+  };
 
   const headers: Record<string, string> = {
     "X-SHA-256": sha256,
@@ -44,8 +58,7 @@ export async function uploadBlob<S extends ServerType, B extends UploadType>(
   // attach the authorization if its already set
   if (opts?.auth) {
     if (typeof opts.auth === "boolean") {
-      if (!opts.onAuth) throw new Error("Missing onAuth handler");
-      headers["Authorization"] = encodeAuthorizationHeader(await opts.onAuth(server, sha256, "upload", blob));
+      headers["Authorization"] = encodeAuthorizationHeader(await resolveAuth(true));
     } else {
       headers["Authorization"] = encodeAuthorizationHeader(opts.auth);
     }
@@ -86,8 +99,7 @@ export async function uploadBlob<S extends ServerType, B extends UploadType>(
       if (opts?.auth === false) throw new Error("Authorization disabled");
 
       // Request authorization event for this upload
-      const auth = await opts?.onAuth?.(server, sha256, "upload", blob);
-      if (!auth) throw new Error("Missing auth handler");
+      const auth = await resolveAuth();
 
       // Try upload with auth
       upload = await fetchWithTimeout(url, {
@@ -103,7 +115,7 @@ export async function uploadBlob<S extends ServerType, B extends UploadType>(
       if (!opts?.onPayment) throw new Error("Missing payment handler");
       const { getEncodedToken } = await import("@cashu/cashu-ts");
       const { getPaymentRequestFromHeaders } = await import("../helpers/cashu.js");
-      const request = getPaymentRequestFromHeaders(firstTry.headers);
+      const request = await getPaymentRequestFromHeaders(firstTry.headers);
 
       const token = await opts.onPayment(server, sha256, blob, request);
       const payment = getEncodedToken(token);
