@@ -1,5 +1,23 @@
 # blossom-client-sdk
 
+## 5.0.0
+
+### Major Changes
+
+- 64c632f: Replace `handleBrokenImages` with `HandleBrokenMedia`
+- 1a97523: Break media uploading flow out into `multiServerMediaUpload` action
+- 821fddc: Remove `BlossomClient` class
+
+### Minor Changes
+
+- 1069e2a: Add `hls` export with `hls.js` loader factories for multi-server Blossom fallback playback.
+- 7997143: Make cashu ddependency optional
+- 9b53ef3: Add `authEvents` option to action for reusing past authorization events
+- 77193c2: Add support for cursor, limit pagination in list actions
+- 1a97523: Add `preflight` option to `multiServerUpload`
+- d99800c: Add support for resolving BUD-10 URIs
+- 2fd4846: Add action for BUD-09 reports
+
 ## 4.1.0
 
 ### Minor Changes
