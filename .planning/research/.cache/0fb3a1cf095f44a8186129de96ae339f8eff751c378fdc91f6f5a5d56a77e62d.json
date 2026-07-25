@@ -1,0 +1,1 @@
+{"content":"BUD-17 PR #106 defines 2 MiB chunked file manifests, max 174 links per node, recursive traversal, encrypted child keys, t=3 structural directory fanout with m.count/m.first/m.last, and readers may accept older draft fanout.","source":"web","provider":"webfetch","confidence":"LOW","fetched_at":"2026-07-25T21:12:41.120Z","ttl":86400000,"kind":"scrape"}

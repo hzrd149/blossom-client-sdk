@@ -1,0 +1,1 @@
+{"content":"@scure/base provides audited, dependency-free TypeScript bech32/bech32m/base encoders with toWords/fromWords; it is suitable for nhash bech32 TLV without adding nostr-tools as a runtime dependency.","source":"web","provider":"webfetch","confidence":"LOW","fetched_at":"2026-07-25T21:12:41.390Z","ttl":86400000,"kind":"web"}
