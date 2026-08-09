@@ -210,7 +210,7 @@ Phases with standard patterns (skip research-phase unless draft state changes):
 ### Primary (HIGH confidence for existing project constraints)
 
 - [Project definition](../PROJECT.md) — milestone scope, portability, modular-client requirement, staging, and explicit commit semantics.
-- Repository `package.json`, `tsconfig.json`, `src/index.ts`, `src/actions/*.ts`, and `.planning/codebase/` research — current exports, engine/build constraints, HTTP behavior, architecture, and test surfaces.
+- Repository `package.json`, `tsconfig.json`, `src/index.ts`, the source action modules, and `.planning/codebase/` research — current exports, engine/build constraints, HTTP behavior, architecture, and test surfaces.
 - [Node.js Web Crypto documentation](https://nodejs.org/api/webcrypto.html) and [Web Streams documentation](https://nodejs.org/api/webstreams.html) — supported runtime APIs.
 - [`@msgpack/msgpack` v3.1.3 source/docs](https://github.com/msgpack/msgpack-javascript/tree/v3.1.3) — runtime support, options, numeric/bin behavior, bounds, and `sortKeys` implementation.
 - [`@scure/base` v1.2.6 source/docs](https://github.com/paulmillr/scure-base/tree/1.2.6) — bech32 API, default length, compatibility, and packaging.
@@ -223,3 +223,9 @@ Phases with standard patterns (skip research-phase unless draft state changes):
 ---
 *Research completed: 2026-08-09*
 *Ready for roadmap: yes*
+
+## Self-Check: PASSED
+
+- All four research dimensions were synthesized.
+- Primary draft PRs and current dependency constraints are cited.
+- Roadmap implications cover the complete active milestone scope.
