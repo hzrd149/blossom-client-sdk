@@ -1,0 +1,1 @@
+{"content":"PR 106 specifies 2 MiB leaf chunks, 174 links per node, recursive file manifests, canonical directory fanout, streaming-compatible ordered reads, mandatory child hash checks, strict fanout validation, and vectors.","source":"web","provider":"websearch","confidence":"MEDIUM","fetched_at":"2026-08-09T17:15:55.525Z","ttl":86400000,"kind":"web"}
