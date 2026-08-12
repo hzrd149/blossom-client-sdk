@@ -2,18 +2,18 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 2
-current_phase_name: BUD-15 CHK and Secret-Safe References
-status: planning
-stopped_at: Phase 2 context gathered
-last_updated: "2026-08-12T15:03:14.421Z"
+current_phase: 02
+current_phase_name: bud-15-chk-and-secret-safe-references
+status: executing
+stopped_at: Completed 02-01-PLAN.md
+last_updated: "2026-08-12T15:35:38.354Z"
 last_activity: 2026-08-12
-last_activity_desc: Phase 01 complete, transitioned to Phase 2
+last_activity_desc: Phase 02 execution started
 progress:
   total_phases: 2
   completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  total_plans: 5
+  completed_plans: 3
 ---
 
 # Project State
@@ -23,16 +23,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-12)
 
 **Core value:** Applications can create, publish, resolve, mutate, stream, and react to interoperable Blossom Hashtrees without implementing the protocol stack themselves.
-**Current focus:** Phase 2 — BUD-15 CHK and Secret-Safe References
+**Current focus:** Phase 02 — bud-15-chk-and-secret-safe-references
 
 ## Current Position
 
-Phase: 2 — BUD-15 CHK and Secret-Safe References
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-08-12 — Phase 01 complete, transitioned to Phase 2
+Phase: 02 (bud-15-chk-and-secret-safe-references) — EXECUTING
+Plan: 2 of 3
+Status: Ready to execute
+Last activity: 2026-08-12 — Phase 02 execution started
 
-Progress: [██████████] 100%
+Progress: [██████░░░░] 60%
 
 ## Performance Metrics
 
@@ -59,6 +59,7 @@ Progress: [██████████] 100%
 |------|----------|-------|-------|
 | Phase 01 P01 | 5m | 3 tasks | 7 files |
 | Phase 01 P02 | 3m | 2 tasks | 3 files |
+| Phase 02 P01 | 4m | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -75,6 +76,8 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - [Phase 1]: Treat namespace, runtime evaluation, and transitive graph isolation as separate required proofs.
 - [Phase 1]: Exercise package self-references from a real .mjs file inside the extracted package scope.
 - [Phase 1]: Keep the Hashtree-exclusive dependency denylist explicit and empty until a later phase adds one.
+- [Phase ?]: [Phase 02]: Keep CHK hashing synchronous while portable Web Crypto handles AES-GCM encryption and decryption.
+- [Phase ?]: [Phase 02]: Expose one fresh cause-free integrity error shape across every CHK verification stage.
 
 ### Pending Todos
 
@@ -93,6 +96,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-12T15:03:14.411Z
-Stopped at: Phase 2 context gathered
-Resume file: .planning/phases/02-bud-15-chk-and-secret-safe-references/02-CONTEXT.md
+Last session: 2026-08-12T15:35:38.344Z
+Stopped at: Completed 02-01-PLAN.md
+Resume file: None

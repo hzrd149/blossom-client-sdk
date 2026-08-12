@@ -16,11 +16,11 @@ Requirements for the first Hashtree milestone. Each maps to exactly one roadmap 
 
 ### BUD-15 Encryption
 
-- [ ] **CHK-01**: Consumer can deterministically encrypt plaintext using the exact `chk-v1` algorithm
-- [ ] **CHK-02**: Consumer can decrypt only after validating the ciphertext hash, GCM authentication, and plaintext CHK hash
-- [ ] **CHK-03**: Each encrypted file chunk derives its own key from its own plaintext
+- [x] **CHK-01**: Consumer can deterministically encrypt plaintext using the exact `chk-v1` algorithm
+- [x] **CHK-02**: Consumer can decrypt only after validating the ciphertext hash, GCM authentication, and plaintext CHK hash
+- [x] **CHK-03**: Each encrypted file chunk derives its own key from its own plaintext
 - [ ] **CHK-04**: Consumer can parse and create `blossom:` references containing valid `enc=chk-v1` and `k` parameters
-- [ ] **CHK-05**: Hashtree secrets are never forwarded to Blossom servers or exposed through ordinary errors, progress events, or diagnostics
+- [x] **CHK-05**: Hashtree secrets are never forwarded to Blossom servers or exposed through ordinary errors, progress events, or diagnostics
 - [ ] **CHK-06**: Plaintext and encrypted modes are first-class throughout the functional and client APIs, with plaintext as the client default
 
 ### BUD-16 Directories
@@ -140,11 +140,11 @@ Roadmap creation maps every v1 requirement to exactly one implementation phase.
 | PKG-02 | Phase 1 | Complete |
 | PKG-03 | Phase 1 | Complete |
 | PKG-04 | Phase 1 | Complete |
-| CHK-01 | Phase 2 | Pending |
-| CHK-02 | Phase 2 | Pending |
-| CHK-03 | Phase 2 | Pending |
+| CHK-01 | Phase 2 | Complete |
+| CHK-02 | Phase 2 | Complete |
+| CHK-03 | Phase 2 | Complete |
 | CHK-04 | Phase 2 | Pending |
-| CHK-05 | Phase 2 | Pending |
+| CHK-05 | Phase 2 | Complete |
 | CHK-06 | Phase 2 | Pending |
 | DIR-01 | Phase 3 | Pending |
 | DIR-02 | Phase 3 | Pending |
