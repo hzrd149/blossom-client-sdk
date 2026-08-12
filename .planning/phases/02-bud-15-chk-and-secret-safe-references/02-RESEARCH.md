@@ -321,18 +321,16 @@ expect(hex(encryptChk(new TextEncoder().encode("hello")).ciphertext)).toBe(
 | A3  | Canonical recognized order should be `enc,k,xs,as,sz`, then sorted extensions.        | Architecture     | Medium; this is a published canonicalization choice and should be locked in the plan. |
 | A4  | Fixed-length XOR accumulation is the portable comparison strategy.                    | Pitfalls         | Low; a proven portable constant-time helper could replace it.                         |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Which canonical recognized parameter order should become public?**
+1. **RESOLVED — Which canonical recognized parameter order should become public?**
 
    - What we know: D-08 requires a documented fixed order; BUD-10/BUD-15 do not prescribe one. [VERIFIED: CONTEXT.md + drafts]
-   - What's unclear: Exact public ordering.
-   - Recommendation: Lock `enc,k,xs,as,sz`, then lexicographically sorted extension pairs, before implementation. [ASSUMED]
+   - Resolution: Use canonical recognized order `enc,k,xs,as,sz`, followed by extension pairs sorted lexicographically by decoded key and value with stable ties. [RESOLVED]
 
-2. **Should parsing accept a plaintext reference with a lone unknown `enc` value?**
+2. **RESOLVED — Should parsing accept a plaintext reference with a lone unknown `enc` value?**
    - What we know: `k` requires `enc=chk-v1`; D-09 makes recognized `enc` security-sensitive. [CITED: BUD-15] [VERIFIED: CONTEXT.md]
-   - What's unclear: Whether unsupported future `enc` is preserved as an extension or rejected as unsupported encryption.
-   - Recommendation: Reject any recognized `enc` value other than exactly one `chk-v1`; unknown parameters are preserved, unknown modes are not silently plaintext. [ASSUMED]
+   - Resolution: Reject every unsupported `enc` value; unknown parameters remain preservable extensions, but unknown encryption modes are never treated as plaintext. [RESOLVED]
 
 ## Environment Availability
 
