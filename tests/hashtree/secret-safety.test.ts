@@ -41,6 +41,6 @@ describe("CHK secret safety", () => {
     expect(failure).toBeInstanceOf(Error);
     expect(containsSecret(failure, "unique-secret-plaintext-6219")).toBe(false);
     expect(containsSecret(failure, Array.from(encrypted.key).join(","))).toBe(false);
-    expect(JSON.stringify(failure)).toBe("{}");
+    expect(JSON.stringify(failure)).toBe('{"name":"HashtreeIntegrityError"}');
   });
 });

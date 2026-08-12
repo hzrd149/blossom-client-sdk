@@ -28,7 +28,9 @@ function validateLength(value: Uint8Array, name: string): void {
 }
 
 function integrityError(): HashtreeIntegrityError {
-  return new HashtreeIntegrityError(INTEGRITY_MESSAGE);
+  const error = new HashtreeIntegrityError(INTEGRITY_MESSAGE);
+  delete error.cause;
+  return error;
 }
 
 /** Hash bytes for use as a Hashtree content key or content address. */
@@ -38,9 +40,7 @@ export function hashHashtreeContent(input: Uint8Array): Uint8Array {
 }
 
 /** Deterministically encrypt one plaintext chunk using BUD-15 chk-v1. */
-export async function encryptChk(
-  plaintext: Uint8Array,
-): Promise<{ ciphertext: Uint8Array; key: Uint8Array }> {
+export async function encryptChk(plaintext: Uint8Array): Promise<{ ciphertext: Uint8Array; key: Uint8Array }> {
   if (!(plaintext instanceof Uint8Array)) throw new HashtreeValidationError("plaintext must be a Uint8Array");
 
   const plaintextCopy = copyBytes(plaintext);

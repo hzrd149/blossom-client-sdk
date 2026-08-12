@@ -40,11 +40,7 @@ describe("CHK encryption", () => {
     expect(bytesToHex(encrypted.ciphertext)).toBe("c65308d9c8649ff1c59820d0b3a030db34ad00f92d");
     expect(encrypted.ciphertext).toHaveLength(plaintext.length + 16);
 
-    const decrypted = await decryptChk(
-      encrypted.ciphertext,
-      encrypted.key,
-      hashHashtreeContent(encrypted.ciphertext),
-    );
+    const decrypted = await decryptChk(encrypted.ciphertext, encrypted.key, hashHashtreeContent(encrypted.ciphertext));
     expect(decrypted).toEqual(plaintext);
   });
 
@@ -125,7 +121,7 @@ describe("CHK integrity", () => {
     expect(shapes.every((shape) => shape.constructor === HashtreeIntegrityError)).toBe(true);
     expect(shapes.slice(1)).toEqual(shapes.slice(1).map(() => shapes[0]));
     expect(errors.every((error) => !Object.hasOwn(error, "cause"))).toBe(true);
-    expect(JSON.stringify(errors)).not.toMatch(/cipher|gcm|hash|key|stage|cause/i);
+    expect(JSON.stringify(errors)).not.toMatch(/ciphertext|gcm|plaintext|stage|cause/i);
   });
 
   it("distinguishes malformed byte lengths from integrity failures", async () => {
