@@ -5,15 +5,15 @@ milestone_name: milestone
 current_phase: 02
 current_phase_name: bud-15-chk-and-secret-safe-references
 status: executing
-stopped_at: Completed 02-01-PLAN.md
-last_updated: "2026-08-12T15:35:38.354Z"
+stopped_at: Completed 02-02-PLAN.md
+last_updated: "2026-08-12T15:40:57.755Z"
 last_activity: 2026-08-12
 last_activity_desc: Phase 02 execution started
 progress:
   total_phases: 2
   completed_phases: 1
   total_plans: 5
-  completed_plans: 3
+  completed_plans: 4
 ---
 
 # Project State
@@ -28,11 +28,11 @@ See: .planning/PROJECT.md (updated 2026-08-12)
 ## Current Position
 
 Phase: 02 (bud-15-chk-and-secret-safe-references) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-08-12 — Phase 02 execution started
 
-Progress: [██████░░░░] 60%
+Progress: [████████░░] 80%
 
 ## Performance Metrics
 
@@ -60,6 +60,7 @@ Progress: [██████░░░░] 60%
 | Phase 01 P01 | 5m | 3 tasks | 7 files |
 | Phase 01 P02 | 3m | 2 tasks | 3 files |
 | Phase 02 P01 | 4m | 2 tasks | 5 files |
+| Phase 02 P02 | 4m | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -78,6 +79,9 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - [Phase 1]: Keep the Hashtree-exclusive dependency denylist explicit and empty until a later phase adds one.
 - [Phase ?]: [Phase 02]: Keep CHK hashing synchronous while portable Web Crypto handles AES-GCM encryption and decryption.
 - [Phase ?]: [Phase 02]: Expose one fresh cause-free integrity error shape across every CHK verification stage.
+- [Phase ?]: [Phase 02]: Preserve unknown Blossom reference extensions as ordered pairs and canonicalize recognized fields before stable decoded extension ordering.
+- [Phase ?]: [Phase 02]: Keep encrypted keys enumerable capabilities while narrowing routine progress and diagnostic contracts to public metadata.
+- [Phase ?]: [Phase 02]: Permit omitted mode only for plaintext; require chk-v1 explicitly.
 
 ### Pending Todos
 
@@ -96,6 +100,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-12T15:35:38.344Z
-Stopped at: Completed 02-01-PLAN.md
+Last session: 2026-08-12T15:40:57.746Z
+Stopped at: Completed 02-02-PLAN.md
 Resume file: None

@@ -57,7 +57,7 @@ Plans:
   3. Consumer can select plaintext or encrypted functional behavior, with client-facing contracts defaulting to plaintext.
   4. Blossom requests, ordinary errors, progress events, and diagnostics never reveal Hashtree secrets.
 
-**Plans**: 1/3 plans executed
+**Plans**: 2/3 plans executed
 
 Plans:
 **Wave 1**
@@ -66,7 +66,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 02-02-PLAN.md — Add strict lossless capability references and plaintext-default secret-safe contracts.
+- [x] 02-02-PLAN.md — Add strict lossless capability references and plaintext-default secret-safe contracts.
 
 **Wave 3** *(blocked on Waves 1–2 completion)*
 
@@ -166,7 +166,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Packaging Boundary and Protocol Contracts | 2/2 | Complete    | 2026-08-12 |
-| 2. BUD-15 CHK and Secret-Safe References | 1/3 | In Progress|  |
+| 2. BUD-15 CHK and Secret-Safe References | 2/3 | In Progress|  |
 | 3. BUD-16 Canonical Directories | 0/TBD | Not started | - |
 | 4. BUD-17 Bounded DAGs and Streaming | 0/TBD | Not started | - |
 | 5. BUD-18 References, Roots, and Visibility | 0/TBD | Not started | - |
