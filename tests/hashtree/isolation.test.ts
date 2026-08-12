@@ -23,7 +23,8 @@ const hashtreeRuntimeNames = [
   "hashHashtreeContent",
   "parseHashtreeBlossomReference",
 ];
-const exclusiveHashtreeDependencies = ["@noble/hashes/hkdf", "@noble/hashes/sha2"] as const;
+// sha2 is already part of the root helper graph; hkdf is the CHK-only edge.
+const exclusiveHashtreeDependencies = ["@noble/hashes/hkdf"] as const;
 
 type Graph = {
   readonly bareSpecifiers: Set<string>;
