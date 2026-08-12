@@ -17,7 +17,13 @@ const hashtreeRuntimeNames = [
   "HashtreeLifecycleError",
   "HashtreeValidationError",
   "ImmutableTreeError",
+  "buildHashtreeBlossomReference",
+  "decryptChk",
+  "encryptChk",
+  "hashHashtreeContent",
+  "parseHashtreeBlossomReference",
 ];
+const exclusiveHashtreeDependencies = ["@noble/hashes/hkdf", "@noble/hashes/sha2"] as const;
 
 type Graph = {
   readonly bareSpecifiers: Set<string>;
@@ -123,14 +129,19 @@ describe("built root isolation", () => {
 
   it("does not reach Hashtree output or exclusive dependencies", async () => {
     const graph = await walkEmittedGraph(join(libRoot, "index.js"));
-    const exclusiveHashtreeDependencies: readonly string[] = [];
-
     for (const file of graph.visited) {
       const pathFromHashtree = relative(hashtreeRoot, file);
       expect(isAbsolute(pathFromHashtree) || pathFromHashtree.startsWith(".."), file).toBe(true);
     }
     for (const dependency of exclusiveHashtreeDependencies) {
       expect(graph.bareSpecifiers, dependency).not.toContain(dependency);
+    }
+  });
+
+  it("detects exclusive-dependency leakage with a known-bad root fixture", async () => {
+    const fixture = await walkEmittedGraph(join(projectRoot, "tests/hashtree/fixtures/leaky-root.fixture.mjs"));
+    for (const dependency of exclusiveHashtreeDependencies) {
+      expect(fixture.bareSpecifiers, dependency).toContain(dependency);
     }
   });
 

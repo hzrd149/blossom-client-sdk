@@ -2,7 +2,20 @@ import { describe, expect, it } from "vitest";
 
 import * as hashtree from "../../src/hashtree/index.js";
 import * as root from "../../src/index.js";
-import type { ByteStream, HashtreeCallback, HashtreeOperationOptions, MaybePromise } from "../../src/hashtree/index.js";
+import type {
+  BlossomReferenceExtension,
+  ByteStream,
+  EncryptedBlossomReference,
+  HashtreeBlossomReference,
+  HashtreeCallback,
+  HashtreeDiagnostic,
+  HashtreeMode,
+  HashtreeModeOptions,
+  HashtreeOperationOptions,
+  HashtreePublicProgress,
+  MaybePromise,
+  PlaintextBlossomReference,
+} from "../../src/hashtree/index.js";
 
 const expectedRuntimeExports = [
   "HashtreeBoundsError",
@@ -13,6 +26,11 @@ const expectedRuntimeExports = [
   "HashtreeLifecycleError",
   "HashtreeValidationError",
   "ImmutableTreeError",
+  "buildHashtreeBlossomReference",
+  "decryptChk",
+  "encryptChk",
+  "hashHashtreeContent",
+  "parseHashtreeBlossomReference",
 ];
 
 describe("Hashtree package boundary", () => {
@@ -25,10 +43,26 @@ describe("Hashtree package boundary", () => {
     const options: HashtreeOperationOptions = { signal: new AbortController().signal };
     const callback: HashtreeCallback<number, string> = (value) => String(value);
     const result: MaybePromise<string> = callback(1);
+    const extension: BlossomReferenceExtension = { key: "x-example", value: "value" };
+    const plaintext: PlaintextBlossomReference = {
+      mode: "plaintext",
+      sha256: "00".repeat(32),
+      ext: "bin",
+      servers: [],
+      authors: [],
+      extensions: [extension],
+    };
+    const encrypted: EncryptedBlossomReference = { ...plaintext, mode: "chk-v1", key: new Uint8Array(32) };
+    const reference: HashtreeBlossomReference = encrypted;
+    const mode: HashtreeMode = "chk-v1";
+    const modeOptions: HashtreeModeOptions = { mode };
+    const progress: HashtreePublicProgress = { operation: "encrypt", mode };
+    const diagnostic: HashtreeDiagnostic = { operation: "encrypt", mode };
 
     expect(bytes).toBeDefined();
     expect(options.signal).toBeInstanceOf(AbortSignal);
     expect(result).toBe("1");
+    expect([reference, modeOptions, progress, diagnostic]).toHaveLength(4);
   });
 
   it("keeps Hashtree runtime exports off the root entrypoint", () => {
@@ -47,7 +81,9 @@ describe.runIf(typeof document === "undefined")("built Hashtree declarations", (
 
     try {
       const declarations = await Promise.all(
-        ["index", "types", "errors"].map((name) => readFile(`lib/hashtree/${name}.d.ts`, "utf8")),
+        ["index", "types", "errors", "chk", "blossom-reference"].map((name) =>
+          readFile(`lib/hashtree/${name}.d.ts`, "utf8"),
+        ),
       );
       expect(declarations.join("\n")).not.toMatch(/\b(?:Buffer|NodeJS)\b|node:|(?:Read|Write)Stream|FileSystem/);
 
@@ -55,10 +91,16 @@ describe.runIf(typeof document === "undefined")("built Hashtree declarations", (
         join(directory, "consumer.ts"),
         [
           'import { HashtreeError } from "blossom-client-sdk/hashtree";',
-          'import type { ByteStream } from "blossom-client-sdk/hashtree/types";',
+          'import { buildHashtreeBlossomReference, encryptChk, parseHashtreeBlossomReference } from "blossom-client-sdk/hashtree";',
+          'import type { ByteStream, HashtreeModeOptions, HashtreePublicProgress } from "blossom-client-sdk/hashtree/types";',
           'import { HashtreeBoundsError } from "blossom-client-sdk/hashtree/errors";',
+          'import { decryptChk, hashHashtreeContent } from "blossom-client-sdk/hashtree/chk";',
+          'import type { EncryptedBlossomReference } from "blossom-client-sdk/hashtree/blossom-reference";',
           "const stream: ByteStream = (async function* () { yield new Uint8Array(); })();",
-          'void [stream, new HashtreeError("failure"), new HashtreeBoundsError("bounds", { limit: 1, actual: 2 })];',
+          'const options: HashtreeModeOptions = { mode: "chk-v1" };',
+          'const progress: HashtreePublicProgress = { operation: "encrypt", mode: options.mode };',
+          'const reference = parseHashtreeBlossomReference("blossom:" + "00".repeat(32) + ".bin?enc=chk-v1&k=" + "11".repeat(32)) as EncryptedBlossomReference;',
+          'void [stream, progress, reference, buildHashtreeBlossomReference, encryptChk, decryptChk, hashHashtreeContent, new HashtreeError("failure"), new HashtreeBoundsError("bounds", { limit: 1, actual: 2 })];',
         ].join("\n"),
       );
       await writeFile(
