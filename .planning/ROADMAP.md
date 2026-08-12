@@ -34,12 +34,12 @@ This milestone establishes an isolated Hashtree package boundary, then delivers 
   3. Consumer receives stable typed failures for validation, integrity, bounds, conflict, immutable-tree, callback, and lifecycle errors.
   4. Packed-package checks demonstrate that the subpath resolves while the root module graph remains isolated.
 
-**Plans**: 2 plans
+**Plans**: 1/2 plans executed
 
 Plans:
 **Wave 1**
 
-- [ ] 01-01-PLAN.md — Publish the portable Hashtree contract and stable typed-error tracer slice.
+- [x] 01-01-PLAN.md — Publish the portable Hashtree contract and stable typed-error tracer slice.
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -152,7 +152,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Packaging Boundary and Protocol Contracts | 0/TBD | Not started | - |
+| 1. Packaging Boundary and Protocol Contracts | 1/2 | In Progress|  |
 | 2. BUD-15 CHK and Secret-Safe References | 0/TBD | Not started | - |
 | 3. BUD-16 Canonical Directories | 0/TBD | Not started | - |
 | 4. BUD-17 Bounded DAGs and Streaming | 0/TBD | Not started | - |

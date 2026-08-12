@@ -9,10 +9,10 @@ Requirements for the first Hashtree milestone. Each maps to exactly one roadmap 
 
 ### Packaging and Contracts
 
-- [ ] **PKG-01**: Consumer can import all Hashtree APIs from `blossom-client-sdk/hashtree`
+- [x] **PKG-01**: Consumer can import all Hashtree APIs from `blossom-client-sdk/hashtree`
 - [ ] **PKG-02**: Importing the package root does not export, evaluate, or bundle Hashtree modules or dependencies
-- [ ] **PKG-03**: Hashtree APIs work in Node.js 18+ and modern browsers without Node-only public types
-- [ ] **PKG-04**: Consumer receives stable typed errors for validation, integrity, bounds, conflicts, immutable trees, callbacks, and lifecycle failures
+- [x] **PKG-03**: Hashtree APIs work in Node.js 18+ and modern browsers without Node-only public types
+- [x] **PKG-04**: Consumer receives stable typed errors for validation, integrity, bounds, conflicts, immutable trees, callbacks, and lifecycle failures
 
 ### BUD-15 Encryption
 
@@ -136,10 +136,10 @@ Roadmap creation maps every v1 requirement to exactly one implementation phase.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PKG-01 | Phase 1 | Pending |
+| PKG-01 | Phase 1 | Complete |
 | PKG-02 | Phase 1 | Pending |
-| PKG-03 | Phase 1 | Pending |
-| PKG-04 | Phase 1 | Pending |
+| PKG-03 | Phase 1 | Complete |
+| PKG-04 | Phase 1 | Complete |
 | CHK-01 | Phase 2 | Pending |
 | CHK-02 | Phase 2 | Pending |
 | CHK-03 | Phase 2 | Pending |
@@ -194,6 +194,7 @@ Roadmap creation maps every v1 requirement to exactly one implementation phase.
 | TEST-05 | Phase 8 | Pending |
 
 **Coverage:**
+
 - v1 requirements: 56 total
 - Mapped to phases: 56
 - Unmapped: 0 ✓
