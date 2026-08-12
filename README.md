@@ -4,6 +4,23 @@ A client for managing blobs on blossom servers
 
 [Documentation](https://hzrd149.github.io/blossom-client-sdk/)
 
+## Hashtree BUD-15 support
+
+The opt-in `blossom-client-sdk/hashtree` entrypoint provides portable BUD-15 `chk-v1` encryption, decryption,
+hashing, and strict `blossom:` reference helpers. Focused imports are also available from
+`blossom-client-sdk/hashtree/chk` and `blossom-client-sdk/hashtree/blossom-reference`. This implementation is
+pinned to BUD-15 draft commit `ef6c7fb4435530556fb32345eec010505bda017a`.
+
+CHK encryption is deterministic: identical plaintext produces identical keys and ciphertext. It therefore reveals
+plaintext equality and lets an observer confirm guesses for low-entropy or otherwise predictable content. It is not
+appropriate when hiding those properties is required.
+
+The `k` query parameter is a decryption key. Treat it, the full encrypted URI, and every parsed encrypted reference
+object as bearer capabilities: anyone who obtains one can decrypt the referenced content. Do not log or serialize
+them indiscriminately. Decryption exposes the same generic integrity error for ciphertext-address, authentication,
+and plaintext-key failures so callers cannot distinguish the failing verification stage. Future mode-aware Hashtree
+clients will default to plaintext; encrypted operation must be selected explicitly.
+
 ## Basic Usage
 
 ```js

@@ -12,6 +12,10 @@ const expectedTargets = [
   "lib/hashtree/types.d.ts",
   "lib/hashtree/errors.js",
   "lib/hashtree/errors.d.ts",
+  "lib/hashtree/chk.js",
+  "lib/hashtree/chk.d.ts",
+  "lib/hashtree/blossom-reference.js",
+  "lib/hashtree/blossom-reference.d.ts",
 ];
 
 type PackResult = {
@@ -53,12 +57,21 @@ describe("packed Hashtree contract", () => {
           'import * as wildcardIndex from "blossom-client-sdk/hashtree/index";',
           'import * as types from "blossom-client-sdk/hashtree/types";',
           'import * as errors from "blossom-client-sdk/hashtree/errors";',
+          'import * as chk from "blossom-client-sdk/hashtree/chk";',
+          'import * as blossomReference from "blossom-client-sdk/hashtree/blossom-reference";',
           'import assert from "node:assert/strict";',
           "const runtimeNames = Object.keys(exact).sort();",
+          "const errorNames = runtimeNames.filter((name) => name.endsWith('Error'));",
           "assert.deepEqual(Object.keys(wildcardIndex).sort(), runtimeNames);",
-          "assert.deepEqual(Object.keys(errors).sort(), runtimeNames);",
+          "assert.deepEqual(Object.keys(errors).sort(), errorNames);",
           "assert.deepEqual(Object.keys(types), []);",
           "assert.ok(runtimeNames.includes('HashtreeError'));",
+          "assert.equal(chk.encryptChk, exact.encryptChk);",
+          "assert.equal(chk.decryptChk, exact.decryptChk);",
+          "assert.equal(chk.hashHashtreeContent, exact.hashHashtreeContent);",
+          "assert.equal(blossomReference.parseHashtreeBlossomReference, exact.parseHashtreeBlossomReference);",
+          "assert.equal(blossomReference.buildHashtreeBlossomReference, exact.buildHashtreeBlossomReference);",
+          "for (const name of ['encryptChk', 'decryptChk', 'hashHashtreeContent', 'parseHashtreeBlossomReference', 'buildHashtreeBlossomReference']) assert.equal(Object.hasOwn(root, name), false);",
           "assert.equal(Object.keys(root).some((name) => /hashtree/i.test(name)), false);",
         ].join("\n"),
       );
