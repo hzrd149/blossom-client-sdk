@@ -4,16 +4,16 @@ milestone: v1.0
 milestone_name: milestone
 current_phase: 02
 current_phase_name: bud-15-chk-and-secret-safe-references
-status: executing
-stopped_at: Completed 02-02-PLAN.md
-last_updated: "2026-08-12T15:40:57.755Z"
+status: verifying
+stopped_at: Completed 02-03-PLAN.md
+last_updated: "2026-08-12T15:49:57.157Z"
 last_activity: 2026-08-12
 last_activity_desc: Phase 02 execution started
 progress:
   total_phases: 2
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 5
-  completed_plans: 4
+  completed_plans: 5
 ---
 
 # Project State
@@ -29,10 +29,10 @@ See: .planning/PROJECT.md (updated 2026-08-12)
 
 Phase: 02 (bud-15-chk-and-secret-safe-references) — EXECUTING
 Plan: 3 of 3
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-08-12 — Phase 02 execution started
 
-Progress: [████████░░] 80%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -61,6 +61,7 @@ Progress: [████████░░] 80%
 | Phase 01 P02 | 3m | 2 tasks | 3 files |
 | Phase 02 P01 | 4m | 2 tasks | 5 files |
 | Phase 02 P02 | 4m | 2 tasks | 5 files |
+| Phase 02 P03 | 7m | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -82,6 +83,9 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - [Phase ?]: [Phase 02]: Preserve unknown Blossom reference extensions as ordered pairs and canonicalize recognized fields before stable decoded extension ordering.
 - [Phase ?]: [Phase 02]: Keep encrypted keys enumerable capabilities while narrowing routine progress and diagnostic contracts to public metadata.
 - [Phase ?]: [Phase 02]: Permit omitted mode only for plaintext; require chk-v1 explicitly.
+- [Phase ?]: Keep CHK and reference functions exclusively on Hashtree entrypoints and focused wildcard modules.
+- [Phase ?]: Deny only the CHK-exclusive @noble/hashes/hkdf edge because sha2 is already part of the root helper graph.
+- [Phase ?]: Document parsed encrypted references and complete encrypted URIs as bearer capabilities.
 
 ### Pending Todos
 
@@ -100,6 +104,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-12T15:40:57.746Z
-Stopped at: Completed 02-02-PLAN.md
+Last session: 2026-08-12T15:49:57.146Z
+Stopped at: Completed 02-03-PLAN.md
 Resume file: None
