@@ -31,7 +31,9 @@ describe("parseHashtreeBlossomReference", () => {
 
     const parsed = parseHashtreeBlossomReference(encrypted) as EncryptedBlossomReference;
     expect(parsed.mode).toBe("chk-v1");
-    expect(Array.from(parsed.key)).toEqual(Array.from(Uint8Array.from(KEY.match(/../g)!, (hex) => Number.parseInt(hex, 16))));
+    expect(Array.from(parsed.key)).toEqual(
+      Array.from(Uint8Array.from(KEY.match(/../g)!, (hex) => Number.parseInt(hex, 16))),
+    );
     expect(Object.keys(parsed)).toContain("key");
     const first = parsed.key[0];
     parsed.key[0] ^= 0xff;
@@ -68,7 +70,9 @@ describe("buildHashtreeBlossomReference", () => {
     const canonical = buildHashtreeBlossomReference(parseHashtreeBlossomReference(noncanonical));
     expect(buildHashtreeBlossomReference(parseHashtreeBlossomReference(canonical))).toBe(canonical);
     const results = await Promise.all(
-      Array.from({ length: 20 }, async () => buildHashtreeBlossomReference(parseHashtreeBlossomReference(noncanonical))),
+      Array.from({ length: 20 }, async () =>
+        buildHashtreeBlossomReference(parseHashtreeBlossomReference(noncanonical)),
+      ),
     );
     expect(new Set(results)).toEqual(new Set([canonical]));
   });
