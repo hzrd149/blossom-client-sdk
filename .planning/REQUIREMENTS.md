@@ -10,7 +10,7 @@ Requirements for the first Hashtree milestone. Each maps to exactly one roadmap 
 ### Packaging and Contracts
 
 - [x] **PKG-01**: Consumer can import all Hashtree APIs from `blossom-client-sdk/hashtree`
-- [ ] **PKG-02**: Importing the package root does not export, evaluate, or bundle Hashtree modules or dependencies
+- [x] **PKG-02**: Importing the package root does not export, evaluate, or bundle Hashtree modules or dependencies
 - [x] **PKG-03**: Hashtree APIs work in Node.js 18+ and modern browsers without Node-only public types
 - [x] **PKG-04**: Consumer receives stable typed errors for validation, integrity, bounds, conflicts, immutable trees, callbacks, and lifecycle failures
 
@@ -87,7 +87,7 @@ Requirements for the first Hashtree milestone. Each maps to exactly one roadmap 
 - [ ] **TEST-01**: Node and browser suites reproduce every published BUD-15/16/17/18 test vector byte-for-byte
 - [ ] **TEST-02**: The SDK cross-reads and cross-writes representative plaintext and encrypted trees with the Hashtree reference implementation
 - [ ] **TEST-03**: Adversarial tests reject corrupt crypto, malformed MessagePack, unsafe paths, invalid fanout, unsupported types, exceeded budgets, and subscription or commit races
-- [ ] **TEST-04**: Packed-package tests prove the Hashtree subpath works while the root entrypoint remains isolated
+- [x] **TEST-04**: Packed-package tests prove the Hashtree subpath works while the root entrypoint remains isolated
 - [ ] **TEST-05**: Published Hashtree support includes API documentation and a minor Changeset
 
 ## v2 Requirements
@@ -137,7 +137,7 @@ Roadmap creation maps every v1 requirement to exactly one implementation phase.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | PKG-01 | Phase 1 | Complete |
-| PKG-02 | Phase 1 | Pending |
+| PKG-02 | Phase 1 | Complete |
 | PKG-03 | Phase 1 | Complete |
 | PKG-04 | Phase 1 | Complete |
 | CHK-01 | Phase 2 | Pending |
@@ -190,7 +190,7 @@ Roadmap creation maps every v1 requirement to exactly one implementation phase.
 | TEST-01 | Phase 5 | Pending |
 | TEST-02 | Phase 6 | Pending |
 | TEST-03 | Phase 8 | Pending |
-| TEST-04 | Phase 1 | Pending |
+| TEST-04 | Phase 1 | Complete |
 | TEST-05 | Phase 8 | Pending |
 
 **Coverage:**

@@ -4,16 +4,16 @@ milestone: v1.0
 milestone_name: milestone
 current_phase: 01
 current_phase_name: Packaging Boundary and Protocol Contracts
-status: executing
-stopped_at: Completed 01-01-PLAN.md
-last_updated: "2026-08-12T10:34:02.738Z"
+status: verifying
+stopped_at: Completed 01-02-PLAN.md
+last_updated: "2026-08-12T10:38:01.072Z"
 last_activity: 2026-08-12
 last_activity_desc: Phase 01 execution started
 progress:
   total_phases: 1
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
+  completed_plans: 2
 ---
 
 # Project State
@@ -29,10 +29,10 @@ See: .planning/PROJECT.md (updated 2026-08-09)
 
 Phase: 01 (Packaging Boundary and Protocol Contracts) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-08-12 — Phase 01 execution started
 
-Progress: [█████░░░░░] 50%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -58,6 +58,7 @@ Progress: [█████░░░░░] 50%
 | Plan | Duration | Tasks | Files |
 |------|----------|-------|-------|
 | Phase 01 P01 | 5m | 3 tasks | 7 files |
+| Phase 01 P02 | 3m | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -71,6 +72,9 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - [Phase ?]: Confirmed confirm-wildcard: types and errors are permanent public imports beneath ./hashtree/*.
 - [Phase ?]: Keep the package root byte-for-byte isolated from Hashtree exports.
 - [Phase ?]: Use class identity/name and narrowly copied safe fields instead of error codes or generic context.
+- [Phase ?]: Treat namespace, runtime evaluation, and transitive graph isolation as separate required proofs.
+- [Phase ?]: Exercise package self-references from a real .mjs file inside the extracted package scope.
+- [Phase ?]: Keep the Hashtree-exclusive dependency denylist explicit and empty until a later phase adds one.
 
 ### Pending Todos
 
@@ -89,6 +93,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-12T10:34:02.729Z
-Stopped at: Completed 01-01-PLAN.md
+Last session: 2026-08-12T10:38:01.063Z
+Stopped at: Completed 01-02-PLAN.md
 Resume file: None
