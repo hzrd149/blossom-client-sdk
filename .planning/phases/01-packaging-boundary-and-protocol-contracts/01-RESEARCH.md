@@ -269,9 +269,9 @@ Apply the same thin subclass pattern to `HashtreeIntegrityError`, `HashtreeBound
 
 ```typescript
 // After pnpm build, create an actual tarball in a temporary destination.
-// Extract it, set cwd to the extracted package root, then run Node with:
-// node --input-type=module -e "import('blossom-client-sdk/hashtree')"
-// Package self-reference uses the extracted package.json exports map.
+// Extract it and write package/consumer-smoke.mjs inside the extracted package scope.
+// Run `node package/consumer-smoke.mjs`; its package self-references use the
+// extracted package.json exports map without relying on eval-input package scope.
 // Also import the root and assert its keys contain no Hashtree names.
 ```
 
@@ -304,19 +304,17 @@ Apply the same thin subclass pattern to `HashtreeIntegrityError`, `HashtreeBound
 
 | # | Claim | Section | Risk if Wrong |
 |---|-------|---------|---------------|
-| A1 | Node package self-reference from `--input-type=module -e` with cwd at the extracted package root will resolve the extracted package by name. [ASSUMED] | Code Examples | If Node does not establish package scope for eval input, write a tiny temporary `.mjs` inside the extracted package instead; no installed consumer project is needed. |
+| A1 | Package self-reference is exercised from a temporary `.mjs` written inside the extracted package, so Node establishes package scope from a real module URL rather than relying on eval-input behavior. [RESOLVED] | Code Examples | The file is test-owned, contains only import assertions, and is removed with the extraction directory; no installed consumer project is needed. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Which future Hashtree dependencies count as “exclusive” in the graph assertion?**
-   - What we know: Phase 1 should add no new dependency; root already reaches `@noble/hashes` and lazily reaches optional Cashu code.
-   - What's unclear: Later phases will add or deepen specialized dependencies.
-   - Recommendation: Begin with a denylist empty except Hashtree paths, and design the helper to accept an explicit exclusive-package list updated by later phases.
+1. **Which Hashtree dependencies count as “exclusive” in the graph assertion? — RESOLVED**
+   - Decision: The Phase 1 exclusive-package denylist is empty because this phase installs and imports no Hashtree-only package. The graph helper accepts an explicit exclusive-package list, and each later phase that introduces a Hashtree-only bare dependency must add it when that dependency is introduced. Hashtree emitted paths are always forbidden independently of this list.
+   - Evidence: Phase 1's package legitimacy audit specifies no new package, while the existing root already legitimately reaches shared dependencies such as `@noble/hashes`; classifying shared dependencies as exclusive would create a false failure.
 
-2. **Should wildcard exposure include `index` as `blossom-client-sdk/hashtree/index`?**
-   - What we know: The locked `./hashtree/*` pattern technically permits it when `lib/hashtree/index.js` ships.
-   - What's unclear: Whether duplicate exact and `/index` spellings are desirable.
-   - Recommendation: Accept it as a consequence of D-13; do not add a null exclusion that contradicts “every Hashtree source module mapped by that wildcard is supported.”
+2. **Should wildcard exposure include `index` as `blossom-client-sdk/hashtree/index`? — RESOLVED**
+   - Decision: Yes. Per D-13, the wildcard intentionally exposes every matched shipped module, including `blossom-client-sdk/hashtree/index`; no null exclusion is added. Both the exact spelling and `/index` are supported public imports and the packed-package test must exercise them.
+   - Evidence: Node subpath patterns perform direct wildcard substitution, so `./hashtree/*` maps `index` to the shipped `lib/hashtree/index.js`; excluding it would contradict the locked wildcard policy.
 
 ## Environment Availability
 
@@ -367,7 +365,7 @@ Apply the same thin subclass pattern to `HashtreeIntegrityError`, `HashtreeBound
 - npm registry queries — repository-pinned TypeScript/Vitest/Prettier version and publication dates
 
 ### Tertiary (LOW confidence)
-- Package self-reference eval invocation detail, explicitly recorded in Assumption A1
+- None; Assumption A1 is resolved by using a real temporary `.mjs` within the extracted package scope.
 
 ## Metadata
 
