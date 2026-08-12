@@ -5,12 +5,12 @@ milestone_name: milestone
 current_phase: 2
 current_phase_name: BUD-15 CHK and Secret-Safe References
 status: planning
-stopped_at: Completed 01-02-PLAN.md
+stopped_at: Phase 1 complete; Phase 2 ready to plan
 last_updated: "2026-08-12T14:35:01.901Z"
 last_activity: 2026-08-12
 last_activity_desc: Phase 01 complete, transitioned to Phase 2
 progress:
-  total_phases: 1
+  total_phases: 8
   completed_phases: 1
   total_plans: 2
   completed_plans: 2
@@ -20,10 +20,10 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-08-09)
+See: .planning/PROJECT.md (updated 2026-08-12)
 
 **Core value:** Applications can create, publish, resolve, mutate, stream, and react to interoperable Blossom Hashtrees without implementing the protocol stack themselves.
-**Current focus:** Phase 01 — Packaging Boundary and Protocol Contracts
+**Current focus:** Phase 2 — BUD-15 CHK and Secret-Safe References
 
 ## Current Position
 
@@ -69,12 +69,12 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - Functional public APIs precede client classes.
 - Protocol phases follow BUD-15 → BUD-16 → BUD-17 → BUD-18 → network/state dependencies.
 - Security-critical protocol layers remain separate despite coarse roadmap granularity.
-- [Phase ?]: Confirmed confirm-wildcard: types and errors are permanent public imports beneath ./hashtree/*.
-- [Phase ?]: Keep the package root byte-for-byte isolated from Hashtree exports.
-- [Phase ?]: Use class identity/name and narrowly copied safe fields instead of error codes or generic context.
-- [Phase ?]: Treat namespace, runtime evaluation, and transitive graph isolation as separate required proofs.
-- [Phase ?]: Exercise package self-references from a real .mjs file inside the extracted package scope.
-- [Phase ?]: Keep the Hashtree-exclusive dependency denylist explicit and empty until a later phase adds one.
+- [Phase 1]: Confirmed confirm-wildcard: types and errors are permanent public imports beneath ./hashtree/*.
+- [Phase 1]: Keep the package root byte-for-byte isolated from Hashtree exports.
+- [Phase 1]: Use class identity/name and narrowly copied safe fields instead of error codes or generic context.
+- [Phase 1]: Treat namespace, runtime evaluation, and transitive graph isolation as separate required proofs.
+- [Phase 1]: Exercise package self-references from a real .mjs file inside the extracted package scope.
+- [Phase 1]: Keep the Hashtree-exclusive dependency denylist explicit and empty until a later phase adds one.
 
 ### Pending Todos
 
