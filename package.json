@@ -56,6 +56,14 @@
     "./actions/*": {
       "import": "./lib/actions/*.js",
       "types": "./lib/actions/*.d.ts"
+    },
+    "./hashtree": {
+      "import": "./lib/hashtree/index.js",
+      "types": "./lib/hashtree/index.d.ts"
+    },
+    "./hashtree/*": {
+      "import": "./lib/hashtree/*.js",
+      "types": "./lib/hashtree/*.d.ts"
     }
   },
   "engines": {

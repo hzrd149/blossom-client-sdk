@@ -38,13 +38,12 @@ describe("Hashtree package boundary", () => {
 
 describe.runIf(typeof document === "undefined")("built Hashtree declarations", () => {
   it("emits exact and wildcard targets without Node-only types", async () => {
-    const [{ mkdtemp, readFile, rm, writeFile }, { tmpdir }, { join }, { execFileSync }] = await Promise.all([
+    const [{ mkdtemp, readFile, rm, writeFile }, { join }, { execFileSync }] = await Promise.all([
       import("node:fs/promises"),
-      import("node:os"),
       import("node:path"),
       import("node:child_process"),
     ]);
-    const directory = await mkdtemp(join(tmpdir(), "blossom-hashtree-"));
+    const directory = await mkdtemp(join(process.cwd(), ".tmp-hashtree-"));
 
     try {
       const declarations = await Promise.all(
