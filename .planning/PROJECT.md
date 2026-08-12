@@ -17,10 +17,10 @@ Applications can create, publish, resolve, mutate, stream, and react to interope
 - ✓ Consumers can inject signing, authentication, payment, server-resolution, and error-handling callbacks without coupling the SDK to a specific application stack — existing
 - ✓ The SDK runs as an ESM library in Node.js 18+ and browsers, with browser-specific media helpers isolated behind appropriate entrypoints — existing
 - ✓ Public APIs are available through explicit package export paths, including dedicated action and helper subpaths — existing
+- ✓ Consumers can import portable Hashtree contracts and stable typed errors from an isolated package subpath without affecting root imports — Phase 1
 
 ### Active
 
-- [ ] Provide a dedicated `blossom-client-sdk/hashtree` export that is not imported or re-exported by the root entrypoint
 - [ ] Implement portable functional primitives for BUD-15 CHK encryption and decryption, including all required integrity checks and official test vectors
 - [ ] Implement deterministic BUD-16 MessagePack directory manifest encoding, decoding, validation, and path resolution
 - [ ] Implement BUD-17 chunked file manifests and directory fanout using canonical 2 MiB chunks and 174-link limits
@@ -71,7 +71,9 @@ The functional layer is the foundation for applications and downstream libraries
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Isolate Hashtree support behind `blossom-client-sdk/hashtree` | Keep specialized implementation and dependencies out of the root bundle | — Pending |
+| Isolate Hashtree support behind `blossom-client-sdk/hashtree` | Keep specialized implementation and dependencies out of the root bundle | ✓ Validated in Phase 1 with namespace, evaluation, emitted-graph, and packed-package checks |
+| Publish `hashtree/types` and `hashtree/errors` as permanent focused module imports | Support both a curated flat barrel and stable direct contract imports | ✓ Confirmed in Phase 1; removal or rename requires compatibility handling |
+| Use class identity and narrowly copied safe fields for Hashtree failures | Preserve useful causes and diagnostics without generic secret-bearing context or speculative error codes | ✓ Validated in Phase 1 |
 | Build functional primitives before the client layer | Establish a reusable base for applications and downstream libraries | — Pending |
 | Offer standalone functions and modular client classes | Serve low-level composition and ergonomic application use without duplicating protocol logic | — Pending |
 | Use one overall client and independently loadable tree instances | Centralize shared configuration while allowing dynamic tree lifecycles and tree-local state | — Pending |
@@ -102,4 +104,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-08-09 after initialization*
+*Last updated: 2026-08-12 after Phase 1*

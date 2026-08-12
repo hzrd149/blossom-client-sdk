@@ -11,7 +11,7 @@ This milestone establishes an isolated Hashtree package boundary, then delivers 
 - Integer phases (1, 2, 3): Planned milestone work
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
-- [ ] **Phase 1: Packaging Boundary and Protocol Contracts** - Consumers can opt into portable typed Hashtree APIs without affecting root imports.
+- [x] **Phase 1: Packaging Boundary and Protocol Contracts** - Consumers can opt into portable typed Hashtree APIs without affecting root imports. (completed 2026-08-12)
 - [ ] **Phase 2: BUD-15 CHK and Secret-Safe References** - Consumers can use exact deterministic CHK encryption safely in plaintext or encrypted workflows.
 - [ ] **Phase 3: BUD-16 Canonical Directories** - Consumers can encode, validate, traverse, and update canonical directory manifests.
 - [ ] **Phase 4: BUD-17 Bounded DAGs and Streaming** - Consumers can build and read canonical large files and directories within finite resource bounds.
@@ -152,7 +152,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Packaging Boundary and Protocol Contracts | 2/2 | In Progress|  |
+| 1. Packaging Boundary and Protocol Contracts | 2/2 | Complete    | 2026-08-12 |
 | 2. BUD-15 CHK and Secret-Safe References | 0/TBD | Not started | - |
 | 3. BUD-16 Canonical Directories | 0/TBD | Not started | - |
 | 4. BUD-17 Bounded DAGs and Streaming | 0/TBD | Not started | - |
