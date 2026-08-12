@@ -57,7 +57,20 @@ Plans:
   3. Consumer can select plaintext or encrypted functional behavior, with client-facing contracts defaulting to plaintext.
   4. Blossom requests, ordinary errors, progress events, and diagnostics never reveal Hashtree secrets.
 
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+**Wave 1**
+
+- [ ] 02-01-PLAN.md — Prove exact BUD-15 CHK encryption, decryption, integrity ordering, and per-chunk secret ownership.
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 02-02-PLAN.md — Add strict lossless capability references and plaintext-default secret-safe contracts.
+
+**Wave 3** *(blocked on Waves 1–2 completion)*
+
+- [ ] 02-03-PLAN.md — Publish and verify the portable package surface, root isolation, documentation, and release intent.
 
 ### Phase 3: BUD-16 Canonical Directories
 
