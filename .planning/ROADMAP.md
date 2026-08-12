@@ -30,7 +30,11 @@ This milestone establishes an isolated Hashtree package boundary, then delivers 
   2. Consumer importing the package root sees no Hashtree exports, evaluation, or bundled Hashtree dependencies.
   3. Consumer receives stable typed failures for validation, integrity, bounds, conflict, immutable-tree, callback, and lifecycle errors.
   4. Packed-package checks demonstrate that the subpath resolves while the root module graph remains isolated.
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Publish the portable Hashtree contract and stable typed-error tracer slice.
+- [ ] 01-02-PLAN.md — Prove root isolation and packed-package resolution, then record the release change.
 
 ### Phase 2: BUD-15 CHK and Secret-Safe References
 **Goal**: Consumers can protect Hashtree content with exact BUD-15 behavior without leaking capabilities or weakening integrity verification.

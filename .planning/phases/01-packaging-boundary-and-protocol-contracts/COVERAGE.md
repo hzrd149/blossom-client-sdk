@@ -1,0 +1,1 @@
+No external API integration: Phase 1 defines local TypeScript package entrypoints, portable public contracts, typed errors, and packed-artifact isolation tests; it does not connect to an external API, SDK, or service.
