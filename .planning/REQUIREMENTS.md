@@ -136,68 +136,68 @@ Roadmap creation maps every v1 requirement to exactly one implementation phase.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PKG-01 | TBD | Pending |
-| PKG-02 | TBD | Pending |
-| PKG-03 | TBD | Pending |
-| PKG-04 | TBD | Pending |
-| CHK-01 | TBD | Pending |
-| CHK-02 | TBD | Pending |
-| CHK-03 | TBD | Pending |
-| CHK-04 | TBD | Pending |
-| CHK-05 | TBD | Pending |
-| CHK-06 | TBD | Pending |
-| DIR-01 | TBD | Pending |
-| DIR-02 | TBD | Pending |
-| DIR-03 | TBD | Pending |
-| DIR-04 | TBD | Pending |
-| DAG-01 | TBD | Pending |
-| DAG-02 | TBD | Pending |
-| DAG-03 | TBD | Pending |
-| DAG-04 | TBD | Pending |
-| DAG-05 | TBD | Pending |
-| DAG-06 | TBD | Pending |
-| REF-01 | TBD | Pending |
-| REF-02 | TBD | Pending |
-| REF-03 | TBD | Pending |
-| REF-04 | TBD | Pending |
-| REF-05 | TBD | Pending |
-| REF-06 | TBD | Pending |
-| REF-07 | TBD | Pending |
-| REF-08 | TBD | Pending |
-| REF-09 | TBD | Pending |
-| INT-01 | TBD | Pending |
-| INT-02 | TBD | Pending |
-| INT-03 | TBD | Pending |
-| INT-04 | TBD | Pending |
-| INT-05 | TBD | Pending |
-| FS-01 | TBD | Pending |
-| FS-02 | TBD | Pending |
-| FS-03 | TBD | Pending |
-| FS-04 | TBD | Pending |
-| FS-05 | TBD | Pending |
-| FS-06 | TBD | Pending |
-| FS-07 | TBD | Pending |
-| FS-08 | TBD | Pending |
-| FS-09 | TBD | Pending |
-| CLI-01 | TBD | Pending |
-| CLI-02 | TBD | Pending |
-| CLI-03 | TBD | Pending |
-| CLI-04 | TBD | Pending |
-| CLI-05 | TBD | Pending |
-| CLI-06 | TBD | Pending |
-| CLI-07 | TBD | Pending |
-| CLI-08 | TBD | Pending |
-| TEST-01 | TBD | Pending |
-| TEST-02 | TBD | Pending |
-| TEST-03 | TBD | Pending |
-| TEST-04 | TBD | Pending |
-| TEST-05 | TBD | Pending |
+| PKG-01 | Phase 1 | Pending |
+| PKG-02 | Phase 1 | Pending |
+| PKG-03 | Phase 1 | Pending |
+| PKG-04 | Phase 1 | Pending |
+| CHK-01 | Phase 2 | Pending |
+| CHK-02 | Phase 2 | Pending |
+| CHK-03 | Phase 2 | Pending |
+| CHK-04 | Phase 2 | Pending |
+| CHK-05 | Phase 2 | Pending |
+| CHK-06 | Phase 2 | Pending |
+| DIR-01 | Phase 3 | Pending |
+| DIR-02 | Phase 3 | Pending |
+| DIR-03 | Phase 3 | Pending |
+| DIR-04 | Phase 3 | Pending |
+| DAG-01 | Phase 4 | Pending |
+| DAG-02 | Phase 4 | Pending |
+| DAG-03 | Phase 4 | Pending |
+| DAG-04 | Phase 4 | Pending |
+| DAG-05 | Phase 4 | Pending |
+| DAG-06 | Phase 4 | Pending |
+| REF-01 | Phase 5 | Pending |
+| REF-02 | Phase 5 | Pending |
+| REF-03 | Phase 5 | Pending |
+| REF-04 | Phase 5 | Pending |
+| REF-05 | Phase 5 | Pending |
+| REF-06 | Phase 5 | Pending |
+| REF-07 | Phase 5 | Pending |
+| REF-08 | Phase 5 | Pending |
+| REF-09 | Phase 5 | Pending |
+| INT-01 | Phase 6 | Pending |
+| INT-02 | Phase 6 | Pending |
+| INT-03 | Phase 6 | Pending |
+| INT-04 | Phase 6 | Pending |
+| INT-05 | Phase 7 | Pending |
+| FS-01 | Phase 7 | Pending |
+| FS-02 | Phase 7 | Pending |
+| FS-03 | Phase 7 | Pending |
+| FS-04 | Phase 7 | Pending |
+| FS-05 | Phase 7 | Pending |
+| FS-06 | Phase 7 | Pending |
+| FS-07 | Phase 7 | Pending |
+| FS-08 | Phase 7 | Pending |
+| FS-09 | Phase 7 | Pending |
+| CLI-01 | Phase 8 | Pending |
+| CLI-02 | Phase 8 | Pending |
+| CLI-03 | Phase 8 | Pending |
+| CLI-04 | Phase 8 | Pending |
+| CLI-05 | Phase 8 | Pending |
+| CLI-06 | Phase 8 | Pending |
+| CLI-07 | Phase 8 | Pending |
+| CLI-08 | Phase 8 | Pending |
+| TEST-01 | Phase 5 | Pending |
+| TEST-02 | Phase 6 | Pending |
+| TEST-03 | Phase 8 | Pending |
+| TEST-04 | Phase 1 | Pending |
+| TEST-05 | Phase 8 | Pending |
 
 **Coverage:**
-- v1 requirements: 55 total
-- Mapped to phases: 0
-- Unmapped: 55 ⚠️
+- v1 requirements: 56 total
+- Mapped to phases: 56
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-08-12*
-*Last updated: 2026-08-12 after initial definition*
+*Last updated: 2026-08-12 after roadmap creation*
