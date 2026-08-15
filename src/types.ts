@@ -40,8 +40,7 @@ export type BlobDescriptor = {
 
 export type RejectionAction = "skip" | "cancel";
 
-// NOTE: structural copies of cashu-ts types so @cashu/cashu-ts can stay an
-// optional peer dependency. Keep field shapes in sync with cashu-ts upstream.
+// NOTE: structural copies retained for compatibility with the deprecated Cashu payment handlers.
 
 export type PaymentRequestTransport = {
   type: string;

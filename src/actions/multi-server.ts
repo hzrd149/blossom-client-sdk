@@ -121,6 +121,10 @@ export async function multiServerUpload<S extends ServerType, B extends UploadTy
     if (!options.onPayment) throw new Error("Missing payment handler");
     return options.onPayment(server, sha256, blob, request);
   };
+  const handlePaymentRequired = (server: S, sha256: string, _blob: any, headers: Headers) => {
+    if (!options.onPaymentRequired) throw new Error("Missing payment handler");
+    return options.onPaymentRequired(server, sha256, blob, headers);
+  };
 
   const handleRejection = async (server: S, sha256: string, error: unknown): Promise<RejectionAction | false> => {
     if (!HTTPError.isRejection(error)) return false;
@@ -179,6 +183,7 @@ export async function multiServerUpload<S extends ServerType, B extends UploadTy
             auth: typeof options.auth === "boolean" ? options.auth : undefined,
             onAuth: (server, sha256) => handleAuthRequest(server, sha256, "upload"),
             onPayment: handlePaymentRequest,
+            onPaymentRequired: options.onPaymentRequired ? handlePaymentRequired : undefined,
             timeout: options.mirrorTimeout,
           });
         } catch (error) {
@@ -196,6 +201,7 @@ export async function multiServerUpload<S extends ServerType, B extends UploadTy
           auth: typeof options.auth === "boolean" ? options.auth : undefined,
           onAuth: handleAuthRequest,
           onPayment: handlePaymentRequest,
+          onPaymentRequired: options.onPaymentRequired ? handlePaymentRequired : undefined,
           timeout: options.mirrorTimeout,
         });
 
@@ -259,6 +265,10 @@ export async function multiServerMediaUpload<S extends ServerType, B extends Upl
     if (!options.onPayment) throw new Error("Missing payment handler");
     return options.onPayment(server, sha256, blob, request);
   };
+  const handlePaymentRequired = (server: S, sha256: string, _blob: any, headers: Headers) => {
+    if (!options.onPaymentRequired) throw new Error("Missing payment handler");
+    return options.onPaymentRequired(server, sha256, blob, headers);
+  };
 
   const handleRejection = async (server: S, sha256: string, error: unknown): Promise<RejectionAction | false> => {
     if (!HTTPError.isRejection(error)) return false;
@@ -285,6 +295,7 @@ export async function multiServerMediaUpload<S extends ServerType, B extends Upl
         auth: typeof options.auth === "boolean" ? options.auth : undefined,
         onAuth: handleAuthRequest,
         onPayment: handlePaymentRequest,
+        onPaymentRequired: options.onPaymentRequired ? handlePaymentRequired : undefined,
       });
 
       results.set(server, initialUpload);
@@ -348,6 +359,7 @@ export async function multiServerMediaUpload<S extends ServerType, B extends Upl
         auth: typeof options.auth === "boolean" ? options.auth : undefined,
         onAuth: (server, sha256) => handleAuthRequest(server, sha256, "upload"),
         onPayment: handlePaymentRequest,
+        onPaymentRequired: options.onPaymentRequired ? handlePaymentRequired : undefined,
         timeout: options.mirrorTimeout,
       });
 
