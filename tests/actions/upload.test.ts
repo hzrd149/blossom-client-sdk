@@ -153,6 +153,19 @@ describe("uploadBlob", async () => {
       await expect(uploadBlob(mockServer, mockBlob)).rejects.toThrow("Missing payment handler");
     });
 
+    it("should retry with generic payment headers", async () => {
+      fetchMock.mockResponses(
+        ["", { status: 402, headers: { "Payment-Required": "scheme=test" } }],
+        [JSON.stringify(mockResponse), { status: 200 }],
+      );
+      const onPaymentRequired = vi.fn().mockResolvedValue(new Headers({ Authorization: "Payment test-token" }));
+
+      await uploadBlob(mockServer, mockBlob, { onPaymentRequired });
+
+      expect(onPaymentRequired).toHaveBeenCalledWith(mockServer, mockSha256, mockBlob, expect.any(Headers));
+      expect(fetchMock.requests()[1]?.headers.get("Authorization")).toBe("Payment test-token");
+    });
+
     it("should throw error on server error (5xx)", async () => {
       fetchMock.mockResponseOnce("", { status: 500 });
 

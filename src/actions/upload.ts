@@ -2,6 +2,7 @@ import { encodeAuthorizationHeader, getReusableAuthEvent, storeAuthEvent } from 
 import { ServerType, UploadType } from "../types.js";
 import HTTPError from "../error.js";
 import { fetchWithTimeout, getBlobSha256, getBlobSize, getBlobType } from "../helpers/index.js";
+import { mergeHeaders } from "../helpers/headers.js";
 import { BlobDescriptor, PaymentRequest, PaymentToken, SignedEvent } from "../types.js";
 
 export type UploadOptions<S extends ServerType, B extends UploadType> = {
@@ -13,6 +14,8 @@ export type UploadOptions<S extends ServerType, B extends UploadType> = {
   authEvents?: Set<SignedEvent>;
   /** Request timeout */
   timeout?: number;
+  /** Return headers to retry a request rejected with HTTP 402. */
+  onPaymentRequired?: (server: S, sha256: string, blob: B, headers: Headers) => Promise<HeadersInit>;
   /**
    * A method used to request payment when uploading or mirroring a blob
    * @param server the server requiring payment
@@ -20,6 +23,7 @@ export type UploadOptions<S extends ServerType, B extends UploadType> = {
    * @param blob the original blob
    * @param request the payment request
    */
+  /** @deprecated Use onPaymentRequired to handle payment schemes generically. */
   onPayment?: (server: S, sha256: string, blob: B, request: PaymentRequest) => Promise<PaymentToken>;
   /**
    * A method used to request a signed auth event for a server and sha256
@@ -112,19 +116,20 @@ export async function uploadBlob<S extends ServerType, B extends UploadType>(
       break;
     }
     case 402: {
-      if (!opts?.onPayment) throw new Error("Missing payment handler");
-      const { getEncodedToken } = await import("@cashu/cashu-ts");
-      const { getPaymentRequestFromHeaders } = await import("../helpers/cashu.js");
-      const request = await getPaymentRequestFromHeaders(firstTry.headers);
-
-      const token = await opts.onPayment(server, sha256, blob, request);
-      const payment = getEncodedToken(token);
+      let paymentHeaders: HeadersInit;
+      if (opts?.onPaymentRequired)
+        paymentHeaders = await opts.onPaymentRequired(server, sha256, blob, firstTry.headers);
+      else if (opts?.onPayment) {
+        const { encodePaymentToken, getPaymentRequestFromHeaders } = await import("../helpers/cashu.js");
+        const request = await getPaymentRequestFromHeaders(firstTry.headers);
+        paymentHeaders = { "X-Cashu": encodePaymentToken(await opts.onPayment(server, sha256, blob, request)) };
+      } else throw new Error("Missing payment handler");
 
       // Try upload with payment
       upload = await fetchWithTimeout(url, {
         method: "PUT",
         body: blob,
-        headers: { ...headers, "X-Cashu": payment },
+        headers: mergeHeaders(headers, paymentHeaders),
         signal: opts?.signal,
         timeout: opts?.timeout,
       });
