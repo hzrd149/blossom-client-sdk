@@ -1,6 +1,6 @@
 {
   "name": "blossom-client-sdk",
-  "version": "5.0.0",
+  "version": "5.1.0",
   "description": "Client SDK for talking to blossom servers",
   "type": "module",
   "main": "./lib/index.js",

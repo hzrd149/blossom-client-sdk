@@ -1,5 +1,11 @@
 # blossom-client-sdk
 
+## 5.1.0
+
+### Minor Changes
+
+- f8478fb: Add generic `onPaymentRequired` handlers for HTTP 402 retries and remove the optional Cashu peer dependency. The legacy `onPayment` Cashu handlers remain supported but are deprecated.
+
 ## 5.0.0
 
 ### Major Changes
