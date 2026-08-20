@@ -317,6 +317,28 @@ describe("multiServerUpload", async () => {
   });
 
   describe("Payment", () => {
+    it("should forward generic payment handling", async () => {
+      mockServers = [new MockServerRequirePayment("https://server1.com"), new MockServer("https://server2.com")];
+      const onPaymentRequired = vi.fn().mockResolvedValue({ "X-Cashu": "generic-payment" });
+
+      await multiServerUpload(
+        mockServers.map((server) => server.url),
+        uploadBlob,
+        { onPaymentRequired },
+      );
+
+      expect(onPaymentRequired).toHaveBeenCalledWith(mockServers[0].url, uploadHash, uploadBlob, expect.any(Headers));
+      expect(mockServers[0].endpoints).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            pathname: "/upload",
+            method: "PUT",
+            headers: expect.objectContaining({ "x-cashu": "generic-payment" }),
+          }),
+        ]),
+      );
+    });
+
     it("should call onPayment when payment is required for upload", async () => {
       mockServers = [new MockServerRequirePayment("https://server1.com"), new MockServer("https://server2.com")];
 

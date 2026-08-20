@@ -118,6 +118,19 @@ describe("uploadMedia", async () => {
     expect(request.headers.get("X-Cashu")).toBe(getEncodedToken(mockToken));
   });
 
+  it("should retry with generic payment headers", async () => {
+    fetchMock.mockResponses(
+      ["", { status: 402, headers: { "Payment-Required": "scheme=test" } }],
+      [JSON.stringify(mockResponse), { status: 200 }],
+    );
+    const onPaymentRequired = vi.fn().mockResolvedValue({ Authorization: "Payment test-token" });
+
+    await uploadMedia(mockServer, mockBlob, { onPaymentRequired });
+
+    expect(onPaymentRequired).toHaveBeenCalledWith(mockServer, mockSha256, mockBlob, expect.any(Headers));
+    expect(fetchMock.requests()[1]?.headers.get("Authorization")).toBe("Payment test-token");
+  });
+
   it("should throw error if 402 received and no onPayment handler provided", async () => {
     const paymentRequest = new PaymentRequest([], "upload-6846354183", 100, "sat", ["https://mint.example.com"]);
 
