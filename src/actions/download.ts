@@ -3,7 +3,7 @@ import { PaymentRequest, PaymentToken, SignedEvent } from "../types.js";
 import HTTPError from "../error.js";
 import { encodeAuthorizationHeader, getReusableAuthEvent, storeAuthEvent } from "../auth.js";
 import { fetchWithTimeout } from "../helpers/index.js";
-import { mergeHeaders } from "../helpers/headers.js";
+import { handleChallenges } from "../internal/challenges.js";
 
 export type DownloadOptions<S extends ServerType> = {
   /** AbortSignal to cancel the action */
@@ -59,49 +59,24 @@ export async function downloadBlob<S extends ServerType>(server: S, hash: string
     }
   }
 
-  let download = await fetchWithTimeout(url, {
-    headers,
+  const request = (headers: HeadersInit) =>
+    fetchWithTimeout(url, { headers, signal: opts?.signal, timeout: opts?.timeout });
+  const download = await handleChallenges(await request(headers), headers, request, {
     signal: opts?.signal,
-    timeout: opts?.timeout,
-  });
-
-  // handle auth and payment
-  switch (download.status) {
-    case 401: {
-      // throw an error if auth is requested and disabled
+    auth: async () => {
       if (opts?.auth === false) throw new Error("Authorization disabled");
-
-      // Request authorization for this request
-      const auth = await resolveAuth();
-
-      // Try download with auth
-      download = await fetchWithTimeout(url, {
-        headers: { ...headers, Authorization: encodeAuthorizationHeader(auth) },
-        signal: opts?.signal,
-        timeout: opts?.timeout,
-      });
-
-      break;
-    }
-    case 402: {
-      let paymentHeaders: HeadersInit;
-      if (opts?.onPaymentRequired) paymentHeaders = await opts.onPaymentRequired(server, hash, download.headers);
-      else if (opts?.onPayment) {
+      return { Authorization: encodeAuthorizationHeader(await resolveAuth()) };
+    },
+    payment: async (headers) => {
+      if (opts?.onPaymentRequired) return opts.onPaymentRequired(server, hash, headers);
+      if (opts?.onPayment) {
         const { encodePaymentToken, getPaymentRequestFromHeaders } = await import("../helpers/cashu.js");
-        const request = await getPaymentRequestFromHeaders(download.headers);
-        paymentHeaders = { "X-Cashu": encodePaymentToken(await opts.onPayment(server, hash, request)) };
-      } else throw new Error("Missing payment handler");
-
-      // Try download with payment
-      download = await fetchWithTimeout(url, {
-        headers: mergeHeaders(headers, paymentHeaders),
-        signal: opts?.signal,
-        timeout: opts?.timeout,
-      });
-
-      break;
-    }
-  }
+        const request = await getPaymentRequestFromHeaders(headers);
+        return { "X-Cashu": encodePaymentToken(await opts.onPayment(server, hash, request)) };
+      }
+      throw new Error("Missing payment handler");
+    },
+  });
 
   // check download errors
   await HTTPError.handleErrorResponse(download);

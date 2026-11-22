@@ -2,7 +2,7 @@ import { encodeAuthorizationHeader, getReusableAuthEvent, storeAuthEvent } from 
 import { ServerType } from "../types.js";
 import HTTPError from "../error.js";
 import { fetchWithTimeout } from "../helpers/index.js";
-import { mergeHeaders } from "../helpers/headers.js";
+import { handleChallenges } from "../internal/challenges.js";
 import { BlobDescriptor, PaymentRequest, PaymentToken, SignedEvent } from "../types.js";
 
 export type MirrorOptions<S extends ServerType> = {
@@ -71,53 +71,24 @@ export async function mirrorBlob<S extends ServerType>(
   }
 
   const body = JSON.stringify({ url: blob.url });
-  let mirror = await fetchWithTimeout(url, {
-    method: "PUT",
+  const request = (headers: HeadersInit) =>
+    fetchWithTimeout(url, { method: "PUT", body, headers, signal: opts?.signal, timeout: opts?.timeout });
+  const mirror = await handleChallenges(await request(headers), headers, request, {
     signal: opts?.signal,
-    headers,
-    body,
-    timeout: opts?.timeout,
-  });
-
-  switch (mirror.status) {
-    case 401: {
-      // throw an error if auth is requested and disabled
+    auth: async () => {
       if (opts?.auth === false) throw new Error("Authorization disabled");
-
-      // Request authorization event for this mirror
-      const auth = await resolveAuth();
-
-      // Try mirror with auth
-      mirror = await fetchWithTimeout(url, {
-        signal: opts?.signal,
-        method: "PUT",
-        body,
-        headers: { ...headers, Authorization: encodeAuthorizationHeader(auth) },
-        timeout: opts?.timeout,
-      });
-      break;
-    }
-    case 402: {
-      let paymentHeaders: HeadersInit;
-      if (opts?.onPaymentRequired)
-        paymentHeaders = await opts.onPaymentRequired(server, blob.sha256, blob, mirror.headers);
-      else if (opts?.onPayment) {
+      return { Authorization: encodeAuthorizationHeader(await resolveAuth()) };
+    },
+    payment: async (headers) => {
+      if (opts?.onPaymentRequired) return opts.onPaymentRequired(server, blob.sha256, blob, headers);
+      if (opts?.onPayment) {
         const { encodePaymentToken, getPaymentRequestFromHeaders } = await import("../helpers/cashu.js");
-        const request = await getPaymentRequestFromHeaders(mirror.headers);
-        paymentHeaders = { "X-Cashu": encodePaymentToken(await opts.onPayment(server, blob.sha256, blob, request)) };
-      } else throw new Error("Missing payment handler");
-
-      // Try mirror with payment
-      mirror = await fetchWithTimeout(url, {
-        signal: opts?.signal,
-        method: "PUT",
-        body,
-        headers: mergeHeaders(headers, paymentHeaders),
-        timeout: opts?.timeout,
-      });
-      break;
-    }
-  }
+        const request = await getPaymentRequestFromHeaders(headers);
+        return { "X-Cashu": encodePaymentToken(await opts.onPayment(server, blob.sha256, blob, request)) };
+      }
+      throw new Error("Missing payment handler");
+    },
+  });
 
   // handle errors
   await HTTPError.handleErrorResponse(mirror);

@@ -1,7 +1,7 @@
 import { ServerType, UploadType } from "../types.js";
 import { BlobDescriptor } from "../types.js";
 import { getBlobSha256, getBlobSize, getBlobType } from "../helpers/index.js";
-import { mergeHeaders } from "../helpers/headers.js";
+import { handleChallenges } from "../internal/challenges.js";
 import HTTPError from "../error.js";
 import { encodeAuthorizationHeader, getReusableAuthEvent, storeAuthEvent } from "../auth.js";
 import { SignedEvent } from "../types.js";
@@ -58,13 +58,11 @@ export async function uploadMedia<S extends ServerType, B extends UploadType>(
   if (type) checkHeaders["X-Content-Type"] = type;
 
   // check upload with HEAD /media
-  let firstTry = await fetch(url, {
+  const firstTry = await fetch(url, {
     method: "HEAD",
     signal: opts?.signal,
     headers: checkHeaders,
   });
-
-  let upload: Response | undefined = undefined;
 
   if (firstTry.status === 404) {
     // HEAD endpoint is not supported. abort
@@ -73,53 +71,30 @@ export async function uploadMedia<S extends ServerType, B extends UploadType>(
 
   if (![401, 402].includes(firstTry.status)) await HTTPError.handleErrorResponse(firstTry);
 
-  // handle auth and payment
-  switch (firstTry.status) {
-    case 401: {
-      // throw an error if auth is requested and disabled
-      if (opts?.auth === false) throw new Error("Authorization disabled");
-
-      // Request authorization event for this upload
-      const auth = await resolveAuth();
-
-      // Try upload with auth
-      upload = await fetch(url, {
-        signal: opts?.signal,
-        method: "PUT",
-        body,
-        headers: { ...headers, Authorization: encodeAuthorizationHeader(auth) },
-      });
-      break;
-    }
-    case 402: {
-      let paymentHeaders: HeadersInit;
-      if (opts?.onPaymentRequired)
-        paymentHeaders = await opts.onPaymentRequired(server, sha256, blob, firstTry.headers);
-      else if (opts?.onPayment) {
-        const { encodePaymentToken, getPaymentRequestFromHeaders } = await import("../helpers/cashu.js");
-        const request = await getPaymentRequestFromHeaders(firstTry.headers);
-        paymentHeaders = { "X-Cashu": encodePaymentToken(await opts.onPayment(server, sha256, blob, request)) };
-      } else throw new Error("Missing payment handler");
-
-      // Try upload with payment
-      upload = await fetch(url, {
-        signal: opts?.signal,
-        method: "PUT",
-        body,
-        headers: mergeHeaders(headers, paymentHeaders),
-      });
-      break;
-    }
-  }
-
-  // check passed, upload
-  if (!upload)
-    upload = await fetch(url, {
+  const request = (headers: HeadersInit) =>
+    fetch(url, {
       signal: opts?.signal,
       method: "PUT",
       body,
-      headers: { ...headers },
+      headers,
     });
+
+  const upload = await handleChallenges(firstTry.ok ? await request(headers) : firstTry, headers, request, {
+    signal: opts?.signal,
+    auth: async () => {
+      if (opts?.auth === false) throw new Error("Authorization disabled");
+      return { Authorization: encodeAuthorizationHeader(await resolveAuth()) };
+    },
+    payment: async (headers) => {
+      if (opts?.onPaymentRequired) return opts.onPaymentRequired(server, sha256, blob, headers);
+      if (opts?.onPayment) {
+        const { encodePaymentToken, getPaymentRequestFromHeaders } = await import("../helpers/cashu.js");
+        const request = await getPaymentRequestFromHeaders(headers);
+        return { "X-Cashu": encodePaymentToken(await opts.onPayment(server, sha256, blob, request)) };
+      }
+      throw new Error("Missing payment handler");
+    },
+  });
 
   // handle errors
   await HTTPError.handleErrorResponse(upload);

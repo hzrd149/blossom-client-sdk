@@ -3,7 +3,7 @@ import { ServerType } from "../types.js";
 import { BlobDescriptor, PaymentRequest, PaymentToken, SignedEvent } from "../types.js";
 import { encodeAuthorizationHeader, getReusableAuthEvent, storeAuthEvent } from "../auth.js";
 import { fetchWithTimeout } from "../helpers/index.js";
-import { mergeHeaders } from "../helpers/headers.js";
+import { handleChallenges } from "../internal/challenges.js";
 
 export type ListOptions<S extends ServerType> = {
   /** AbortSignal to cancel the action */
@@ -68,42 +68,24 @@ export async function listBlobs<S extends ServerType>(
     }
   }
 
-  let list = await fetchWithTimeout(url, { headers, signal: opts?.signal, timeout: opts?.timeout });
-
-  // handle auth and payments
-  switch (list.status) {
-    case 401: {
-      // throw an error if auth is requested and disabled
+  const request = (headers: HeadersInit) =>
+    fetchWithTimeout(url, { headers, signal: opts?.signal, timeout: opts?.timeout });
+  const list = await handleChallenges(await request(headers), headers, request, {
+    signal: opts?.signal,
+    auth: async () => {
       if (opts?.auth === false) throw new Error("Authorization disabled");
-
-      const auth = await resolveAuth();
-
-      // Try list with auth
-      list = await fetchWithTimeout(url, {
-        headers: { ...headers, Authorization: encodeAuthorizationHeader(auth) },
-        signal: opts?.signal,
-        timeout: opts?.timeout,
-      });
-      break;
-    }
-    case 402: {
-      let paymentHeaders: HeadersInit;
-      if (opts?.onPaymentRequired) paymentHeaders = await opts.onPaymentRequired(server, list.headers);
-      else if (opts?.onPayment) {
+      return { Authorization: encodeAuthorizationHeader(await resolveAuth()) };
+    },
+    payment: async (headers) => {
+      if (opts?.onPaymentRequired) return opts.onPaymentRequired(server, headers);
+      if (opts?.onPayment) {
         const { encodePaymentToken, getPaymentRequestFromHeaders } = await import("../helpers/cashu.js");
-        const request = await getPaymentRequestFromHeaders(list.headers);
-        paymentHeaders = { "X-Cashu": encodePaymentToken(await opts.onPayment(server, request)) };
-      } else throw new Error("Missing payment handler");
-
-      // Try list with payment
-      list = await fetchWithTimeout(url, {
-        headers: mergeHeaders(headers, paymentHeaders),
-        signal: opts?.signal,
-        timeout: opts?.timeout,
-      });
-      break;
-    }
-  }
+        const request = await getPaymentRequestFromHeaders(headers);
+        return { "X-Cashu": encodePaymentToken(await opts.onPayment(server, request)) };
+      }
+      throw new Error("Missing payment handler");
+    },
+  });
 
   // handle errors
   await HTTPError.handleErrorResponse(list);

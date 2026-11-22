@@ -4,6 +4,7 @@
 
 ### Patch Changes
 
+- Handle sequential auth and payment challenges in either order, including challenges after upload preflight, with bounded retries.
 - Stop uploads immediately when preflight is rejected, preserving the HTTP status and server reason.
 - Preserve authorization and hash headers when uploading to servers without HEAD support.
 - Fix the `blossom-client-sdk/actions` JavaScript and TypeScript entrypoints.

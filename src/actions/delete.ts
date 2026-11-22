@@ -2,7 +2,7 @@ import { encodeAuthorizationHeader, getReusableAuthEvent, storeAuthEvent } from 
 import { ServerType } from "../types.js";
 import HTTPError from "../error.js";
 import { fetchWithTimeout } from "../helpers/fetch.js";
-import { mergeHeaders } from "../helpers/headers.js";
+import { handleChallenges } from "../internal/challenges.js";
 import { PaymentRequest, PaymentToken, SignedEvent } from "../types.js";
 
 export type DeleteOptions<S extends ServerType> = {
@@ -59,50 +59,24 @@ export async function deleteBlob<S extends ServerType>(server: S, hash: string, 
     }
   }
 
-  let res = await fetchWithTimeout(url, {
-    method: "DELETE",
-    headers,
+  const request = (headers: HeadersInit) =>
+    fetchWithTimeout(url, { method: "DELETE", headers, signal: opts?.signal, timeout: opts?.timeout });
+  const res = await handleChallenges(await request(headers), headers, request, {
     signal: opts?.signal,
-    timeout: opts?.timeout,
-  });
-
-  // handle auth and payment
-  switch (res.status) {
-    case 401: {
-      // throw an error if authorization is required but disabled
+    auth: async () => {
       if (opts?.auth === false) throw new Error("Authorization disabled");
-
-      // request authorization for this request
-      const auth = await resolveAuth();
-
-      // Try delete with auth
-      res = await fetchWithTimeout(url, {
-        signal: opts?.signal,
-        method: "DELETE",
-        headers: { ...headers, Authorization: encodeAuthorizationHeader(auth) },
-        timeout: opts?.timeout,
-      });
-      break;
-    }
-    case 402: {
-      let paymentHeaders: HeadersInit;
-      if (opts?.onPaymentRequired) paymentHeaders = await opts.onPaymentRequired(server, hash, res.headers);
-      else if (opts?.onPayment) {
+      return { Authorization: encodeAuthorizationHeader(await resolveAuth()) };
+    },
+    payment: async (headers) => {
+      if (opts?.onPaymentRequired) return opts.onPaymentRequired(server, hash, headers);
+      if (opts?.onPayment) {
         const { encodePaymentToken, getPaymentRequestFromHeaders } = await import("../helpers/cashu.js");
-        const request = await getPaymentRequestFromHeaders(res.headers);
-        paymentHeaders = { "X-Cashu": encodePaymentToken(await opts.onPayment(server, hash, request)) };
-      } else throw new Error("Missing payment handler");
-
-      // Try delete with payment
-      res = await fetchWithTimeout(url, {
-        signal: opts?.signal,
-        method: "DELETE",
-        headers: mergeHeaders(headers, paymentHeaders),
-        timeout: opts?.timeout,
-      });
-      break;
-    }
-  }
+        const request = await getPaymentRequestFromHeaders(headers);
+        return { "X-Cashu": encodePaymentToken(await opts.onPayment(server, hash, request)) };
+      }
+      throw new Error("Missing payment handler");
+    },
+  });
 
   // handle errors
   await HTTPError.handleErrorResponse(res);
