@@ -59,10 +59,10 @@
     }
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20.19.0"
   },
   "dependencies": {
-    "@noble/hashes": "^1.8.0"
+    "@noble/hashes": "^2.4.0"
   },
   "peerDependencies": {
     "hls.js": "^1.6.16"
