@@ -1,5 +1,11 @@
 # blossom-client-sdk
 
+## Unreleased
+
+### Patch Changes
+
+- Fix Buffer upload and hashing compatibility with current TypeScript Web API types.
+
 ## 5.1.0
 
 ### Minor Changes

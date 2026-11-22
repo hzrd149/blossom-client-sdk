@@ -6,6 +6,7 @@ import HTTPError from "../error.js";
 import { encodeAuthorizationHeader, getReusableAuthEvent, storeAuthEvent } from "../auth.js";
 import { SignedEvent } from "../types.js";
 import { UploadOptions } from "./upload.js";
+import { toWebBytes } from "../internal/bytes.js";
 
 /** Error thrown when /media endpoint is not present on a server */
 export class MediaEndpointMissingError extends Error {}
@@ -20,6 +21,7 @@ export async function uploadMedia<S extends ServerType, B extends UploadType>(
 ): Promise<BlobDescriptor> {
   const url = new URL("/media", server);
   const sha256 = await getBlobSha256(blob);
+  const body = blob instanceof Blob ? blob : toWebBytes(blob);
   const authEvents = opts?.authEvents as Set<SignedEvent> | undefined;
   const resolveAuth = async (preset: boolean = false) => {
     const reused = authEvents
@@ -82,7 +84,7 @@ export async function uploadMedia<S extends ServerType, B extends UploadType>(
       upload = await fetch(url, {
         signal: opts?.signal,
         method: "PUT",
-        body: blob,
+        body,
         headers: { ...headers, Authorization: encodeAuthorizationHeader(auth) },
       });
       break;
@@ -101,7 +103,7 @@ export async function uploadMedia<S extends ServerType, B extends UploadType>(
       upload = await fetch(url, {
         signal: opts?.signal,
         method: "PUT",
-        body: blob,
+        body,
         headers: mergeHeaders(headers, paymentHeaders),
       });
       break;
@@ -115,7 +117,7 @@ export async function uploadMedia<S extends ServerType, B extends UploadType>(
     upload = await fetch(url, {
       signal: opts?.signal,
       method: "PUT",
-      body: blob,
+      body,
       headers: { ...headers },
     });
 

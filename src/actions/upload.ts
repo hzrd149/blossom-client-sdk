@@ -4,6 +4,7 @@ import HTTPError from "../error.js";
 import { fetchWithTimeout, getBlobSha256, getBlobSize, getBlobType } from "../helpers/index.js";
 import { mergeHeaders } from "../helpers/headers.js";
 import { BlobDescriptor, PaymentRequest, PaymentToken, SignedEvent } from "../types.js";
+import { toWebBytes } from "../internal/bytes.js";
 
 export type UploadOptions<S extends ServerType, B extends UploadType> = {
   /** AbortSignal to cancel the action */
@@ -42,6 +43,7 @@ export async function uploadBlob<S extends ServerType, B extends UploadType>(
 ): Promise<BlobDescriptor> {
   const url = new URL("/upload", server);
   const sha256 = await getBlobSha256(blob);
+  const body = blob instanceof Blob ? blob : toWebBytes(blob);
   const resolveAuth = async (preset: boolean = false) => {
     const reused = opts?.authEvents
       ? await getReusableAuthEvent(opts.authEvents, { server, type: "upload", blob: sha256 })
@@ -89,7 +91,7 @@ export async function uploadBlob<S extends ServerType, B extends UploadType>(
   if (firstTry.status === 404) {
     // BUD-06 HEAD endpoint is not supported. attempt to upload
     upload = firstTry = await fetchWithTimeout(url, {
-      body: blob,
+      body,
       method: "PUT",
       signal: opts?.signal,
       timeout: opts?.timeout,
@@ -108,7 +110,7 @@ export async function uploadBlob<S extends ServerType, B extends UploadType>(
       // Try upload with auth
       upload = await fetchWithTimeout(url, {
         method: "PUT",
-        body: blob,
+        body,
         headers: { ...headers, Authorization: encodeAuthorizationHeader(auth) },
         signal: opts?.signal,
         timeout: opts?.timeout,
@@ -128,7 +130,7 @@ export async function uploadBlob<S extends ServerType, B extends UploadType>(
       // Try upload with payment
       upload = await fetchWithTimeout(url, {
         method: "PUT",
-        body: blob,
+        body,
         headers: mergeHeaders(headers, paymentHeaders),
         signal: opts?.signal,
         timeout: opts?.timeout,
@@ -143,7 +145,7 @@ export async function uploadBlob<S extends ServerType, B extends UploadType>(
   if (!upload)
     upload = await fetchWithTimeout(url, {
       method: "PUT",
-      body: blob,
+      body,
       headers: { ...headers },
       signal: opts?.signal,
       timeout: opts?.timeout,

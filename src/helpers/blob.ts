@@ -1,5 +1,6 @@
 import { bytesToHex } from "@noble/hashes/utils.js";
 import { UploadType } from "../types.js";
+import { toWebBytes } from "../internal/bytes.js";
 
 /** Checks if a string is a 64 length hex string */
 export function isSha256(str: string) {
@@ -21,14 +22,14 @@ export function getBlobSha256(blob: UploadType) {
 
 /** Calculates the sha2456 of a Blob */
 export async function computeBlobSha256(blob: UploadType) {
-  let buffer: ArrayBuffer | Buffer;
+  let buffer: ArrayBuffer | Uint8Array<ArrayBuffer>;
 
   // NOTE: use typeof File !== "undefined" to check if File is supported (required to support node 18)
   if ((typeof File !== "undefined" && blob instanceof File) || blob instanceof Blob) {
     buffer = await blob.arrayBuffer();
   } else {
     // nodejs Buffer
-    buffer = blob;
+    buffer = toWebBytes(blob);
   }
 
   let hash: Uint8Array;
