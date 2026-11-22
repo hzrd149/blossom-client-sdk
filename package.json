@@ -74,7 +74,6 @@
   },
   "devDependencies": {
     "@cashu/cashu-ts": "^2.4.3",
-    "@changesets/cli": "^2.29.3",
     "@testing-library/dom": "^10.4.0",
     "@types/node": "^22.15.14",
     "@vitest/browser": "^3.1.3",
