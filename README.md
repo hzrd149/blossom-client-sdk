@@ -21,6 +21,38 @@ Install dependencies with `pnpm install --frozen-lockfile`.
 
 GitHub Actions runs the full suite across supported Node versions, Deno 2, the latest Bun, and all three browser engines.
 
+### ngit CI
+
+The native [ngit CI workflow](https://ngit.dev/ci/workflows/) is `.grasp/nix/workflows/ci.yaml`.
+It runs the same scripts in six independent jobs: Node 22, Deno, Bun, Chromium, Firefox, and WebKit.
+The root `flake.lock` pins the Nix toolchain; `pnpm-lock.yaml` pins JavaScript dependencies and Playwright browser revisions.
+Jobs require an x86_64 Linux provider with network access for package/browser downloads and support for
+Bubblewrap's FHS environment (user namespaces). No repository secrets are needed.
+
+With Nix flakes enabled, validate and run commands locally from this checkout:
+
+```sh
+nix flake check --no-build
+nix run .#install
+nix run .#node
+nix run .#deno
+nix run .#bun
+nix run .#chromium
+nix run .#firefox
+nix run .#webkit
+```
+
+A maintainer must arrange a coordinator/provider and authorize the coordinator before automatic runs:
+
+```sh
+ngit ci request <coordinator-npub>
+# After publishing the committed workflow to the repository:
+ngit ci trigger <coordinator-npub> HEAD --workflow .grasp/nix/workflows/ci.yaml
+ngit ci status HEAD --json --require-ci-trust maintainer-directed
+```
+
+The workflow responds to pushes and pull requests targeting `master`. Adding it alone does not activate a hosted CI service.
+
 ## Basic Usage
 
 ```js

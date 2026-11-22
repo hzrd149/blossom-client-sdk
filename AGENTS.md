@@ -24,7 +24,9 @@
 
 ## Verification
 
-- CI runs node tests on Node `18`, `20`, and `22`, plus a separate browser job on Node `22` after `pnpm exec playwright install`.
+- GitHub CI runs the full suite on Node `20.19.0`, `20`, `22`, `24`, Deno 2, and Bun, plus Chromium, Firefox, and WebKit.
+- `pnpm test:node`, `pnpm test:deno`, and `pnpm test:bun` run the same Vitest suite in the named runtime, followed by built-package tests. `tests/runtime-check.ts` verifies the worker runtime.
+- ngit CI uses `.grasp/nix/workflows/ci.yaml` and the root Nix flake to run the same scripts on Linux. Keep CI-only Nix definitions under `.grasp/nix/`.
 - If you touch DOM-facing media helpers in `src/media.ts`, run the browser suite, not just node tests.
 - There is no lint script. Formatting is enforced by Prettier (`2` spaces, `printWidth: 120`).
 

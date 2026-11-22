@@ -1,0 +1,32 @@
+version: 1
+name: SDK tests
+system: x86_64-linux
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+requirements:
+  resources:
+    vcpus: { gte: 2 }
+    memory-mib: { gte: 4096 }
+    scratch-mib: { gte: 8192 }
+jobs:
+  node:
+    timeout: 30m
+    steps: [install, node]
+  deno:
+    timeout: 30m
+    steps: [install, deno]
+  bun:
+    timeout: 30m
+    steps: [install, bun]
+  chromium:
+    timeout: 30m
+    steps: [install, chromium]
+  firefox:
+    timeout: 30m
+    steps: [install, firefox]
+  webkit:
+    timeout: 30m
+    steps: [install, webkit]
