@@ -36,4 +36,8 @@
 ## Release Workflow
 
 - Default branch is `master`.
-- Releases are driven by Changesets in CI (`.github/workflows/version-or-publish.yml`). If you change published behavior, add a changeset with `pnpm changeset` unless the user asks not to.
+- The maintainer bumps versions and publishes releases locally. Do not bump versions or publish unless explicitly asked.
+- Stage public, customer-facing changes under `## Unreleased` at the top of `CHANGELOG.md`; create the section if absent and follow the changelog's existing format.
+- Keep entries concise and focused on package consumers: describe observable behavior, API changes, fixes, and compatibility requirements. Clearly identify breaking changes and any required migration.
+- Use one entry per distinct change. Exclude internal-only refactors, tests, CI, tooling, and implementation details that do not affect consumers.
+- When cutting a release, the maintainer moves the staged entries into the new version's section, bumps the package version, and publishes locally.
