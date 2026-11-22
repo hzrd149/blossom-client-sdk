@@ -50,8 +50,8 @@
       "types": "./lib/auth.d.ts"
     },
     "./actions": {
-      "import": "./lib/actions.js",
-      "types": "./lib/actions.d.ts"
+      "import": "./lib/actions/index.js",
+      "types": "./lib/actions/index.d.ts"
     },
     "./actions/*": {
       "import": "./lib/actions/*.js",

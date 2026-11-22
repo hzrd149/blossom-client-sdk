@@ -4,6 +4,7 @@
 
 ### Patch Changes
 
+- Fix the `blossom-client-sdk/actions` JavaScript and TypeScript entrypoints.
 - Fix Buffer upload and hashing compatibility with current TypeScript Web API types.
 
 ## 5.1.0
