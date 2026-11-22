@@ -118,7 +118,9 @@ describe("getBlobType", () => {
   it.skipIf(typeof File === "undefined")("should return the type of a File", () => {
     const data = new Uint8Array([1, 2, 3, 4, 5]);
     const file = new File([data], "test.txt", { type: "text/plain" });
-    expect(getBlobType(file)).toBe("text/plain");
+    // Bun adds a charset to text/plain; the helper preserves the native MIME type.
+    expect(file.type).toMatch(/^text\/plain(?:;|$)/);
+    expect(getBlobType(file)).toBe(file.type);
   });
 
   it("should return empty string for Blob with no type", () => {

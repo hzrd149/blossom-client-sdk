@@ -4,6 +4,23 @@ A client for managing blobs on blossom servers
 
 [Documentation](https://hzrd149.github.io/blossom-client-sdk/)
 
+## Testing
+
+Install dependencies with `pnpm install --frozen-lockfile`.
+
+- `pnpm test`: the Node Vitest suite.
+- `pnpm test:browser`: the Vitest suite, including DOM/media tests, in headless Chromium, Firefox, and WebKit.
+  Install browsers first with `pnpm exec playwright install --with-deps`.
+  To run one browser, append `--browser.name=chromium` (or `firefox` / `webkit`).
+- `pnpm test:node`, `pnpm test:deno`, `pnpm test:bun`: build the package and run the **same full Vitest suite**
+  in the selected runtime, followed by the same built-package export and HTTP integration tests.
+  Install Deno 2 or Bun for their respective commands. Worker runtime checks prevent accidental fallback to Node.
+  DOM-only tests run in browsers; Buffer-only tests run in server runtimes.
+  Deno needs `-A` for Vitest's workers, module loading, and local servers. TypeScript is checked during the build.
+- `pnpm test:all`: run all of the above (requires all runtimes and browsers).
+
+GitHub Actions runs the full suite across supported Node versions, Deno 2, the latest Bun, and all three browser engines.
+
 ## Basic Usage
 
 ```js

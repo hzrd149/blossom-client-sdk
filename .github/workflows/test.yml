@@ -30,13 +30,17 @@ jobs:
           cache: "pnpm"
 
       - name: Install Dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
-      - name: Run tests
-        run: pnpm vitest run
+      - name: Run full suite and built-package tests
+        run: pnpm test:node
 
   test-browser:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
 
     steps:
       - name: Checkout Repo
@@ -51,10 +55,37 @@ jobs:
           cache: "pnpm"
 
       - name: Install Dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
-      - name: Install Chromium
-        run: pnpm exec playwright install
+      - name: Install browser
+        run: pnpm exec playwright install --with-deps ${{ matrix.browser }}
 
       - name: Run tests
-        run: pnpm vitest run --browser --browser.headless
+        run: pnpm test:browser --browser.name=${{ matrix.browser }}
+
+  test-runtime:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        runtime: [deno, bun]
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+      - uses: denoland/setup-deno@v2
+        if: matrix.runtime == 'deno'
+        with:
+          deno-version: v2.x
+      - uses: oven-sh/setup-bun@v2
+        if: matrix.runtime == 'bun'
+        with:
+          bun-version: latest
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Run full suite and built-package tests
+        run: pnpm test:${{ matrix.runtime }}

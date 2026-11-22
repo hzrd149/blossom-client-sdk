@@ -12,6 +12,11 @@
     "build": "tsc",
     "prepublish": "npm run build",
     "test": "vitest run",
+    "test:browser": "vitest run --browser --browser.headless",
+    "test:node": "pnpm build && node node_modules/vitest/vitest.mjs run && node --test tests/package-exports.test.mjs tests/runtime/*.test.mjs",
+    "test:deno": "pnpm build && deno run -A --no-config --no-lock --node-modules-dir=manual node_modules/vitest/vitest.mjs run && deno test -A --no-config --no-lock --no-check --node-modules-dir=manual tests/package-exports.test.mjs tests/runtime/",
+    "test:bun": "pnpm build && bun run --bun node_modules/vitest/vitest.mjs run && bun test tests/package-exports.test.mjs tests/runtime/",
+    "test:all": "pnpm test:node && pnpm test:deno && pnpm test:bun && pnpm test:browser",
     "coverage": "vitest run --coverage",
     "format": "prettier -w .",
     "docs": "typedoc src/index.ts"
