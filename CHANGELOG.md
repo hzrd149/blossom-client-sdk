@@ -1,6 +1,10 @@
 # blossom-client-sdk
 
-## Unreleased
+## 5.2.0
+
+### Compatibility
+
+- **Breaking:** Node.js 18 is no longer supported; upgrade to Node.js 20.19.0 or newer.
 
 ### Minor Changes
 
