@@ -26,6 +26,19 @@ describe("uploadBlob", async () => {
   };
 
   describe("with HEAD /upload support", () => {
+    it("preserves authorization and hash headers when HEAD is unsupported", async () => {
+      fetchMock.mockResponses(["", { status: 404 }], [JSON.stringify(mockResponse), { status: 200 }]);
+
+      await uploadBlob(mockServer, mockBlob, { auth: mockAuth });
+
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      const request = fetchMock.requests()[1];
+      expect(request.method).toBe("PUT");
+      expect(request.headers.get("Authorization")).toBe(encodeAuthorizationHeader(mockAuth));
+      expect(request.headers.get("X-SHA-256")).toBe(mockSha256);
+      expect(await request.text()).toBe("test content");
+    });
+
     it("should check if upload is allowed with HEAD request first", async () => {
       fetchMock.mockResponses(
         // HEAD response

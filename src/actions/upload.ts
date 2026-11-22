@@ -93,6 +93,7 @@ export async function uploadBlob<S extends ServerType, B extends UploadType>(
     upload = firstTry = await fetchWithTimeout(url, {
       body,
       method: "PUT",
+      headers,
       signal: opts?.signal,
       timeout: opts?.timeout,
     });
