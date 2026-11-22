@@ -1,0 +1,9 @@
+allowBuilds:
+  esbuild: true
+# Resolve older releases rather than bypassing the release-age policy.
+minimumReleaseAgeStrict: true
+overrides:
+  # TODO: Remove these temporary pins once newer releases pass minimumReleaseAge
+  # and the test suite. Rollup 4.68.8 and js-tokens 10.0.1 were too new on 2026-11-21.
+  rollup: 4.68.7
+  js-tokens@^10.0.0: 10.0.0
