@@ -1,4 +1,6 @@
-export class TimeoutError extends Error {}
+export class TimeoutError extends Error {
+  name = "TimeoutError";
+}
 
 /** Creates and optionally wraps an AbortSignal with a timeout */
 export function wrapSignalWithTimeout(
@@ -8,13 +10,13 @@ export function wrapSignalWithTimeout(
 ): { cancel: () => void; signal: AbortSignal } {
   const controller = new AbortController();
 
-  if (signal) signal.addEventListener("abort", (err) => controller.abort(err), { once: true });
-
   const t = setTimeout(() => {
     controller.abort(new TimeoutError(message));
   }, timeout);
 
   const cancel = () => clearTimeout(t);
 
-  return { cancel, signal: controller.signal };
+  // Native composition preserves existing abort reasons and avoids retaining listeners
+  // on a caller's long-lived signal. It also keeps cancellation working after headers arrive.
+  return { cancel, signal: signal ? AbortSignal.any([signal, controller.signal]) : controller.signal };
 }

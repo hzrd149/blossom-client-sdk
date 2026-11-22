@@ -100,10 +100,12 @@ export async function multiServerUpload<S extends ServerType, B extends UploadTy
   opts?: MultiServerUploadOptions<S, B>,
 ) {
   const options = { ...defaultMultiServerOptions, ...opts };
+  options.signal?.throwIfAborted();
   let initialUpload: BlobDescriptor | undefined;
   const results = new Map<S, BlobDescriptor>();
   const authEvents = options.authEvents ?? new Set<SignedEvent>();
   const blobSha256 = await getBlobSha256(blob);
+  options.signal?.throwIfAborted();
 
   if (typeof options.auth === "object") authEvents.add(options.auth);
 
@@ -151,6 +153,7 @@ export async function multiServerUpload<S extends ServerType, B extends UploadTy
         return { server, exists };
       }),
     );
+    options.signal?.throwIfAborted();
 
     for (const result of preflightResults) {
       if (result.status === "fulfilled" && result.value.exists) {
@@ -161,6 +164,7 @@ export async function multiServerUpload<S extends ServerType, B extends UploadTy
 
   // upload to each server
   for (const server of uploadServers) {
+    options.signal?.throwIfAborted();
     const serverHasBlob = serversWithBlob.has(server);
 
     try {
@@ -187,6 +191,7 @@ export async function multiServerUpload<S extends ServerType, B extends UploadTy
             timeout: options.mirrorTimeout,
           });
         } catch (error) {
+          options.signal?.throwIfAborted();
           // mirror failed, if server already has blob skip upload fallback
           if (serverHasBlob) continue;
         }
@@ -211,6 +216,7 @@ export async function multiServerUpload<S extends ServerType, B extends UploadTy
       results.set(server, metadata);
       options.onUpload?.(server, metadata.sha256, blob);
     } catch (error) {
+      options.signal?.throwIfAborted();
       const rejection = await handleRejection(server, blobSha256, error);
       if (rejection === "cancel") return results;
       if (!rejection && error instanceof Error) options.onError?.(server, blobSha256, blob, error);
@@ -244,10 +250,12 @@ export async function multiServerMediaUpload<S extends ServerType, B extends Upl
   opts?: MultiServerMediaUploadOptions<S, B>,
 ) {
   const options = { ...defaultMediaUploadOptions, ...opts };
+  options.signal?.throwIfAborted();
   let initialUpload: BlobDescriptor | undefined;
   const results = new Map<S, BlobDescriptor>();
   const authEvents = options.authEvents ?? new Set<SignedEvent>();
   const blobSha256 = await getBlobSha256(blob);
+  options.signal?.throwIfAborted();
 
   if (typeof options.auth === "object") authEvents.add(options.auth);
 
@@ -287,6 +295,7 @@ export async function multiServerMediaUpload<S extends ServerType, B extends Upl
 
   // phase 1: upload to /media on one server for optimization
   for (const server of mediaServers) {
+    options.signal?.throwIfAborted();
     try {
       options.onStart?.(server, blobSha256, blob);
 
@@ -302,6 +311,7 @@ export async function multiServerMediaUpload<S extends ServerType, B extends Upl
       mediaUploadServer = server;
       options.onUpload?.(server, initialUpload.sha256, blob);
     } catch (error) {
+      options.signal?.throwIfAborted();
       if (error instanceof MediaEndpointMissingError) {
         // ignore, try next server
       } else {
@@ -341,6 +351,7 @@ export async function multiServerMediaUpload<S extends ServerType, B extends Upl
         return { server, exists };
       }),
     );
+    options.signal?.throwIfAborted();
 
     for (const result of preflightResults) {
       if (result.status === "fulfilled" && result.value.exists) {
@@ -351,6 +362,7 @@ export async function multiServerMediaUpload<S extends ServerType, B extends Upl
 
   // mirror to remaining servers
   for (const server of remainingServers) {
+    options.signal?.throwIfAborted();
     try {
       options.onStart?.(server, initialUpload.sha256, blob);
 
@@ -366,6 +378,7 @@ export async function multiServerMediaUpload<S extends ServerType, B extends Upl
       results.set(server, metadata);
       options.onUpload?.(server, metadata.sha256, blob);
     } catch (error) {
+      options.signal?.throwIfAborted();
       const rejection = await handleRejection(server, initialUpload.sha256, error);
       if (rejection === "cancel") return results;
       if (!rejection && error instanceof Error) options.onError?.(server, initialUpload.sha256, blob, error);

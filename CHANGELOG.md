@@ -4,6 +4,7 @@
 
 ### Patch Changes
 
+- Preserve abort reasons and already-aborted signals, and stop resolution and multi-server fallbacks when cancelled.
 - Handle sequential auth and payment challenges in either order, including challenges after upload preflight, with bounded retries.
 - Stop uploads immediately when preflight is rejected, preserving the HTTP status and server reason.
 - Preserve authorization and hash headers when uploading to servers without HEAD support.

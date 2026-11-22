@@ -90,12 +90,14 @@ export async function getBlobUrls(uri: string | URL | BlossomURI, opts?: GetBlob
 
 /** Resolves a blossom URI to a downloaded blob by trying servers from hints sequentially */
 export async function resolveBlob(uri: string | URL | BlossomURI, opts?: ResolveOptions): Promise<Response> {
+  opts?.signal?.throwIfAborted();
   const parsed = parseInput(uri);
   const collector = createServerCollector(buildBlobPath(parsed.sha256, parsed.ext));
 
   /** Try GET on each URL, return the first successful response */
   const tryUrls = async (urls: string[]): Promise<Response | undefined> => {
     for (const url of urls) {
+      opts?.signal?.throwIfAborted();
       try {
         const res = await fetchWithTimeout(new URL(url), {
           signal: opts?.signal,
@@ -104,6 +106,7 @@ export async function resolveBlob(uri: string | URL | BlossomURI, opts?: Resolve
 
         if (res.ok) return res;
       } catch {
+        opts?.signal?.throwIfAborted();
         // server unreachable or error — try next
         continue;
       }
@@ -121,7 +124,9 @@ export async function resolveBlob(uri: string | URL | BlossomURI, opts?: Resolve
   // 2. resolve and try author hints (deferred — requires relay queries)
   if (opts?.getServers) {
     for (const pubkey of parsed.authors) {
+      opts?.signal?.throwIfAborted();
       const authorServers = await opts.getServers(pubkey);
+      opts?.signal?.throwIfAborted();
       if (authorServers) {
         const urls = collector.add(authorServers);
         if (urls.length > 0) {

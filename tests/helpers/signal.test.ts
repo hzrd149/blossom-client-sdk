@@ -45,5 +45,22 @@ describe("wrapSignalWithTimeout", () => {
     existingController.abort("User aborted");
 
     expect(signal.aborted).toBe(true);
+    expect(signal.reason).toBe("User aborted");
+  });
+
+  it("preserves an already-aborted signal and its reason", () => {
+    const reason = new Error("Stopped");
+    const { signal, cancel } = wrapSignalWithTimeout(1000, "Timeout", AbortSignal.abort(reason));
+    expect(signal.aborted).toBe(true);
+    expect(signal.reason).toBe(reason);
+    cancel();
+  });
+
+  it("still forwards cancellation after the timeout has been cleared", () => {
+    const controller = new AbortController();
+    const { signal, cancel } = wrapSignalWithTimeout(1000, "Timeout", controller.signal);
+    cancel();
+    controller.abort("Stop reading the body");
+    expect(signal.reason).toBe("Stop reading the body");
   });
 });
