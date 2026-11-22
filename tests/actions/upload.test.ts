@@ -182,7 +182,7 @@ describe("uploadBlob", async () => {
     it("should throw error on server error (5xx)", async () => {
       fetchMock.mockResponseOnce("", { status: 500 });
 
-      await expect(uploadBlob(mockServer, mockBlob)).rejects.toThrow("Server error");
+      await expect(uploadBlob(mockServer, mockBlob)).rejects.toMatchObject({ status: 500 });
     });
 
     it("should not include X-Content-Type if blob type is not set", async () => {

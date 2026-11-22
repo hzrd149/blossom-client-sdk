@@ -71,6 +71,8 @@ export async function uploadMedia<S extends ServerType, B extends UploadType>(
     throw new MediaEndpointMissingError("/media endpoint not supported");
   }
 
+  if (![401, 402].includes(firstTry.status)) await HTTPError.handleErrorResponse(firstTry);
+
   // handle auth and payment
   switch (firstTry.status) {
     case 401: {
@@ -109,8 +111,6 @@ export async function uploadMedia<S extends ServerType, B extends UploadType>(
       break;
     }
   }
-
-  if (firstTry.status >= 500) throw new Error("Server error");
 
   // check passed, upload
   if (!upload)

@@ -4,6 +4,7 @@
 
 ### Patch Changes
 
+- Stop uploads immediately when preflight is rejected, preserving the HTTP status and server reason.
 - Preserve authorization and hash headers when uploading to servers without HEAD support.
 - Fix the `blossom-client-sdk/actions` JavaScript and TypeScript entrypoints.
 - Fix Buffer upload and hashing compatibility with current TypeScript Web API types.

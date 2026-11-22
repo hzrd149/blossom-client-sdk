@@ -88,6 +88,8 @@ export async function uploadBlob<S extends ServerType, B extends UploadType>(
 
   let upload: Response | undefined = undefined;
 
+  if (![401, 402, 404].includes(firstTry.status)) await HTTPError.handleErrorResponse(firstTry);
+
   if (firstTry.status === 404) {
     // BUD-06 HEAD endpoint is not supported. attempt to upload
     upload = firstTry = await fetchWithTimeout(url, {
@@ -139,8 +141,6 @@ export async function uploadBlob<S extends ServerType, B extends UploadType>(
       break;
     }
   }
-
-  if (firstTry.status >= 500) throw new Error("Server error");
 
   // check passed, upload
   if (!upload)

@@ -147,7 +147,7 @@ describe("uploadMedia", async () => {
   it("should throw error on server error (5xx)", async () => {
     fetchMock.mockResponseOnce("", { status: 500 });
 
-    await expect(uploadMedia(mockServer, mockBlob)).rejects.toThrow("Server error");
+    await expect(uploadMedia(mockServer, mockBlob)).rejects.toMatchObject({ status: 500 });
   });
 
   it("should throw MediaEndpointMissingError if HEAD endpoint returns 404", async () => {
