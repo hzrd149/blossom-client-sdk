@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Minor Changes
+
+- Export `HTTPError` from the package root for inspecting action failures.
+
 ### Patch Changes
 
 - Fix `hasBlob()` returning true for HTTP errors; it now throws `HTTPError` for non-404 failures.

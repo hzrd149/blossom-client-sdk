@@ -22,6 +22,9 @@ test("published action entrypoints resolve in Node", async () => {
   const root = await import("blossom-client-sdk");
   assert.equal(actions.uploadBlob, upload.uploadBlob);
   assert.equal(root.Actions.uploadBlob, actions.uploadBlob);
+  const error = new root.HTTPError(new Response(null, { status: 413 }), "Too large");
+  assert.equal(root.HTTPError.isRejection(error), true);
+  assert.equal(error.code, "too_large");
 });
 
 test("every explicit package export has JavaScript and declarations", async () => {
