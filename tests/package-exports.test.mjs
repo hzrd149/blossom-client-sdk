@@ -3,6 +3,19 @@ import assert from "node:assert/strict";
 import { access } from "node:fs/promises";
 import { test } from "node:test";
 
+test("README named SDK imports exist in the published entrypoints", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const readme = await readFile(new URL("../README.md", import.meta.url), "utf8");
+  const imports = [...readme.matchAll(/import\s*\{([^}]+)\}\s*from\s*"(blossom-client-sdk[^"]*)"/g)];
+  assert.ok(imports.length > 0);
+  for (const [, names, specifier] of imports) {
+    const exports = await import(specifier);
+    for (const name of names.split(",").map((name) => name.trim())) {
+      assert.ok(name in exports, `${specifier} must export ${name}`);
+    }
+  }
+});
+
 test("published action entrypoints resolve in Node", async () => {
   const actions = await import("blossom-client-sdk/actions");
   const upload = await import("blossom-client-sdk/actions/upload");

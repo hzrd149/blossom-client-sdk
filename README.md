@@ -7,7 +7,8 @@ A client for managing blobs on blossom servers
 ## Basic Usage
 
 ```js
-import { uploadBlob, createUploadAuth, encodeAuthorizationHeader } from "blossom-client-sdk";
+import { createUploadAuth, encodeAuthorizationHeader } from "blossom-client-sdk";
+import { uploadBlob } from "blossom-client-sdk/actions";
 
 async function signer(event) {
   return await window.nostr.signEvent(event);
@@ -230,7 +231,8 @@ hls.attachMedia(videoElement);
 ### List a page of blobs on a server
 
 ```js
-import { listBlobs, createListAuth } from "blossom-client-sdk";
+import { createListAuth } from "blossom-client-sdk";
+import { listBlobs } from "blossom-client-sdk/actions";
 
 async function signer(event) {
   return await window.nostr.signEvent(event);
@@ -247,7 +249,8 @@ const blobs = await listBlobs(server, pubkey, {
 ### Iterate blob pages on a server
 
 ```js
-import { iterateBlobs, createListAuth } from "blossom-client-sdk/actions";
+import { createListAuth } from "blossom-client-sdk";
+import { iterateBlobs } from "blossom-client-sdk/actions";
 
 async function signer(event) {
   return await window.nostr.signEvent(event);
@@ -267,7 +270,8 @@ for await (const page of iterateBlobs(server, pubkey, {
 ### Upload a single blob
 
 ```js
-import { uploadBlob, createUploadAuth } from "blossom-client-sdk";
+import { createUploadAuth } from "blossom-client-sdk";
+import { uploadBlob } from "blossom-client-sdk/actions";
 
 async function signer(event) {
   return await window.nostr.signEvent(event);
@@ -283,7 +287,8 @@ const blob = await uploadBlob(server, new File(["testing"], "test.txt"), {
 ### Upload a single blob to multiple servers
 
 ```js
-import { uploadBlob, createUploadAuth } from "blossom-client-sdk";
+import { createUploadAuth } from "blossom-client-sdk";
+import { uploadBlob } from "blossom-client-sdk/actions";
 
 async function signer(event) {
   return await window.nostr.signEvent(event);
@@ -304,7 +309,8 @@ for (let server of servers) {
 The `multiServerUpload` method uploads a blob to the first server, then mirrors it to the remaining servers. It runs parallel preflight checks (`HEAD /<sha256>`) to detect which servers already have the blob, using `/mirror` to register ownership on those servers instead of re-uploading.
 
 ```ts
-import { multiServerUpload, createUploadAuth } from "blossom-client-sdk";
+import { createUploadAuth } from "blossom-client-sdk";
+import { multiServerUpload } from "blossom-client-sdk/actions";
 
 async function signer(event: any) {
   // @ts-expect-error
@@ -336,7 +342,8 @@ const results = await multiServerUpload(servers, file, {
 The `multiServerMediaUpload` method is designed for media files (images, videos) that should be optimized before distribution. It uploads the blob to a single server's BUD-05 `/media` endpoint for processing, then mirrors the optimized result to all other servers. The original unprocessed blob is never uploaded to other servers since the `/media` endpoint may transform it (resize, re-encode, etc.).
 
 ```ts
-import { multiServerMediaUpload, createUploadAuth } from "blossom-client-sdk";
+import { createUploadAuth } from "blossom-client-sdk";
+import { multiServerMediaUpload } from "blossom-client-sdk/actions";
 
 async function signer(event: any) {
   // @ts-expect-error
@@ -362,7 +369,8 @@ const results = await multiServerMediaUpload(servers, media, {
 ### Upload and Mirror manually
 
 ```js
-import { uploadBlob, mirrorBlob, createUploadAuth } from "blossom-client-sdk";
+import { createUploadAuth } from "blossom-client-sdk";
+import { uploadBlob, mirrorBlob } from "blossom-client-sdk/actions";
 
 async function signer(event) {
   return await window.nostr.signEvent(event);
