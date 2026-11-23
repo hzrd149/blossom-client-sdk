@@ -19,7 +19,6 @@
 - `pnpm vitest run --browser --browser.headless`: browser suite for DOM/media helpers.
 - `pnpm coverage`: coverage run.
 - `pnpm build`: compile `src/` to `lib/` and emit declarations.
-- `pnpm docs`: TypeDoc build; CI publishes the generated `docs/` directory on version tags.
 - `pnpm format`: Prettier over the whole repo.
 
 ## Verification

@@ -2,7 +2,7 @@
 
 A client for managing blobs on blossom servers
 
-[Documentation](https://hzrd149.github.io/blossom-client-sdk/)
+[Documentation](https://jsr.io/@hzrd149/blossom-client/doc)
 
 ## Installation
 

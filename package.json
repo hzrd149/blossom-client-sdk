@@ -20,8 +20,7 @@
     "test:bun": "pnpm build && bun run --bun node_modules/vitest/vitest.mjs run && bun test tests/package-exports.test.mjs tests/runtime/",
     "test:all": "pnpm test:node && pnpm test:deno && pnpm test:bun && pnpm test:browser",
     "coverage": "vitest run --coverage",
-    "format": "prettier -w .",
-    "docs": "typedoc src/index.ts"
+    "format": "prettier -w ."
   },
   "files": [
     "lib",
@@ -90,8 +89,6 @@
     "nostr-tools": "^2.26.1",
     "playwright": "^1.65.1",
     "prettier": "^3.10.1",
-    "typedoc": "^0.28.20",
-    "typedoc-plugin-mermaid": "^1.12.0",
     "typescript": "^7.0.2",
     "vitest": "^5.1.1",
     "vitest-fetch-mock": "^0.4.5"
