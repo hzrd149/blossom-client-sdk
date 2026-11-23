@@ -111,7 +111,12 @@ describe("uploadMedia", async () => {
     await uploadMedia(mockServer, mockBlob, { onPayment });
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
-    expect(onPayment).toHaveBeenCalledWith(mockServer, mockSha256, mockBlob, paymentRequest);
+    expect(onPayment).toHaveBeenCalledWith(
+      mockServer,
+      mockSha256,
+      mockBlob,
+      expect.objectContaining({ id: paymentRequest.id, amount: 100, unit: "sat", mints: paymentRequest.mints }),
+    );
 
     // Check second request has payment header
     const request = fetchMock.requests()[1];

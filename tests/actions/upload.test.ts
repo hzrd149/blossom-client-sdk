@@ -146,7 +146,12 @@ describe("uploadBlob", async () => {
       await uploadBlob(mockServer, mockBlob, { onPayment });
 
       expect(fetchMock).toHaveBeenCalledTimes(2);
-      expect(onPayment).toHaveBeenCalledWith(mockServer, mockSha256, mockBlob, paymentRequest);
+      expect(onPayment).toHaveBeenCalledWith(
+        mockServer,
+        mockSha256,
+        mockBlob,
+        expect.objectContaining({ id: paymentRequest.id, amount: 100, unit: "sat", mints: paymentRequest.mints }),
+      );
 
       // Check second request has payment header
       const request = fetchMock.requests()[1];
@@ -262,7 +267,12 @@ describe("uploadBlob", async () => {
       await uploadBlob(mockServer, mockBlob, { onPayment });
 
       expect(fetchMock).toHaveBeenCalledTimes(3);
-      expect(onPayment).toHaveBeenCalledWith(mockServer, mockSha256, mockBlob, paymentRequest);
+      expect(onPayment).toHaveBeenCalledWith(
+        mockServer,
+        mockSha256,
+        mockBlob,
+        expect.objectContaining({ id: paymentRequest.id, amount: 100, unit: "sat", mints: paymentRequest.mints }),
+      );
 
       // Check third request has payment header
       const request = fetchMock.requests()[2];

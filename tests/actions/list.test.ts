@@ -125,7 +125,10 @@ describe("listBlobs", async () => {
     await listBlobs(mockServer, mockPubkey, { onPayment });
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
-    expect(onPayment).toHaveBeenCalledWith(mockServer, paymentRequest);
+    expect(onPayment).toHaveBeenCalledWith(
+      mockServer,
+      expect.objectContaining({ id: paymentRequest.id, amount: 100, unit: "sat", mints: paymentRequest.mints }),
+    );
 
     // Check second request has payment header
     const request = fetchMock.requests()[1];

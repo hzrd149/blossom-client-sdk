@@ -84,7 +84,11 @@ describe("deleteBlob", async () => {
     await deleteBlob(mockServer, mockSha256, { onPayment });
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
-    expect(onPayment).toHaveBeenCalledWith(mockServer, mockSha256, paymentRequest);
+    expect(onPayment).toHaveBeenCalledWith(
+      mockServer,
+      mockSha256,
+      expect.objectContaining({ id: paymentRequest.id, amount: 100, unit: "sat", mints: paymentRequest.mints }),
+    );
 
     // Check second request has payment header
     const request = fetchMock.requests()[1];

@@ -12,7 +12,17 @@ describe("getPaymentRequestFromHeaders", () => {
 
     const result = await getPaymentRequestFromHeaders(headers);
 
-    expect(result).toEqual(mockPaymentRequest);
+    expect(result).toEqual({
+      transport: [],
+      id: undefined,
+      amount: 100,
+      unit: "sat",
+      mints: ["https://cashu.space"],
+      description: undefined,
+      singleUse: false,
+    });
+    expect(result.toEncodedRequest()).toBe(encodedHeader);
+    expect(result.toRawRequest()).toEqual({ t: [], a: 100, u: "sat", m: ["https://cashu.space"] });
   });
 
   it("should throw an error when header is missing and quiet is false", async () => {
