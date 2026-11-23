@@ -1,3 +1,9 @@
+/**
+ * Browser image, video, and audio fallback handling for Blossom URIs and HTTP blob URLs.
+ *
+ * @module
+ */
+
 import { getBlobUrls } from "./actions/resolve.js";
 import { parseBlossomURI } from "./helpers/blossom-uri.js";
 import { getHashFromURL } from "./helpers/url.js";

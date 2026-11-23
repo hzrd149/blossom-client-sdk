@@ -1,3 +1,9 @@
+/**
+ * Blob existence checks using HEAD requests, with cancellation and timeout options.
+ *
+ * @module
+ */
+
 import { ServerType } from "../types.js";
 import { fetchWithTimeout } from "../helpers/index.js";
 import HTTPError from "../error.js";

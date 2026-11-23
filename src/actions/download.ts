@@ -1,3 +1,9 @@
+/**
+ * Blob download actions and options, including authentication and payment challenge handling.
+ *
+ * @module
+ */
+
 import { ServerType } from "../types.js";
 import { PaymentRequest, PaymentToken, SignedEvent } from "../types.js";
 import HTTPError from "../error.js";

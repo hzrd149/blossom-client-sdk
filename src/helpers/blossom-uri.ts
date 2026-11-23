@@ -1,3 +1,9 @@
+/**
+ * Types and helpers for parsing, constructing, and converting Blossom URIs with server and author hints.
+ *
+ * @module
+ */
+
 import { isSha256 } from "./blob.js";
 
 export type BlossomURI = {

@@ -1,3 +1,9 @@
+/**
+ * Hls.js playlist and fragment loaders with Blossom server fallbacks, configuration types, and fallback notifications.
+ *
+ * @module
+ */
+
 import type {
   FragmentLoaderConstructor,
   FragmentLoaderContext as HlsFragmentLoaderContext,

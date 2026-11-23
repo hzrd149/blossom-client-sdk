@@ -1,3 +1,9 @@
+/**
+ * Fetch requests with optional timeouts and caller-provided cancellation signals.
+ *
+ * @module
+ */
+
 import { wrapSignalWithTimeout } from "./signal.js";
 
 export type RequestInitWithTimeout = RequestInit & { timeout?: number; timeoutMessage?: string };

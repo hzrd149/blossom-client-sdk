@@ -1,3 +1,9 @@
+/**
+ * Submission of signed NIP-56 blob reports to multiple Blossom servers, with per-server results and error callbacks.
+ *
+ * @module
+ */
+
 import HTTPError from "../error.js";
 import { fetchWithTimeout } from "../helpers/fetch.js";
 import { ServerType, SignedEvent } from "../types.js";

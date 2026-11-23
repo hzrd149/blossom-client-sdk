@@ -1,3 +1,9 @@
+/**
+ * Media uploads through the Blossom /media endpoint, with authentication, payment handling, and a missing-endpoint error.
+ *
+ * @module
+ */
+
 import { ServerType, UploadType } from "../types.js";
 import { BlobDescriptor } from "../types.js";
 import { getBlobSha256, getBlobSize, getBlobType } from "../helpers/index.js";

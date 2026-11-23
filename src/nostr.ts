@@ -1,3 +1,9 @@
+/**
+ * The Blossom server list event kind and extraction of ordered server URLs from Nostr kind 10063 events.
+ *
+ * @module
+ */
+
 export const USER_BLOSSOM_SERVER_LIST_KIND = 10063;
 
 /** Returns an ordered array of servers found in a server list event (10063) */

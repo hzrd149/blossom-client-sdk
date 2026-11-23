@@ -1,3 +1,9 @@
+/**
+ * Server hostname normalization and comparison, plus SHA-256 hash extraction from URLs.
+ *
+ * @module
+ */
+
 /** Normalizes a server reference to a lowercase hostname */
 export function getServerHostname(server: string | URL): string {
   if (server instanceof URL) return server.hostname.toLowerCase();

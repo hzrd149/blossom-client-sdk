@@ -1,3 +1,9 @@
+/**
+ * Timeout errors and abort signal composition for cancellable requests.
+ *
+ * @module
+ */
+
 export class TimeoutError extends Error {
   name = "TimeoutError";
 }

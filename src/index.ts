@@ -1,3 +1,10 @@
+/**
+ * Blossom client SDK constants, authentication, helpers, media fallbacks, Nostr utilities, errors, and types.
+ * Server actions are available through the `Actions` namespace.
+ *
+ * @module
+ */
+
 export * from "./const.js";
 export * from "./auth.js";
 export * from "./helpers/index.js";

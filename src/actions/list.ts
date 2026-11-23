@@ -1,3 +1,9 @@
+/**
+ * Blob listing actions and filtering options, including authentication and payment challenge handling.
+ *
+ * @module
+ */
+
 import HTTPError from "../error.js";
 import { ServerType } from "../types.js";
 import { BlobDescriptor, PaymentRequest, PaymentToken, SignedEvent } from "../types.js";

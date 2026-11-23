@@ -1,3 +1,9 @@
+/**
+ * Blob upload actions and options, including authentication and payment challenge handling.
+ *
+ * @module
+ */
+
 import { encodeAuthorizationHeader, getReusableAuthEvent, storeAuthEvent } from "../auth.js";
 import { ServerType, UploadType } from "../types.js";
 import HTTPError from "../error.js";

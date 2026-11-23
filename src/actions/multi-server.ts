@@ -1,3 +1,9 @@
+/**
+ * Multi-server blob and media uploads, including preflight existence checks, mirroring, and per-server callbacks.
+ *
+ * @module
+ */
+
 import { getReusableAuthEvent, storeAuthEvent } from "../auth.js";
 import { ServerType, UploadType } from "../types.js";
 import { getBlobSha256 } from "../helpers/index.js";

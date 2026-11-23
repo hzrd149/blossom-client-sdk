@@ -1,3 +1,9 @@
+/**
+ * Blob SHA-256 hashing and caching, hash validation, and upload size and media type helpers.
+ *
+ * @module
+ */
+
 import { bytesToHex } from "@noble/hashes/utils.js";
 import { UploadType } from "../types.js";
 import { toWebBytes } from "../internal/bytes.js";

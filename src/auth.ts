@@ -1,3 +1,9 @@
+/**
+ * Creation, encoding, matching, and reuse of Blossom kind 24242 Nostr authorization events.
+ *
+ * @module
+ */
+
 import { ServerType, UploadType } from "./types.js";
 import { AUTH_EVENT_KIND } from "./const.js";
 import { getBlobSha256, isSha256 } from "./helpers/blob.js";

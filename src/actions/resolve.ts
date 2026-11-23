@@ -1,3 +1,9 @@
+/**
+ * Blossom URI resolution and blob retrieval using server hints, author server lists, and fallback servers.
+ *
+ * @module
+ */
+
 import { BlossomURI, blossomURIFromURL, parseBlossomURI } from "../helpers/blossom-uri.js";
 import { fetchWithTimeout } from "../helpers/fetch.js";
 import { DownloadOptions } from "./download.js";

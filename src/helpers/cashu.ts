@@ -1,3 +1,9 @@
+/**
+ * Cashu payment request decoding from HTTP headers and legacy payment token encoding.
+ *
+ * @module
+ */
+
 import { PaymentRequest } from "../types.js";
 
 const decodeBase64 = (value: string) => {

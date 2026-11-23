@@ -1,3 +1,10 @@
+/**
+ * Blossom server actions for uploading, downloading, listing, deleting, mirroring, resolving, and reporting blobs.
+ * Includes media uploads, existence checks, and multi-server upload orchestration.
+ *
+ * @module
+ */
+
 export * from "./upload.js";
 export * from "./mirror.js";
 export * from "./list.js";
