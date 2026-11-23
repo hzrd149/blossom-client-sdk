@@ -1,6 +1,8 @@
 # blossom-client-sdk
 
-## Unreleased
+## 5.2.1
+
+### Patch Changes
 
 - Add JSR distribution as `@hzrd149/blossom-client` with the same public entrypoints as the npm package.
 
