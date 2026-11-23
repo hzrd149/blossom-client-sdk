@@ -3,7 +3,7 @@ import { UploadType } from "../types.js";
 import { toWebBytes } from "../internal/bytes.js";
 
 /** Checks if a string is a 64 length hex string */
-export function isSha256(str: string) {
+export function isSha256(str: string): RegExpMatchArray | null {
   return str.match(/^[0-9a-f]{64}$/);
 }
 
@@ -11,7 +11,7 @@ export function isSha256(str: string) {
 export const BlobHashSymbol = Symbol.for("sha256");
 
 /** gets or calculates the sha2456 of a Blob */
-export function getBlobSha256(blob: UploadType) {
+export function getBlobSha256(blob: UploadType): string | Promise<string> {
   if (Reflect.has(blob, BlobHashSymbol)) return Reflect.get(blob, BlobHashSymbol) as string;
 
   return computeBlobSha256(blob).then((hash) => {
@@ -21,7 +21,7 @@ export function getBlobSha256(blob: UploadType) {
 }
 
 /** Calculates the sha2456 of a Blob */
-export async function computeBlobSha256(blob: UploadType) {
+export async function computeBlobSha256(blob: UploadType): Promise<string> {
   let buffer: ArrayBuffer | Uint8Array<ArrayBuffer>;
 
   // NOTE: use typeof File !== "undefined" to check if File is supported (required to support node 18)
@@ -45,7 +45,7 @@ export async function computeBlobSha256(blob: UploadType) {
 }
 
 /** Returns the size of the blob in bytes */
-export function getBlobSize(blob: UploadType) {
+export function getBlobSize(blob: UploadType): number {
   if ((typeof File !== "undefined" && blob instanceof File) || blob instanceof Blob) {
     return blob.size;
   } else {
@@ -55,7 +55,7 @@ export function getBlobSize(blob: UploadType) {
 }
 
 /** Returns the mime type of the blob */
-export function getBlobType(blob: UploadType) {
+export function getBlobType(blob: UploadType): string | undefined {
   if ((typeof File !== "undefined" && blob instanceof File) || blob instanceof Blob) {
     return blob.type;
   }

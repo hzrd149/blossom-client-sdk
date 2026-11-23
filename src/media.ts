@@ -20,7 +20,11 @@ type GetServersMethod = (pubkey?: string) => Promise<(string | URL)[] | undefine
  * @param overridePubkey An optional pubkey to use instead of walking the DOM
  * @returns A method to remove the "error" event listener
  */
-export function handleMediaFallbacks(element: MediaElement, getServers: GetServersMethod, overridePubkey?: string) {
+export function handleMediaFallbacks(
+  element: MediaElement,
+  getServers: GetServersMethod,
+  overridePubkey?: string,
+): () => void {
   let urls: string[] | undefined;
   let urlIndex = 0;
 

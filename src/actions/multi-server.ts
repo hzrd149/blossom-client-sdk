@@ -98,7 +98,7 @@ export async function multiServerUpload<S extends ServerType, B extends UploadTy
   servers: Iterable<S>,
   blob: B,
   opts?: MultiServerUploadOptions<S, B>,
-) {
+): Promise<Map<S, BlobDescriptor>> {
   const options = { ...defaultMultiServerOptions, ...opts };
   options.signal?.throwIfAborted();
   let initialUpload: BlobDescriptor | undefined;
@@ -248,7 +248,7 @@ export async function multiServerMediaUpload<S extends ServerType, B extends Upl
   servers: Iterable<S>,
   blob: B,
   opts?: MultiServerMediaUploadOptions<S, B>,
-) {
+): Promise<Map<S, BlobDescriptor>> {
   const options = { ...defaultMediaUploadOptions, ...opts };
   options.signal?.throwIfAborted();
   let initialUpload: BlobDescriptor | undefined;

@@ -4,8 +4,8 @@ import { getBlobSha256, isSha256 } from "./helpers/blob.js";
 import { areServersEqual, getServerHostname } from "./helpers/url.js";
 import { EventTemplate, SignedEvent, Signer } from "./types.js";
 
-export const now = () => Math.floor(new Date().valueOf() / 1000);
-export const oneHour = () => now() + 60 * 60;
+export const now = (): number => Math.floor(new Date().valueOf() / 1000);
+export const oneHour = (): number => now() + 60 * 60;
 
 export type AuthRequest = {
   server: ServerType;
@@ -14,7 +14,7 @@ export type AuthRequest = {
 };
 
 /** Encodes an auth event into a nostr authorization header */
-export function encodeAuthorizationHeader(event: SignedEvent) {
+export function encodeAuthorizationHeader(event: SignedEvent): string {
   const json = JSON.stringify(event);
   const bytes = new TextEncoder().encode(json);
   let binary = "";
@@ -30,18 +30,18 @@ export async function doseAuthMatchBlob(
   server: ServerType,
   blob: string | UploadType,
   type: string = "upload",
-) {
+): Promise<boolean> {
   if (type !== "upload" && type !== "media") return false;
   return doesAuthMatchRequest(auth, { server, type, blob });
 }
 
 /** Returns all tag values for a specific tag name */
-export function getAuthTagValues(auth: SignedEvent, tagName: string) {
+export function getAuthTagValues(auth: SignedEvent, tagName: string): string[] {
   return auth.tags.filter((tag) => tag[0] === tagName).map((tag) => tag[1]);
 }
 
 /** Returns the auth event expiration timestamp if one exists */
-export function getAuthExpiration(auth: SignedEvent) {
+export function getAuthExpiration(auth: SignedEvent): number | undefined {
   const expiration = auth.tags.find((tag) => tag[0] === "expiration")?.[1];
   if (!expiration) return undefined;
 
@@ -52,13 +52,13 @@ export function getAuthExpiration(auth: SignedEvent) {
 }
 
 /** Returns true if an auth event has expired */
-export function isAuthExpired(auth: SignedEvent, timestamp: number = now()) {
+export function isAuthExpired(auth: SignedEvent, timestamp: number = now()): boolean {
   const expiration = getAuthExpiration(auth);
   return expiration !== undefined && expiration <= timestamp;
 }
 
 /** Normalizes a server tag value to a lowercase hostname */
-export function normalizeServerTag(server: string | URL) {
+export function normalizeServerTag(server: string | URL): string {
   return getServerHostname(server);
 }
 
@@ -67,7 +67,7 @@ function requestRequiresHashTag(type: AuthType) {
 }
 
 /** Checks if an auth event can be reused for a request */
-export async function doesAuthMatchRequest(auth: SignedEvent, request: AuthRequest) {
+export async function doesAuthMatchRequest(auth: SignedEvent, request: AuthRequest): Promise<boolean> {
   if (isAuthExpired(auth)) return false;
 
   const authType = auth.tags.find((tag) => tag[0] === "t")?.[1];
@@ -88,7 +88,10 @@ export async function doesAuthMatchRequest(auth: SignedEvent, request: AuthReque
 }
 
 /** Finds a reusable auth event in a store and prunes expired events */
-export async function getReusableAuthEvent(authEvents: Set<SignedEvent>, request: AuthRequest) {
+export async function getReusableAuthEvent(
+  authEvents: Set<SignedEvent>,
+  request: AuthRequest,
+): Promise<SignedEvent | undefined> {
   for (const auth of authEvents) {
     if (isAuthExpired(auth)) {
       authEvents.delete(auth);
@@ -102,7 +105,7 @@ export async function getReusableAuthEvent(authEvents: Set<SignedEvent>, request
 }
 
 /** Stores a new auth event in the shared store */
-export function storeAuthEvent(authEvents: Set<SignedEvent>, auth: SignedEvent) {
+export function storeAuthEvent(authEvents: Set<SignedEvent>, auth: SignedEvent): SignedEvent {
   authEvents.add(auth);
   return auth;
 }
@@ -132,7 +135,11 @@ export type AuthEventOptions = {
 };
 
 /** Generic auth event builder */
-export async function createAuthEvent(signer: Signer, type: AuthType, options?: AuthEventOptions) {
+export async function createAuthEvent(
+  signer: Signer,
+  type: AuthType,
+  options?: AuthEventOptions,
+): Promise<SignedEvent> {
   const draft: EventTemplate = {
     created_at: now(),
     kind: AUTH_EVENT_KIND,
@@ -172,7 +179,7 @@ export async function createDownloadAuth(
   signer: Signer,
   serverOrHash: string | string[] | UploadType | UploadType[],
   options?: DownloadAuthOptions,
-) {
+): Promise<SignedEvent> {
   if (!Array.isArray(serverOrHash)) serverOrHash = [serverOrHash] as string[] | UploadType[];
 
   return await createAuthEvent(signer, "get", {
@@ -191,7 +198,7 @@ export async function createUploadAuth(
   signer: Signer,
   blobs: string | string[] | UploadType | UploadType[],
   options?: UploadAuthOptions,
-) {
+): Promise<SignedEvent> {
   return await createAuthEvent(signer, options?.type ?? "upload", { message: "Upload Blob", ...options, blobs });
 }
 
@@ -201,14 +208,14 @@ export async function createMirrorAuth(
   signer: Signer,
   blobs: string | string[] | UploadType | UploadType[],
   options?: MirrorAuthOptions,
-) {
+): Promise<SignedEvent> {
   // The /mirror endpoint uses "upload" type
   return await createAuthEvent(signer, "upload", { message: "Mirror Blob", ...options, blobs });
 }
 
 export type ListAuthOptions = Omit<AuthEventOptions, "blobs">;
 /** Creates a list auth event */
-export async function createListAuth(signer: Signer, options?: ListAuthOptions) {
+export async function createListAuth(signer: Signer, options?: ListAuthOptions): Promise<SignedEvent> {
   return await createAuthEvent(signer, "list", { message: "List Blobs", ...options });
 }
 
@@ -218,6 +225,6 @@ export async function createDeleteAuth(
   signer: Signer,
   blobs: string | string[] | UploadType | UploadType[],
   options?: DeleteAuthOptions,
-) {
+): Promise<SignedEvent> {
   return await createAuthEvent(signer, "delete", { message: "Delete Blob", ...options, blobs });
 }

@@ -33,7 +33,11 @@ export type DeleteOptions<S extends ServerType> = {
 };
 
 /** Deletes a blob to a server */
-export async function deleteBlob<S extends ServerType>(server: S, hash: string, opts?: DeleteOptions<S>) {
+export async function deleteBlob<S extends ServerType>(
+  server: S,
+  hash: string,
+  opts?: DeleteOptions<S>,
+): Promise<boolean> {
   const url = new URL("/" + hash, server);
   const resolveAuth = async (preset: boolean = false) => {
     const reused = opts?.authEvents

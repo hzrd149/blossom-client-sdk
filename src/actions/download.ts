@@ -33,7 +33,11 @@ export type DownloadOptions<S extends ServerType> = {
 };
 
 /** Downloads a blob from a server and returns the Response */
-export async function downloadBlob<S extends ServerType>(server: S, hash: string, opts?: DownloadOptions<S>) {
+export async function downloadBlob<S extends ServerType>(
+  server: S,
+  hash: string,
+  opts?: DownloadOptions<S>,
+): Promise<Response> {
   const url = new URL("/" + hash, server);
   const resolveAuth = async (preset: boolean = false) => {
     const reused = opts?.authEvents

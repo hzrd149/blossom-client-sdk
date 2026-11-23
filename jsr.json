@@ -1,0 +1,36 @@
+{
+  "$schema": "https://jsr.io/schema/config-file.v1.json",
+  "name": "@hzrd149/blossom-client",
+  "version": "5.2.0",
+  "exports": {
+    ".": "./src/index.ts",
+    "./media": "./src/media.ts",
+    "./hls": "./src/hls.ts",
+    "./helpers": "./src/helpers/index.ts",
+    "./helpers/blob": "./src/helpers/blob.ts",
+    "./helpers/blossom-uri": "./src/helpers/blossom-uri.ts",
+    "./helpers/cashu": "./src/helpers/cashu.ts",
+    "./helpers/fetch": "./src/helpers/fetch.ts",
+    "./helpers/headers": "./src/helpers/headers.ts",
+    "./helpers/index": "./src/helpers/index.ts",
+    "./helpers/signal": "./src/helpers/signal.ts",
+    "./helpers/url": "./src/helpers/url.ts",
+    "./nostr": "./src/nostr.ts",
+    "./auth": "./src/auth.ts",
+    "./actions": "./src/actions/index.ts",
+    "./actions/delete": "./src/actions/delete.ts",
+    "./actions/download": "./src/actions/download.ts",
+    "./actions/has": "./src/actions/has.ts",
+    "./actions/index": "./src/actions/index.ts",
+    "./actions/list": "./src/actions/list.ts",
+    "./actions/media": "./src/actions/media.ts",
+    "./actions/mirror": "./src/actions/mirror.ts",
+    "./actions/multi-server": "./src/actions/multi-server.ts",
+    "./actions/report": "./src/actions/report.ts",
+    "./actions/resolve": "./src/actions/resolve.ts",
+    "./actions/upload": "./src/actions/upload.ts"
+  },
+  "publish": {
+    "include": ["src/**/*.ts", "README.md", "LICENSE.txt", "package.json", "jsr.json"]
+  }
+}

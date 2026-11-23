@@ -11,6 +11,8 @@
   "scripts": {
     "build": "tsc",
     "prepublish": "npm run build",
+    "publish:jsr:check": "node scripts/check-jsr.mjs && pnpm dlx jsr publish --dry-run --allow-dirty",
+    "publish:jsr": "node scripts/check-jsr.mjs && pnpm dlx jsr publish",
     "test": "vitest run",
     "test:browser": "vitest run --browser --browser.headless",
     "test:node": "pnpm build && node node_modules/vitest/vitest.mjs run && node --test tests/package-exports.test.mjs tests/runtime/*.test.mjs",

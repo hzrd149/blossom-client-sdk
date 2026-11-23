@@ -3,6 +3,10 @@ import assert from "node:assert/strict";
 import { access } from "node:fs/promises";
 import { test } from "node:test";
 
+test("JSR version and source entrypoints match npm", async () => {
+  await import("../scripts/check-jsr.mjs");
+});
+
 test("README named SDK imports exist in the published entrypoints", async () => {
   const { readFile } = await import("node:fs/promises");
   const readme = await readFile(new URL("../README.md", import.meta.url), "utf8");

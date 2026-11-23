@@ -1,5 +1,5 @@
 /** Normalizes a server reference to a lowercase hostname */
-export function getServerHostname(server: string | URL) {
+export function getServerHostname(server: string | URL): string {
   if (server instanceof URL) return server.hostname.toLowerCase();
 
   if (URL.canParse(server)) return new URL(server).hostname.toLowerCase();
@@ -8,12 +8,12 @@ export function getServerHostname(server: string | URL) {
 }
 
 /** Check if two servers are the same */
-export function areServersEqual(a: string | URL, b: string | URL) {
+export function areServersEqual(a: string | URL, b: string | URL): boolean {
   return getServerHostname(a) === getServerHostname(b);
 }
 
 /** returns the last sha256 in a URL */
-export function getHashFromURL(url: string | URL) {
+export function getHashFromURL(url: string | URL): string | null {
   if (typeof url === "string") url = new URL(url);
 
   const hashes = Array.from(url.pathname.matchAll(/[0-9a-f]{64}/gi));
